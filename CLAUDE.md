@@ -2,6 +2,18 @@
 
 本仓库（MahjongRuleKB）的开发过程文档管理规范。
 
+## 关键决策（已定，不要重开）
+
+### Rule Studio 不走 PiBot 二开路线（2026-11-24 终止）
+
+已实测过：环境打通 1 天、改名要动 30+ 文件（i18n 约 130 处 + 打包身份 + 数据目录名）、Capability 裁剪留下 142 处 UI 与宿主侧引用并叠加每次上游合并的冲突。结论：**不要再找「大而全的 Agent 桌面应用」做基座**，也不要自建完整 Agent 运行时。
+
+- 备份（要查历史实现去这两处，不要重写）：KB 分支 `archive/rule-studio-pibot`；fork `mickorz/PiBot` 的 `main`（`d0f0d09`，含改名、NOTICE 派生声明、README 裁剪说明）
+- 现行路线：`studio` CLI 内核（浏览 / `propose` / `validate` / `diff` / `apply` / 历史，提案存 `<kb>/.rule-studio/`，门禁进程内）→ 配 `SKILL.md` 用现成 AI 客户端驱动 → 再叠本地 Web 工作台（Node 服务 + React，仅监听 `127.0.0.1`，不用 Electron）
+- 前提：KB 领域层先拆成纯函数：`schemas/` + `parser/` + `compiler/` 不得 `import "node:*"`、不读写 `process`，磁盘与命令行只在 `cli/`；编译器不修改输入、结果与编译次数和变种顺序无关
+- 与路线无关、必须保留的设计（不要因换路线而推翻）：提案与门禁 G1-G4、事务状态机（先取写锁再校验 Hash、新建文件回滚、`recovery_failed` 不自动重试）、Agent 工具白名单、G5 Gold Set 门禁默认关闭且只由用户触发
+- 产品需求与评审结论仍然有效：`dev-docs/design/2026-11-24-RuleStudio需求文档.md`、两轮评审原文、`dev-docs/design/2026-11-24-RuleStudio技术路线对比.md`
+
 ## 开发文档目录：`dev-docs/`
 
 `dev-docs/` 是本仓库专门保存开发过程文档的目录（随仓库入库，正常提交推送）。
