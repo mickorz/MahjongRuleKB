@@ -16,6 +16,7 @@
 | v2.1 | 2026-11-24 | 合并 `main`（`b6e06d4`、`b78230f`）后同步：KB Phase 3、Phase 4 已完成，Phase E 不再被阻塞；`main` 新增 `content_hash`（基础内容指纹），底座变更规则扩展为「升版本并更新指纹」；编译器修改输入的问题已单独修复并加回归测试，A-4 与 AC-14 相应标注；KB 测试增至 85 个；同步目录必须类型检查零错误（新增 `typecheck` 脚本） |
 | v2.2 | 2026-11-24 | 按第二轮评审意见修订（`dev-docs/design/2026-11-24-RuleStudio执行计划评审意见-第2轮.md`）：并入 `main` 的 `167b111`（测试基线 86；`typecheck` 脚本已由 main 加入并清零类型错误）；新增「进入 Phase A 的前置条件」核对表；事务改为先取写入锁再校验 Hash、写入前逐文件复查；提案更新必须显式指定 `proposalId`；事务恢复用例补全；ID 前缀统一为 2～4 位；Gold Set 授权后可选自动运行。评审中标为未解决的四项 P0 在 v2 已处理，逐条核对见下表 |
 | v2.3 | 2026-11-24 | 任务 0.4 标记进行中：Node 26.11.1、pnpm 12.14.0 已装，fork 历史已补全；`pnpm install` 等磁盘空间；新增环境搭建指南与两篇经验文档（nvm 镜像 latest 滞后、失效 corepack 垫片） |
+| v2.4 | 2026-11-24 | 合并 `main` 的 `decdf12`（第一阶段冻结，`962f488`）后同步：测试基线 88；KB Phase 3 口径改为「工程完成、Gold Set 27 verified / 33 draft」；写明版本递增由 Studio 门禁 G3 检查（KB 编译器不做这项检查，`AGENTS.md` 第 4 条）；Gold Set 门禁报告区分测试通过与人工核验；补充与第一阶段冻结的关系 |
 
 ### 第二轮评审逐条核对
 
@@ -79,7 +80,7 @@ flowchart LR
 | Phase D | 新建变种、影响分析、未决管理 | fork | 4 - 6 天 | Phase C | AC-10、AC-11、AC-12 |
 | Phase E | Gold Set 门禁、审计历史、上游合并演练 | fork + KB | 2 - 3 天 | KB Phase 3（已完成） | AC-13 |
 
-KB Phase 3（Gold Set）与 Phase 4（`AGENTS.md`）已在 `main` 完成（`b78230f`），Phase E 不再被阻塞。
+KB Phase 3 的工程部分与 Phase 4（`AGENTS.md`）已在 `main` 完成（`b78230f`、`167b111`）；Gold Set 验收状态为 27 verified / 33 draft（`decdf12`，第一阶段冻结），规则验证尚未全部完成。这不阻塞 Phase E 的工程接入，但 Studio 的 Gold Set 门禁报告要区分「测试通过」与「用例已人工核验」。
 
 **第一阶段真正的交付物**：策划在 PiBot 桌面应用里，通过聊天修改一张杭州规则卡，看到 Diff 与门禁结果，点击应用后写入工作区；期间 `sources/` 不变、Agent 没有写盘能力、失败可回滚。
 
@@ -135,7 +136,7 @@ PiBot fork 以 submodule 进入 `thirdparties/`，本机能 `pnpm dev` 启动并
 
 ### 目标
 
-KB 的领域层拆成不触碰文件系统、不修改输入的纯函数：Parser（内存中的文件内容 → 规则集结构）、Validator（结构校验）、Kernel（编译）；磁盘读写与命令行留在 `cli/`。不再依赖目录名与硬编码前缀，能在内存中解析、校验、编译任意规则集。纯领域目录（`schemas/`、`parser/`、`compiler/`）一键整体同步进 fork，并有漂移检查与纯度检查。**全部在 KB 仓库内完成，KB 现有 86 个测试必须持续通过。**
+KB 的领域层拆成不触碰文件系统、不修改输入的纯函数：Parser（内存中的文件内容 → 规则集结构）、Validator（结构校验）、Kernel（编译）；磁盘读写与命令行留在 `cli/`。不再依赖目录名与硬编码前缀，能在内存中解析、校验、编译任意规则集。纯领域目录（`schemas/`、`parser/`、`compiler/`）一键整体同步进 fork，并有漂移检查与纯度检查。**全部在 KB 仓库内完成，KB 现有 88 个测试必须持续通过。**
 
 ### 目标目录结构
 
@@ -209,7 +210,7 @@ KB 根目录
 
 - AC-2：新增 `variants/<x>/`（2～4 位大写字母前缀，与 A-1 一致）不改 Schema 即可通过校验与编译
 - AC-3：`npm run sync:check` 通过；`$FORK` 内 `pnpm typecheck`、`pnpm lint` 对 `@pibot/mahjong-kb` 通过
-- `npm test` 全绿（现有 86 个 + 新增）
+- `npm test` 全绿（现有 88 个 + 新增）
 - AC-14：编译器不修改输入；同一输入重复编译、多个变种按不同顺序编译，结果一致（`kernel.test.ts`）
 - `npm run typecheck` 通过
 
@@ -219,10 +220,12 @@ KB 根目录
 
 | # | 条件 | 状态 |
 | --- | --- | --- |
-| 1 | 同步 `main` | 已完成：`b6e06d4`、`b78230f`、`167b111` 均已并入（`e4d92a4`） |
+| 1 | 同步 `main` | 已完成：`b6e06d4`、`b78230f`、`167b111`（`e4d92a4`）、`decdf12`（`962f488`）均已并入 |
 | 2 | 确定纯内存 Parser 接口 | 已确定：A-3 的 `parseRuleset({ kind, files })` |
 | 3 | 明确领域代码同步边界 | 已确定：只同步 `schemas/`、`parser/`、`compiler/`，`cli/` 不同步 |
 | 4 | Compiler 不可变性纳入验收 | 已确定：A-4 约束、A-9 测试、AC-14；代码已修复（`fe38158`） |
+
+与第一阶段冻结的关系（`dev-docs/design/2025-11-24-第一阶段冻结评审意见.md`）：冻结的是 KB 第一阶段的范围，不再新增版本基线机制、不扩展编译器能力、不新增基础设施。Phase A 不改变编译语义，只做结构拆分、manifest 的 `id_prefix` 字段与显式 `kind`；Studio 的基础设施都在 fork 内，不进 KB 仓库。
 - `npm run compile` 产物与迁移前一致（`git diff compiled/` 为空）
 
 ## Phase B：Mahjong Capability 只读
@@ -291,7 +294,7 @@ Agent 可生成结构化提案，策划在 UI 审阅 Diff、证据、影响与�
 | C-6 | Diff 计算 | `src/brain/proposals/diff.ts`：逐文件生成行级 Diff（新增 / 修改 / 删除行），供 UI 展示；若 Spike S-8 结论允许复用 `@pibot/workspaces/ui` 的 Diff 组件则直接复用 | Diff |
 | C-7 | UI：卡片 | `features/mahjong/ProposalCard.tsx`：在聊天中按工具名与 `details.proposalId` 渲染：状态、文件数、门禁摘要、按钮「查看详情」「应用」「拒绝」；应用前若 `status !== ready` 或门禁未过则禁用并说明 | 卡片 |
 | C-8 | UI：详情与验证 | `features/mahjong/ProposalDetail.tsx`（理由、证据链接、逐文件 Diff、影响分析、门禁报告、事务步骤记录）、`features/mahjong/GateReportView.tsx`（「验证」子视图）；大型 JSON 可折叠 | 详情 |
-| C-9 | 版本规则落地 | G3：目标为底座且变更含 `rulesets/hangzhou/**` 但无 manifest `version` 升级 → 失败，错误文案指向「需在同一提案升 manifest.version」。底座变更提案还必须携带新的 `content_hash`（`main` 的 `b6e06d4` 引入的基础内容指纹）：由服务端在生成提案时用 `rulesetContentHash` 按提案应用后的内容计算，写进 `update_manifest`，Agent 不提供；未携带或算错时 G2 编译因指纹不符失败。Skill 增加该规则与 `update_manifest` 用法 | 规则 |
+| C-9 | 版本规则落地 | G3：目标为底座且变更含 `rulesets/hangzhou/**` 但无 manifest `version` 升级 → 失败，错误文案指向「需在同一提案升 manifest.version」。底座变更提案还必须携带新的 `content_hash`（`main` 的 `b6e06d4` 引入的基础内容指纹）：由服务端在生成提案时用 `rulesetContentHash` 按提案应用后的内容计算，写进 `update_manifest`，Agent 不提供；未携带或算错时 G2 编译因指纹不符失败。KB 编译器本身不检查「更新了 `content_hash` 但没有升 `version`」（`AGENTS.md` 第 4 条）；这项发布流程约束由 G3 在提案门禁里检查。Skill 增加该规则与 `update_manifest` 用法 | 规则 |
 | C-10 | 运行时目录 | KB `.gitignore` 加 `.rule-studio/`；`<kb>/.rule-studio/README.md`（由 Capability 首次创建时写入）说明该目录是运行时数据 | 忽略规则 |
 | C-11 | 测试 | 门禁各层正反用例（缺槽位、引用悬空、未升版、下游失配）；事务：正常提交、门禁失败回滚、Hash 不一致过期；备份过程中崩溃（`preparing`）、备份完成未写入时崩溃（`prepared`）、写入过程中崩溃（`writing`）三种中断后的启动恢复（规则文件与事务前一致）；新建文件回滚（`create_rule` 的文件被删除、空目录被清理）；恢复时原始文件备份缺失或 Hash 不符 → `recovery_failed` 并保留现场；回滚失败进入 `recovery_failed` 后不自动重试；取锁后校验 Hash 发现外部修改 → 提案过期、不写入；并发第二次 apply 被锁拒绝；fake-llm 跑「引用 → 提案 → 应用」链路 | 测试 |
 | C-12 | 文档与进度 | `$FORK/packages/mahjong/README.md` 补提案与事务；KB `docs/how-to-guides.md`（中英）加「通过对话修改规则」；进度文档与 `PC-执行报告.md` | 文档 |
@@ -342,8 +345,8 @@ Gold Set 接入门禁；审计与提案历史完整；上游合并流程演练�
 
 | # | 任务 | 要点 | 产出 |
 | --- | --- | --- | --- |
-| E-1 | KB Phase 3 | **已完成（`main` 提交 `b78230f`）**：60 条 Gold Set、4 个计算纯函数、回归测试 | KB 测试体系 |
-| E-2 | G5 宿主端口与授权 | 运行知识库目录里的 `npm test` 等于执行该目录的代码（`package.json` 脚本与依赖），按外部代码对待：**默认关闭**；只能由用户在界面主动触发；每个知识库目录首次执行前弹确认，显示执行目录、固定命令与超时；授权后用户可自行开启「应用后自动运行」（开关默认关，按知识库目录记忆）；命令固定为 `npm test -- --reporter=json`，不接受 Agent 或用户拼接；有超时、取消、输出记录（截断保存）并写入审计；不向 Agent 提供任何可触发它的工具，也不授予通用 Shell 权限。`packages/mahjong-contract` 定义 `KbTestPort`（输入 KB 根目录，输出解析后的 Vitest JSON 报告）；`apps/desktop/src/main/` 实现端口（`node:child_process`，带超时与 `AbortSignal`）；brain 侧端口缺失时返回显式「不支持」；门禁报告增加 G5 区块 | 门禁扩展 |
+| E-1 | KB Phase 3 | **工程部分已完成（`main` 提交 `b78230f`、`167b111`）**：60 条 Gold Set、4 个计算纯函数、回归测试。验收状态 27 verified / 33 draft（`decdf12`）：33 条判定类用例待结合游戏实现人工核验，不阻塞本阶段的工程接入 | KB 测试体系 |
+| E-2 | G5 宿主端口与授权 | 运行知识库目录里的 `npm test` 等于执行该目录的代码（`package.json` 脚本与依赖），按外部代码对待：**默认关闭**；只能由用户在界面主动触发；每个知识库目录首次执行前弹确认，显示执行目录、固定命令与超时；授权后用户可自行开启「应用后自动运行」（开关默认关，按知识库目录记忆）；命令固定为 `npm test -- --reporter=json`，不接受 Agent 或用户拼接；有超时、取消、输出记录（截断保存）并写入审计；不向 Agent 提供任何可触发它的工具，也不授予通用 Shell 权限。`packages/mahjong-contract` 定义 `KbTestPort`（输入 KB 根目录，输出解析后的 Vitest JSON 报告）；`apps/desktop/src/main/` 实现端口（`node:child_process`，带超时与 `AbortSignal`）；brain 侧端口缺失时返回显式「不支持」；门禁报告增加 G5 区块，并同时给出每条用例的人工核验状态（verified / draft），不以「测试通过」代替「规则已核验」（第一阶段冻结评审的口径） | 门禁扩展 |
 | E-3 | 审计与历史 | `mahjong.proposals.list` 支持全部状态；「提案」子视图增加历史筛选；应用 / 拒绝 / 回滚均入审计（Spike S-5） | 历史 |
 | E-4 | 上游合并演练 | 在 fork 中执行一次「`git fetch upstream` → 合并 `upstream/main` 到 fork 的 `main` → `pnpm check` → 推送 fork → 更新 submodule 指针与 `REFERENCES.md`」，记录耗时与冲突点，更新工作流指南 | 演练记录 |
 | E-5 | 进度 | `PE-执行报告.md`；更新 `REFERENCES.md` 固定 commit | 文档 |

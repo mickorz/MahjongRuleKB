@@ -15,6 +15,7 @@
 | v1.2 | 2026-11-24 | 按评审意见修订（`dev-docs/design/2026-11-24-RuleStudio执行计划评审意见.md`）：第一节第 7 至 9 行按实测补充环境与 fork 状态；I-1 改为显式工具白名单，I-9 改为显式状态机，新增 I-13、I-14；FR-01、FR-10、FR-19 修订；8.1 的 G1 改为解析加校验、G5 默认关闭；AD-1、AD-3、AD-5 修订，新增 AD-13；10.3 事务改为显式状态机并支持新建文件回滚；安全表、验收（AC-3、AC-6，新增 AC-14、AC-15）、风险、待决策同步。实测校正两项并按实测写入：`corepack` 命令在 Node 26 上不可用；`unresolved.yaml` 的宽泛 catch 已在 `23e9dff` 修复 |
 | v1.3 | 2026-11-24 | 合并 `main` 后同步：第一节新增第 11 行（`content_hash`、KB Phase 3 / 4 完成）；I-4、FR-12、G3 扩展为「升版本并更新 `content_hash`」；R-13 标为已修复；示例中的示意 ID（`HJ-R-BANK-02`、`HJ-R-GANG-01`）按实测换成真实卡 `HJ-R-LUNZHUANG`、`HJ-K-GANGKAI` |
 | v1.4 | 2026-11-24 | 按第二轮评审意见修订：并入 `main` 的 `167b111`（测试基线 86）；事务改为先取写入锁再校验 Hash、写入前逐文件复查（I-9、10.3）；修订提案必须显式指定 `proposalId`（10.2）；Gold Set 授权后可开启自动运行（FR-19）；AC-2 的前缀长度与执行计划 A-1 统一为 2～4 位 |
+| v1.5 | 2026-11-24 | 合并 `main` 的第一阶段冻结（`decdf12`）后同步：第一节新增第 13 行；I-4、G3 写明版本递增由 Studio 门禁检查，KB 编译器不做这项检查（`AGENTS.md` 第 4 条）；Gold Set 门禁（FR-19、G5）区分「测试通过」与「用例已人工核验」（27 verified / 33 draft）；基线 88 |
 
 ## 一、对设计讨论稿前提的核对与纠正
 
@@ -34,6 +35,7 @@
 | 10 | 「`compiled/xiaoshan/` 86 条规则」与「完整萧山 = (N − a) + b」 | 进度文档已修正公式为 **N + b**（modified 卡替换后自身进产物） | 需求文档沿用修正后公式 |
 | 11 | 文档编写后 `main` 的新变化 | `b6e06d4`：manifest 增加 `content_hash`（基础规则内容指纹），编译时比对，内容变化而版本未变则报错。`b78230f`：KB Phase 3（60 条 Gold Set、4 个计算纯函数）与 Phase 4（`AGENTS.md`）完成，测试 85 个 | I-4、FR-12、G3 扩展为「升版本并更新 `content_hash`」；Phase E 不再等待 KB Phase 3；Studio Skill 的内容来源 `AGENTS.md` 已就绪 |
 | 12 | 第二轮评审依据的是远程分支旧版（v1.1） | `main` 又新增 `167b111`（修 Phase 3 审查问题：新增 `npm run typecheck`、清零类型错误、测试 80）；本分支并入后 86 个测试、typecheck 通过 | 基线同步为 86；第二轮评审新增的 5 项（写锁顺序、`proposalId`、恢复用例、前缀长度、自动运行开关）写入本文档与执行计划 v2.2 |
+| 13 | 文档未反映 `main` 的第一阶段冻结 | `decdf12`：Gold Set 27 verified / 33 draft（33 条判定类用例待人工核验）；`AGENTS.md` 第 4 条纠正为「编译器不检测忘升 `version`，版本递增是发布流程约束」；冻结声明：不新增版本基线机制、不扩展编译器、不新增基础设施 | I-4、G3 写明版本递增由 Studio 门禁检查；Gold Set 门禁报告区分测试通过与人工核验；Phase A 不改变编译语义（见执行计划） |
 
 ## 二、目标
 
@@ -163,7 +165,7 @@
 | I-1 | 麻将 Bot 下发给模型的工具集合等于显式白名单，不含任何通用写文件、补丁、Shell、通用工作区修改工具 | Agent 只能产生 Proposal。白名单按阶段启用；运行中的工具发现也只能加载白名单所在分组。**移除 PiBot Capability 不等于收回工具**：命令执行、文件写入等由 PiBot 内核提供，必须单独限制（AD-13） |
 | I-2 | 正式写入只由 UI「应用」按钮触发的 RPC 执行 | Agent 在对话中说「已修改」不产生任何写入 |
 | I-3 | `sources/` 只读；`compiled/` 只由编译器生成 | Capability 的路径白名单不包含对二者的写权限 |
-| I-4 | 杭州底座任何卡或配置变更，必须在同一提案内升 `manifest.version` 并更新 `content_hash` | `content_hash`（基础内容指纹）由服务端按提案应用后的内容计算，Agent 不提供；缺任一项门禁失败，错误信息明确指向缺失项 |
+| I-4 | 杭州底座任何卡或配置变更，必须在同一提案内升 `manifest.version` 并更新 `content_hash` | `content_hash`（基础内容指纹）由服务端按提案应用后的内容计算，Agent 不提供。KB 编译器只校验指纹一致与 `base.version` 匹配，检测不了「更新了指纹但忘升版本」（`AGENTS.md` 第 4 条）；这项发布流程约束由 Studio 的门禁 G3 检查，缺任一项门禁失败，错误信息明确指向缺失项 |
 | I-5 | 变种 `base.version` 不自动跟随底座 | 底座升版后下游锁定失配是「待升级」提示：不阻塞底座提案应用，但阻塞该变种可发布 |
 | I-6 | `modified` 卡必须是完整有效规则 | 门禁按 KB 的槽位策略（base / inherited / modified / added）校验 |
 | I-7 | 影响判定、算分、结算金额的未决内容不得被 AI 默认为 `confirmed` | AI 只能产生 `unresolved` / `disputed` + `candidates`，由策划裁决并填 `resolution` |
@@ -199,7 +201,7 @@
 | FR-16 | 修改继承规则 | 「沿用但加限制」转为 `modified` + `base_rule_ref` 的完整卡 | SHOULD | D |
 | FR-17 | 底座影响分析 | 底座变更提案展示下游每个变种的 inherited / modified / 依赖卡清单与锁定状态；「升级变种锁定」作为独立提案 | SHOULD | D |
 | FR-18 | 未决项管理 | 新增、裁决 `unresolved.yaml` 条目；裁决必须填 `resolution`；blocker 影响 `releasable` | SHOULD | D |
-| FR-19 | Gold Set 门禁 | 默认关闭，只能由用户在界面主动触发；每个知识库目录首次执行前确认（显示执行目录、固定命令、超时）；授权后用户可开启「应用后自动运行」（默认关，按知识库目录记忆）；有超时、取消、输出记录并写审计；Agent 无触发途径；本机无 Node 时明确「不支持」而非跳过 | LATER | E |
+| FR-19 | Gold Set 门禁 | 默认关闭，只能由用户在界面主动触发；每个知识库目录首次执行前确认（显示执行目录、固定命令、超时）；授权后用户可开启「应用后自动运行」（默认关，按知识库目录记忆）；有超时、取消、输出记录并写审计；报告区分「测试通过」与「用例已人工核验」（当前 27 verified / 33 draft）；Agent 无触发途径；本机无 Node 时明确「不支持」而非跳过 | LATER | E |
 | FR-20 | 审计与历史 | 应用、拒绝写入 PiBot 审计日志；提案历史列表 | SHOULD | E |
 
 ## 八、质量门禁
@@ -222,9 +224,9 @@ flowchart TD
 | --- | --- | --- | --- |
 | G1 解析与结构校验 | 逐文件解析（YAML 元数据 Zod）后：ID 唯一、ID 前缀与 manifest 的 `id_prefix` 一致（规则卡、config、config.ui、未决清单）、ID 前缀段与类型一致、必填槽位、引用闭合 | `@pibot/mahjong-kb`（同步自 KB `parser/` 与 `compiler/validator.ts`）；所有错误一次列出 | 失败则禁止应用 |
 | G2 编译 | 版本锁定、映射冲突、依赖闭合、发布门槛汇总 | `@pibot/mahjong-kb`（同步自 KB `compiler/kernel.ts`），编译到内存不落盘，不修改输入 | 失败则禁止应用 |
-| G3 版本规则 | 目标为底座时，变更集是否含 `manifest.version` 升级与新的 `content_hash`；指纹不符由 G2 编译报出 | Capability 内规则，加 `@pibot/mahjong-kb` 的 `rulesetContentHash` | 失败则禁止应用 |
+| G3 版本规则 | 目标为底座时，变更集是否含 `manifest.version` 升级与新的 `content_hash`。指纹不符由 G2 编译报出；版本未递增编译器不报错，只有本层检查 | Capability 内规则，加 `@pibot/mahjong-kb` 的 `rulesetContentHash` | 失败则禁止应用 |
 | G4 下游锁定状态 | 目标为底座时，逐个变种：锁定版本是否匹配；匹配则试编译，失配则标「待升级」 | `@pibot/mahjong-kb` | **只展示**，不计入本提案通过条件（I-5） |
-| G5 Gold Set | KB `npm test`（执行知识库目录内的代码） | 宿主端口运行，结果解析；默认关闭，用户触发，首次确认，固定命令 | 第二阶段；不计入自动通过条件；无 Node 时显式「不支持」 |
+| G5 Gold Set | KB `npm test`（执行知识库目录内的代码） | 宿主端口运行，结果解析；默认关闭，用户触发，首次确认，固定命令 | 第二阶段；不计入自动通过条件；报告同时给出每条用例的人工核验状态（verified / draft）；无 Node 时显式「不支持」 |
 
 **通过条件**：G1 + G2 + G3 对目标规则集全部通过。
 
