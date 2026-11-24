@@ -1,0 +1,19 @@
+ruleset_id: xiaoshan-friends-4p
+version: 0.1.0
+base:
+  ruleset_id: hangzhou-friends-4p
+  version: 1.0.0
+scope:
+  player_count: 4
+  room_type: friends
+sources:
+  - sources/xiaoshan/xiaoshan-rules.md
+note: 萧山麻将好友房，以杭州好友房为核心流程的基线。原文未点名的能力仍按杭州规则。
+compiled_from:
+  ruleset_id: hangzhou-friends-4p
+  version: 1.0.0
+releasable: false
+blockers:
+  - XS-K-FAN (unresolved)
+  - XS-K-GANG (unresolved)
+  - HJ-C-JOKER (disputed)
