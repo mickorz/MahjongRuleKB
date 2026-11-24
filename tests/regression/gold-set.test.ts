@@ -25,6 +25,16 @@ describe("Gold Set 结构", () => {
     expect(byFile("cap-distribution.yaml")).toHaveLength(6);
   });
 
+  it("27 条 verified（P0 算分 21 + 跟庄 6），33 条 draft", () => {
+    const verified = all.filter((c) => c.verification.status === "verified");
+    expect(verified).toHaveLength(27);
+    expect(all.filter((c) => c.verification.status === "draft")).toHaveLength(33);
+  });
+
+  it("automated 用例必须是 verified", () => {
+    for (const c of all) if (c.automation.status === "automated") expect(c.verification.status, c.id).toBe("verified");
+  });
+
   it("ruleset_id 是已知 manifest", () => {
     const known = new Set([loadRuleset("rulesets/hangzhou").manifest.ruleset_id, loadRuleset("variants/xiaoshan").manifest.ruleset_id]);
     for (const c of all) expect(known.has(c.ruleset_id), c.id).toBe(true);

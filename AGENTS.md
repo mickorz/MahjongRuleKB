@@ -63,7 +63,9 @@ sources:
 1. **不要手改 `compiled/`**。改规则改 `rulesets/` 或 `variants/`，再跑编译。
 2. **`modified` 卡必须是完整有效规则**，不能只写差异。「杭麻」槽是对照信息，不是有效规则的一部分。
 3. **`base_rule_ref` 和 `compares_to` 永远指向原始杭州卡**，不随编译重写；只有 `depends_on` 和正文依赖引用会被重写。
-4. **杭州规则内容变更必须升 `rulesets/hangzhou/manifest.yaml` 的 `version` 和 `content_hash`**，否则编译报错。
+4. **杭州规则内容发生任何变更，必须同时**：提升 `rulesets/hangzhou/manifest.yaml` 的 `version`、更新 `content_hash`、检查 `variants/*/manifest.yaml` 的 `base.version`、完成派生规则集回归验收。
+
+   编译器只检查 `content_hash` 与当前内容是否一致，以及派生规则集的 `base.version` 是否匹配。**编译器不保存上一发布版本基线，无法自动检测「更新了 `content_hash` 但忘记提升 `version`」的情况。** `version` 递增属于发布流程约束，必须通过 PR 或发布评审人工确认。
 5. **未决项不准 AI 自行补全**。`variants/xiaoshan/unresolved.yaml` 里的 `release_blocker: true` 项必须由规则方裁决，改 `status: confirmed` 同时填非空 `resolution`。
 6. **`releasable: false` 的规则集不能对外声称已发布**。
 

@@ -13,8 +13,7 @@
   expected:
     blocked: false
   verification:
-    status: verified
-    by: 人工
+    status: draft
     source: HJ-R-CHI；来源见对应原始规则章节
   automation:
     status: none
@@ -33,8 +32,7 @@
   expected:
     blocked: true
   verification:
-    status: verified
-    by: 人工
+    status: draft
     source: HJ-R-CHI；来源见对应原始规则章节
   automation:
     status: none
@@ -53,8 +51,7 @@
   expected:
     blocked: false
   verification:
-    status: verified
-    by: 人工
+    status: draft
     source: XS-R-CHI；来源见对应原始规则章节
   automation:
     status: none
@@ -73,8 +70,7 @@
   expected:
     blocked: true
   verification:
-    status: verified
-    by: 人工
+    status: draft
     source: XS-R-CHI；来源见对应原始规则章节
   automation:
     status: none

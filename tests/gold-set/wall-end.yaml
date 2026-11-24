@@ -10,8 +10,7 @@
   expected:
     draw_allowed: true
   verification:
-    status: verified
-    by: 人工
+    status: draft
     source: HJ-T-WALL；来源见对应原始规则章节
   automation:
     status: none
@@ -28,8 +27,7 @@
     draw_allowed: false
     wall_end: true
   verification:
-    status: verified
-    by: 人工
+    status: draft
     source: HJ-T-WALL；来源见对应原始规则章节
   automation:
     status: none
@@ -45,8 +43,7 @@
   expected:
     draw_allowed: true
   verification:
-    status: verified
-    by: 人工
+    status: draft
     source: XS-T-WALL；来源见对应原始规则章节
   automation:
     status: none
@@ -63,8 +60,7 @@
     draw_allowed: false
     wall_end: true
   verification:
-    status: verified
-    by: 人工
+    status: draft
     source: XS-T-WALL；来源见对应原始规则章节
   automation:
     status: none
