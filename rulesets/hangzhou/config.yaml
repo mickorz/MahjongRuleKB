@@ -1,63 +1,63 @@
 # 杭州麻将好友房 —— 玩法参数
 # 每项有唯一 ID；来源指向原始 PRD 章节号
-- id: HJ-C-PLAYER-COUNT
+- id: HJ-C-RENSHU
   origin: base
   name: 人数
   value: 4
   source: 本期开发范围
-- id: HJ-C-ROUND-COUNT
+- id: HJ-C-JUSHU
   origin: base
   name: 局数
   value: 8
   source: "2.3.2.1"
-- id: HJ-C-BASE-SCORE
+- id: HJ-C-DIFEN
   origin: base
   name: 底分
   value: 1
   source: "2.3.2.10"
-- id: HJ-C-TILE-COUNT
+- id: HJ-C-PAISHU
   origin: base
   name: 牌数
   value: 136
   source: "2.1"
-- id: HJ-C-JOKER
+- id: HJ-C-CAISHEN
   origin: base
   name: 财神
   value: white_dragon
   source: "2.3.2.5"
-- id: HJ-C-SCORE-CAP
+- id: HJ-C-FENGDING
   origin: base
   name: 封顶
   value: none
   source: 本期开发范围
-- id: HJ-C-BANKER-MODE
+- id: HJ-C-LIANZHUANG-MOSHI
   origin: base
   name: 连庄模式
   value: du_san_lao_zhuang
   description: 笃三老庄，每局固定三牢
   source: "2.3.2.6"
-- id: HJ-C-BANKER-LEVEL
+- id: HJ-C-ZHUANGJIA-LAOSHU
   origin: base
   name: 庄家牢数
   value: 3
   source: "2.3.2.6"
-- id: HJ-C-BANKER-MULTIPLIER
+- id: HJ-C-ZHUANGJIA-BEILV
   origin: base
   name: 庄家倍率
   value: 8
   source: "2.3.2.6"
-- id: HJ-C-DISCARD-HU
+- id: HJ-C-ZHUANGXIAN-FANGCHONG
   origin: base
   name: 庄闲放铳
   value: enabled
   description: 三牢局中庄闲之间可点炮胡
   source: "2.3.2.7"
-- id: HJ-C-CONTRACT
+- id: HJ-C-SANTAN-CHENGBAO
   origin: base
   name: 三摊承包
   value: enabled
   source: "2.3.2.8"
-- id: HJ-C-PENG-COUNTS-TAN
+- id: HJ-C-PENG-SUAN-TAN
   origin: base
   name: 碰算摊
   value: disabled
@@ -67,7 +67,7 @@
   name: 吃碰禁手
   value: enabled
   source: "2.3.2.9"
-- id: HJ-C-SHI-FENG
+- id: HJ-C-SHIFENG
   origin: base
   name: 十风
   value: enabled
@@ -77,24 +77,24 @@
   name: 有财必拷响
   value: disabled
   source: 本期开发范围
-- id: HJ-C-QIANG-GANG-HU
+- id: HJ-C-QIANGGANGHU
   origin: base
   name: 抢杠胡
   value: enabled
   description: 仅三牢局内庄闲之间可抢杠胡
   source: "2.3.1.4"
-- id: HJ-C-WALL-KEEP
+- id: HJ-C-LIUJU-LIUDI-ZHANGSHU
   origin: base
   name: 流局留底张数
   value: 20
   source: 2.2 名词「流局」
-- id: HJ-C-KONG-MIN-WALL
+- id: HJ-C-GANG-ZUIDI-YUPAI
   origin: base
   name: 允许杠的最低余牌数
   value: 22
   description: 剩 21 张时禁止杠，允许最后一次常规摸牌
   source: "2.3.1.4"
-- id: HJ-C-DEAL-BATCH
+- id: HJ-C-FAIPAI-JIEZOU
   origin: base
   name: 发牌节奏
   value: 4x3+1+1

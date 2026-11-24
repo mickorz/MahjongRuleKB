@@ -40,7 +40,7 @@
   name: 萧山第 1、2 次吃不产生吃禁手
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-R-CHI
+    - XS-R-CHI-JINSHOU
   input:
     ruleset: xiaoshan-friends-4p
     chi_count: 2
@@ -52,14 +52,14 @@
     blocked: false
   verification:
     status: draft
-    source: XS-R-CHI；来源见对应原始规则章节
+    source: XS-R-CHI-JINSHOU；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-R-CHI-004
   name: 萧山第 3 次吃 2 条禁打 2 条
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-R-CHI
+    - XS-R-CHI-JINSHOU
   input:
     ruleset: xiaoshan-friends-4p
     chi_count: 3
@@ -71,6 +71,6 @@
     blocked: true
   verification:
     status: draft
-    source: XS-R-CHI；来源见对应原始规则章节
+    source: XS-R-CHI-JINSHOU；来源见对应原始规则章节
   automation:
     status: none

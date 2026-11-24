@@ -1,4 +1,4 @@
-- id: HJ-C-UI-TURN-TIMER
+- id: HJ-C-UI-DAOJISHI
   name: 出牌与响应倒计时
   scope: four_player_friend_room
   status: confirmed
@@ -7,7 +7,7 @@
   origin: base
   value: 10
   unit: 秒
-- id: HJ-C-UI-LONG-PRESS
+- id: HJ-C-UI-CHANGAN-YUZHI
   name: 长按查看牌桌阈值
   scope: four_player_friend_room
   status: confirmed
@@ -16,7 +16,7 @@
   origin: base
   value: 500
   unit: 毫秒
-- id: HJ-C-UI-OPENING-ANIM
+- id: HJ-C-UI-KAISHI-DONGHUA
   name: 对局开始动画总时长
   scope: four_player_friend_room
   status: confirmed
@@ -25,7 +25,7 @@
   origin: base
   value: 865
   unit: 毫秒
-- id: HJ-C-UI-SCORE-WAN
+- id: HJ-C-UI-JIFEN-WANWEI
   name: 积分换算万位阈值
   description: 达到六位换算成「万」保留 3 位小数
   scope: four_player_friend_room
@@ -34,7 +34,7 @@
   source: 3.2.3
   origin: base
   value: 100000
-- id: HJ-C-UI-NICKNAME-MAX
+- id: HJ-C-UI-NICHENG-ZISHU
   name: 昵称最大显示字符数
   scope: four_player_friend_room
   status: confirmed

@@ -60,9 +60,9 @@ describe("compiled/xiaoshan", () => {
 
   it("rule_aliases 记录 HJ→XS（modified）和 XS→HJ（inherited），无双向映射", () => {
     const a = c.index.rule_aliases;
-    expect(a["HJ-R-GANG-ADD"]).toBe("XS-R-HU-02");
-    expect(a["XS-R-BANK-01"]).toBe("HJ-R-DINGZHUANG");
-    expect(a["HJ-C-QIANG-GANG-HU"]).toBe("XS-C-QIANG-GANG-HU");
+    expect(a["HJ-R-JIAGANG"]).toBe("XS-R-HUPAI-02");
+    expect(a["XS-R-ZHUANGJIA-01"]).toBe("HJ-R-DINGZHUANG");
+    expect(a["HJ-C-QIANGGANGHU"]).toBe("XS-C-QIANGGANGHU");
     for (const [k, v] of Object.entries(a)) expect(a[v], `${k} ↔ ${v}`).not.toBe(k);
   });
 
@@ -101,17 +101,17 @@ describe("compiled/xiaoshan", () => {
   });
 
   it("配置合并：inherited 取杭州值并带入萧山 status；modified 用萧山值；未提及的继承", () => {
-    const joker = c.config.find((x) => x.id === "HJ-C-JOKER")!;
+    const joker = c.config.find((x) => x.id === "HJ-C-CAISHEN")!;
     expect(joker.value).toBe("white_dragon");
     expect(joker.status).toBe("disputed");
-    const qiang = c.config.find((x) => x.id === "XS-C-QIANG-GANG-HU")!;
+    const qiang = c.config.find((x) => x.id === "XS-C-QIANGGANGHU")!;
     expect(qiang.value).toBe("disabled");
-    expect(c.config.find((x) => x.id === "HJ-C-QIANG-GANG-HU")).toBeUndefined();
-    const cap = c.config.find((x) => x.id === "XS-C-CAP-LIMIT")!;
+    expect(c.config.find((x) => x.id === "HJ-C-QIANGGANGHU")).toBeUndefined();
+    const cap = c.config.find((x) => x.id === "XS-C-TUODI-EDU")!;
     expect(cap.value).toBe(200);
-    const baseScore = c.config.find((x) => x.id === "HJ-C-BASE-SCORE")!;
+    const baseScore = c.config.find((x) => x.id === "HJ-C-DIFEN")!;
     expect(baseScore.value).toBe(1);
-    expect(c.config.find((x) => x.id === "HJ-C-PLAYER-COUNT")).toBeDefined();
+    expect(c.config.find((x) => x.id === "HJ-C-RENSHU")).toBeDefined();
   });
 
   it("config.ui.yaml 纯继承，不含 XS 项", () => {
@@ -121,7 +121,7 @@ describe("compiled/xiaoshan", () => {
   it("manifest releasable=false，3 个阻塞项", () => {
     expect(c.manifest.releasable).toBe(false);
     expect(c.manifest.blockers).toHaveLength(3);
-    expect(c.manifest.compiled_from).toEqual({ ruleset_id: "hangzhou-friends-4p", version: "1.0.0" });
+    expect(c.manifest.compiled_from).toEqual({ ruleset_id: "hangzhou-friends-4p", version: "1.1.0" });
     expect(c.manifest.scope).toEqual({ player_count: 4, room_type: "friends" });
   });
 

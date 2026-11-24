@@ -2,7 +2,7 @@
   name: 杭州剩 21 张允许摸最后 1 张到 20
   ruleset_id: hangzhou-friends-4p
   rule_refs:
-    - HJ-T-WALL
+    - HJ-T-LIUJU-SHIJI
   input:
     ruleset: hangzhou-friends-4p
     remaining: 21
@@ -11,14 +11,14 @@
     draw_allowed: true
   verification:
     status: draft
-    source: HJ-T-WALL；来源见对应原始规则章节
+    source: HJ-T-LIUJU-SHIJI；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-T-WALL-002
   name: 杭州剩 20 张且响应处理完后下一次应摸牌时流局
   ruleset_id: hangzhou-friends-4p
   rule_refs:
-    - HJ-T-WALL
+    - HJ-T-LIUJU-SHIJI
   input:
     ruleset: hangzhou-friends-4p
     remaining: 20
@@ -28,14 +28,14 @@
     wall_end: true
   verification:
     status: draft
-    source: HJ-T-WALL；来源见对应原始规则章节
+    source: HJ-T-LIUJU-SHIJI；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-T-WALL-003
   name: 萧山余 1 张仍可摸
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-T-WALL
+    - XS-T-ZUIHOU-LIUJU
   input:
     ruleset: xiaoshan-friends-4p
     remaining: 1
@@ -44,14 +44,14 @@
     draw_allowed: true
   verification:
     status: draft
-    source: XS-T-WALL；来源见对应原始规则章节
+    source: XS-T-ZUIHOU-LIUJU；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-T-WALL-004
   name: 萧山余 0 张时流局
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-T-WALL
+    - XS-T-ZUIHOU-LIUJU
   input:
     ruleset: xiaoshan-friends-4p
     remaining: 0
@@ -61,6 +61,6 @@
     wall_end: true
   verification:
     status: draft
-    source: XS-T-WALL；来源见对应原始规则章节
+    source: XS-T-ZUIHOU-LIUJU；来源见对应原始规则章节
   automation:
     status: none

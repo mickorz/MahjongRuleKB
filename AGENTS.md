@@ -28,10 +28,20 @@ compiled/xiaoshan/
 ├── rule-index.json      # HJ↔XS 规则 ID 映射
 ├── compile-report.md    # 继承/替换/新增数量、阻塞项、映射表
 ├── unresolved.yaml      # 未裁决项
-└── rules/ timing/ state/ formulas/ tables/ settlement/ ui/   # 规则卡
+└── guize/ shixu/ zhuangtai/ gongshi/ biaoge/ jiesuan/ jiemian/   # 规则卡（拼音目录，类型字母见下表）
 ```
 
-**按 ID 查规则**：`grep -r "HJ-R-BANK-02" compiled/`
+| 目录 | 类型字母 | front matter 的 `type` |
+| --- | --- | --- |
+| `guize/` | R | judgment |
+| `shixu/` | T | timing |
+| `zhuangtai/` | N / M | counter / record |
+| `gongshi/` | F | formula |
+| `biaoge/` | K | lookup |
+| `jiesuan/` | P | settlement |
+| `jiemian/` | V / I / A | static-ui / interaction / animation |
+
+**按 ID 查规则**：`grep -r "HJ-R-ZHUANGJIA-02" compiled/`
 
 **查两玩法差异**：读 `compiled/xiaoshan/compile-report.md` 的「规则 ID 映射」。
 
@@ -43,13 +53,13 @@ compiled/xiaoshan/
 
 ```markdown
 ---
-id: HJ-R-BANK-02
+id: HJ-R-ZHUANGJIA-02
 origin: base            # base | variant
 type: judgment          # 11 类之一
 name: 连庄与换庄
 status: confirmed       # confirmed | inferred | unresolved | disputed
 release_blocker: false
-depends_on: [HJ-N-BANK]
+depends_on: [HJ-N-ZHUANGJIA-LAOSHU]
 sources:
   - source: sources/hangzhou/hangzhou-core-flow.md
     section: "2.3.2.4"

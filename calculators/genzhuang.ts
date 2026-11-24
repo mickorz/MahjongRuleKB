@@ -1,4 +1,4 @@
-// 跟庄赔付（XS-R-GZ、XS-F-GZ）
+// 跟庄赔付（XS-R-RUAN-GEN、XS-F-GENZHUANG-PEIFU）
 // 规则：跟庄成立后重掷两颗骰子，S = d1 + d2；该圈首出者 −3S，其余三家各 +S
 export interface GenZhuangInput {
   /** 跟庄成立后重掷的两颗骰子 */
@@ -20,7 +20,7 @@ export function calculateGenZhuangPayment(input: GenZhuangInput): Record<string,
   };
 }
 
-// 跟庄成立判定（XS-R-GZ）：第 1-3 张实际牌面相同，第 4 张相同或为本局实际财神
+// 跟庄成立判定（XS-R-RUAN-GEN）：第 1-3 张实际牌面相同，第 4 张相同或为本局实际财神
 export interface GenZhuangCheckInput {
   /** 四张弃牌的实际牌面，按行牌方向 */
   tiles: string[];

@@ -113,7 +113,7 @@ describe("拖底分配计算", () => {
 describe("跟庄计算", () => {
   for (const c of byFile("genzhuang.yaml")) {
     it(`${c.id} ${c.name}`, () => {
-      if (c.rule_refs.includes("XS-F-GZ") && (c.input as { dice?: number[] }).dice) {
+      if (c.rule_refs.includes("XS-F-GENZHUANG-PEIFU") && (c.input as { dice?: number[] }).dice) {
         const input = c.input as { dice: [number, number]; first_player: string; other_players: string[] };
         expect(calculateGenZhuangPayment(input)).toEqual((c.expected as { payment: Record<string, number> }).payment);
       } else {

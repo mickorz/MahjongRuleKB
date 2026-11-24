@@ -45,8 +45,8 @@ describe("variants/xiaoshan", () => {
     }
   });
 
-  it("manifest 锁定杭州 1.0.0", () => {
-    expect(rs.manifest.base).toEqual({ ruleset_id: "hangzhou-friends-4p", version: "1.0.0" });
+  it("manifest 锁定杭州 1.1.0", () => {
+    expect(rs.manifest.base).toEqual({ ruleset_id: "hangzhou-friends-4p", version: "1.1.0" });
   });
 
   it("inherited 配置项不填 value", () => {
@@ -56,7 +56,7 @@ describe("variants/xiaoshan", () => {
   });
 
   it("翻财神配置项标 disputed + release_blocker", () => {
-    const joker = rs.config.find((c) => c.id === "XS-C-JOKER")!;
+    const joker = rs.config.find((c) => c.id === "XS-C-CAISHEN")!;
     expect(joker.status).toBe("disputed");
     expect(joker.release_blocker).toBe(true);
   });
@@ -67,7 +67,7 @@ describe("variants/xiaoshan", () => {
   });
 
   it("K-FAN 和 K-GANG 标 unresolved + release_blocker", () => {
-    for (const id of ["XS-K-FAN", "XS-K-GANG"]) {
+    for (const id of ["XS-K-FANXING", "XS-K-LIANGANG"]) {
       const r = rs.rules.find((x) => x.meta.id === id)!;
       expect(r.meta.status).toBe("unresolved");
       expect(r.meta.release_blocker).toBe(true);

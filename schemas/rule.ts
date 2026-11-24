@@ -34,7 +34,7 @@ export const idPrefixToType: Record<string, RuleType> = {
 export const ruleStatuses = ["confirmed", "inferred", "unresolved", "disputed"] as const;
 export const changeTypes = ["inherited", "modified", "added"] as const;
 
-/** 规则 ID 格式：HJ-R-BANK-02 / XS-R-BANK-02；配置 ID：HJ-C-BASE-SCORE。depends_on 可引用配置项 */
+/** 规则 ID 格式：HJ-R-BANK-02 / XS-R-ZHUANGJIA-02；配置 ID：HJ-C-DIFEN。depends_on 可引用配置项 */
 export const ruleIdPattern = /^(HJ|XS)-[CRFKNMTPVIA]-[A-Z0-9]+(-[A-Z0-9]+)*$/;
 
 const sourceSchema = z.object({

@@ -2,8 +2,8 @@
   name: 杭州庄家三牢自摸平胡
   ruleset_id: hangzhou-friends-4p
   rule_refs:
-    - HJ-F-BANK
-    - HJ-P-ZIMO
+    - HJ-F-ZHUANGXIAN-BEILV
+    - HJ-P-ZIMO-RUZHANG
   input:
     ruleset_id: hangzhou-friends-4p
     winner_is_banker: true
@@ -20,7 +20,7 @@
   verification:
     status: verified
     by: 人工
-    source: HJ-F-BANK、HJ-P-ZIMO；来源见对应原始规则章节
+    source: HJ-F-ZHUANGXIAN-BEILV、HJ-P-ZIMO-RUZHANG；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -28,8 +28,8 @@
   name: 杭州闲家三牢自摸平胡
   ruleset_id: hangzhou-friends-4p
   rule_refs:
-    - HJ-F-BANK
-    - HJ-P-ZIMO
+    - HJ-F-ZHUANGXIAN-BEILV
+    - HJ-P-ZIMO-RUZHANG
   input:
     ruleset_id: hangzhou-friends-4p
     winner_is_banker: false
@@ -46,7 +46,7 @@
   verification:
     status: verified
     by: 人工
-    source: HJ-F-BANK、HJ-P-ZIMO；来源见对应原始规则章节
+    source: HJ-F-ZHUANGXIAN-BEILV、HJ-P-ZIMO-RUZHANG；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -54,8 +54,8 @@
   name: 杭州庄闲平胡点炮
   ruleset_id: hangzhou-friends-4p
   rule_refs:
-    - HJ-F-BANK
-    - HJ-P-DIANPAO
+    - HJ-F-ZHUANGXIAN-BEILV
+    - HJ-P-DIANPAO-RUZHANG
   input:
     ruleset_id: hangzhou-friends-4p
     winner_is_banker: true
@@ -72,7 +72,7 @@
   verification:
     status: verified
     by: 人工
-    source: HJ-F-BANK、HJ-P-DIANPAO；来源见对应原始规则章节
+    source: HJ-F-ZHUANGXIAN-BEILV、HJ-P-DIANPAO-RUZHANG；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -80,8 +80,8 @@
   name: 萧山二牢庄家自摸平胡（验证 2^牢数生效）
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-F-BANK
-    - XS-F-HU
+    - XS-F-ZHUANGXIAN-BEILV
+    - XS-F-HUPAI-GANGFEN
   input:
     ruleset_id: xiaoshan-friends-4p
     winner_is_banker: true
@@ -98,7 +98,7 @@
   verification:
     status: verified
     by: 人工
-    source: XS-F-BANK、XS-F-HU；来源见对应原始规则章节
+    source: XS-F-ZHUANGXIAN-BEILV、XS-F-HUPAI-GANGFEN；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -106,8 +106,8 @@
   name: 萧山四牢庄家自摸平胡（验证 2^牢数生效）
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-F-BANK
-    - XS-F-HU
+    - XS-F-ZHUANGXIAN-BEILV
+    - XS-F-HUPAI-GANGFEN
   input:
     ruleset_id: xiaoshan-friends-4p
     winner_is_banker: true
@@ -124,7 +124,7 @@
   verification:
     status: verified
     by: 人工
-    source: XS-F-BANK、XS-F-HU；来源见对应原始规则章节
+    source: XS-F-ZHUANGXIAN-BEILV、XS-F-HUPAI-GANGFEN；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -132,8 +132,8 @@
   name: 萧山五牢闲家自摸平胡
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-F-BANK
-    - XS-F-HU
+    - XS-F-ZHUANGXIAN-BEILV
+    - XS-F-HUPAI-GANGFEN
   input:
     ruleset_id: xiaoshan-friends-4p
     winner_is_banker: false
@@ -150,7 +150,7 @@
   verification:
     status: verified
     by: 人工
-    source: XS-F-BANK、XS-F-HU；来源见对应原始规则章节
+    source: XS-F-ZHUANGXIAN-BEILV、XS-F-HUPAI-GANGFEN；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts

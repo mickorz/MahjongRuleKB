@@ -1,10 +1,10 @@
 # 萧山麻将好友房 —— 配置差异
 # 只写与杭州不同的项。沿用项显式保留为 inherited 便于审计，未点名的走默认继承。
-- id: XS-C-JOKER
+- id: XS-C-CAISHEN
   origin: variant
   name: 财神
   change_type: inherited
-  base_rule_ref: HJ-C-JOKER
+  base_rule_ref: HJ-C-CAISHEN
   status: disputed
   release_blocker: true
   candidates:
@@ -12,33 +12,33 @@
     - flipped_joker
   description: 配置表写「沿用白板财神」，术语表写「本局实际财神由翻财神确定」，自相矛盾，待规则方裁决
   source: 1.1 配置表 / 术语
-- id: XS-C-BASE-SCORE
+- id: XS-C-DIFEN
   origin: variant
   name: 底分
   change_type: inherited
-  base_rule_ref: HJ-C-BASE-SCORE
+  base_rule_ref: HJ-C-DIFEN
   source: 1.1 配置表
-- id: XS-C-SCORE-CAP
+- id: XS-C-FENGDING
   origin: variant
   name: 封顶
   change_type: inherited
-  base_rule_ref: HJ-C-SCORE-CAP
+  base_rule_ref: HJ-C-FENGDING
   source: 1.1 配置表
-- id: XS-C-ROUND-COUNT
+- id: XS-C-JUSHU
   origin: variant
   name: 局数
   change_type: inherited
-  base_rule_ref: HJ-C-ROUND-COUNT
+  base_rule_ref: HJ-C-JUSHU
   description: 8 局。未拖底且未满 8 局则继续
   source: 1.1 配置表
-- id: XS-C-CONTRACT
+- id: XS-C-SANTAN-CHENGBAO
   origin: variant
   name: 三摊承包
   change_type: inherited
-  base_rule_ref: HJ-C-CONTRACT
+  base_rule_ref: HJ-C-SANTAN-CHENGBAO
   description: 原文未点名，按「未点名仍按杭麻」默认继承
   source: 推导
-- id: XS-C-GEN-ZHUANG
+- id: XS-C-GENZHUANG
   origin: variant
   name: 跟庄
   change_type: added
@@ -51,15 +51,15 @@
   change_type: added
   value: fixed_on
   source: 1.1 配置表
-- id: XS-C-QIANG-GANG-HU
+- id: XS-C-QIANGGANGHU
   origin: variant
   name: 抢杠胡
   change_type: modified
-  base_rule_ref: HJ-C-QIANG-GANG-HU
+  base_rule_ref: HJ-C-QIANGGANGHU
   value: disabled
   description: 补杠确认时无抢杠响应
   source: 1.1 配置表
-- id: XS-C-CAP-LIMIT
+- id: XS-C-TUODI-EDU
   origin: variant
   name: 拖底额度
   change_type: added

@@ -61,12 +61,12 @@
 
 | # | 场景 | 用户动作 | 期望结果 | 覆盖需求 |
 | --- | --- | --- | --- | --- |
-| S1 | 规则问答 | 「萧山和杭州的财神规则有什么区别？」 | AI 读取 `HJ-C-JOKER`、`XS-C-JOKER`、`HJ-R-CAISHEN`、`XS-M-PIAO` 与对应原始资料，指出 `XS-C-JOKER` 为 `disputed` + `release_blocker`，不擅自裁决 | FR-07、FR-03 |
+| S1 | 规则问答 | 「萧山和杭州的财神规则有什么区别？」 | AI 读取 `HJ-C-CAISHEN`、`XS-C-CAISHEN`、`HJ-R-CAISHEN`、`XS-M-PIAOCAI` 与对应原始资料，指出 `XS-C-CAISHEN` 为 `disputed` + `release_blocker`，不擅自裁决 | FR-07、FR-03 |
 | S2 | 引用修改底座 | 左栏点开 `HJ-R-LUNZHUANG`（轮庄），「引用到对话」，输入「轮庄条件补充流局时原庄连庄的例外」 | 产生一个提案：修改 `rulesets/hangzhou/rules/hj-r-lunzhuang.md` + 升 `manifest.version` 并更新 `content_hash`；展示 Diff、证据、门禁结果；点击应用后写入，`sources/` 不变 | FR-05、FR-08、FR-09、FR-10、FR-11、FR-12 |
 | S3 | 底座升版后的变种 | S2 应用后 | 提示「萧山仍锁定杭州 1.0.0，N 张卡受影响（其中 M 张 modified 需复核）」（数字由影响分析实时得出）；策划可发起「升级萧山锁定到新版本」提案，门禁对萧山重新编译通过后应用 | FR-17 |
 | S4 | 新建地方变种 | 「新增桐庐麻将，基础规则参考杭州」 | 创建 `variants/tonglu/`（manifest、`id_prefix: TL`、空 config、空 unresolved），按对话逐条生成 added / modified 卡；只写差异；编译产物 `releasable` 状态正确 | FR-15、FR-16 |
 | S5 | 修改继承规则 | 「萧山沿用杭州杠上开花（`HJ-K-GANGKAI`），但增加一项限制」 | AI 生成 `origin: variant` + `change_type: modified` + `base_rule_ref: HJ-K-GANGKAI` 的**完整有效卡**，含「杭麻」对照槽，而非一句差异说明 | FR-16、I-6 |
-| S6 | 裁决未决项 | 策划口头裁决「翻财神由翻财神决定」 | 提案：`XS-U-001` 填 `resolution`、`status: confirmed`；同步更新 `XS-C-JOKER`；门禁通过后萧山 blocker 减一 | FR-18 |
+| S6 | 裁决未决项 | 策划口头裁决「翻财神由翻财神决定」 | 提案：`XS-U-001` 填 `resolution`、`status: confirmed`；同步更新 `XS-C-CAISHEN`；门禁通过后萧山 blocker 减一 | FR-18 |
 | S7 | 资料矛盾 | 萧山配置表与术语表矛盾 | AI 不得默认任一方；产生 `disputed` + `candidates`，要求策划确认 | I-7 |
 
 ## 四、范围
@@ -424,7 +424,7 @@ flowchart TD
 | AC-1 | `git submodule status` 显示 `thirdparties/PiBot` 指向 fork 的固定 commit；`pnpm dev` 在 Windows 上启动桌面应用并完成一次对话 | Phase 0 |
 | AC-2 | KB 新增一个 `variants/<x>/`（2～4 位大写字母前缀，夹具覆盖 2 位与 4 位）时，不改任何 Schema 代码即可通过校验与编译 | Phase A |
 | AC-3 | `npm run sync:check` 通过；KB 纯度测试通过（同步目录不引用 `node:` 模块）；`@pibot/mahjong-kb` 在 fork 内 `pnpm typecheck`、`pnpm lint` 通过 | Phase A |
-| AC-4 | 策划通过聊天问「萧山和杭州财神规则的区别」，AI 回答引用正确的规则 ID，并指出 `XS-C-JOKER` 为 `disputed`，不擅自裁决 | Phase B |
+| AC-4 | 策划通过聊天问「萧山和杭州财神规则的区别」，AI 回答引用正确的规则 ID，并指出 `XS-C-CAISHEN` 为 `disputed`，不擅自裁决 | Phase B |
 | AC-5 | 「引用到对话」后 AI 能读取该卡全文、版本与来源 | Phase B |
 | AC-6 | 麻将 Bot 实际运行时下发给模型的工具集合等于白名单，工具发现加载不到其他分组；对话中要求 AI 直接改文件会被拒绝并转为提案 | Phase B、C |
 | AC-7 | 通过聊天修改一张杭州规则卡：提案含卡文件与 manifest 升版；Diff 与门禁在 UI 可见；应用后 `sources/` 无变化，`npm run compile` 在 KB 目录通过 | Phase C |

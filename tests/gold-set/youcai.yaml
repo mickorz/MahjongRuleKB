@@ -2,7 +2,7 @@
   name: 有财神且只有平胡 1 倍，庄闲倍率 8 倍，仍拦截
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-R-HU-03
+    - XS-R-HUPAI-03
   input:
     has_joker: true
     fan_multiplier: 1
@@ -11,14 +11,14 @@
     allowed: false
   verification:
     status: draft
-    source: XS-R-HU-03；来源见对应原始规则章节
+    source: XS-R-HUPAI-03；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-R-HU-03-002
   name: 有财神且番型 2 倍，允许
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-R-HU-03
+    - XS-R-HUPAI-03
   input:
     has_joker: true
     fan_multiplier: 2
@@ -27,14 +27,14 @@
     allowed: true
   verification:
     status: draft
-    source: XS-R-HU-03；来源见对应原始规则章节
+    source: XS-R-HUPAI-03；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-R-HU-03-003
   name: 无财神时按本次合法番型判定，不套 2 倍门槛
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-R-HU-03
+    - XS-R-HUPAI-03
   input:
     has_joker: false
     fan_multiplier: 1
@@ -43,6 +43,6 @@
     allowed: true
   verification:
     status: draft
-    source: XS-R-HU-03；来源见对应原始规则章节
+    source: XS-R-HUPAI-03；来源见对应原始规则章节
   automation:
     status: none

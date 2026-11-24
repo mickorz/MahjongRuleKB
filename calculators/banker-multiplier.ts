@@ -1,4 +1,4 @@
-// 庄闲倍率与基础算分（HJ-F-BANK、HJ-F-ORIGINAL、XS-F-BANK、XS-F-HU）
+// 庄闲倍率与基础算分（HJ-F-ZHUANGXIAN-BEILV、HJ-F-YUANYING-PEIFEN、XS-F-ZHUANGXIAN-BEILV、XS-F-HUPAI-GANGFEN）
 export type RulesetId = "hangzhou-friends-4p" | "xiaoshan-friends-4p";
 
 export interface BankerMultiplierInput {
@@ -9,7 +9,7 @@ export interface BankerMultiplierInput {
   banker_level?: number;
 }
 
-/** 单笔庄闲倍率：庄闲之间按倍率，闲闲之间为 1（HJ-F-BANK、XS-F-BANK） */
+/** 单笔庄闲倍率：庄闲之间按倍率，闲闲之间为 1（HJ-F-ZHUANGXIAN-BEILV、XS-F-ZHUANGXIAN-BEILV） */
 export function calculateBankerMultiplier(input: BankerMultiplierInput): number {
   if (!input.winner_is_banker && !input.payer_is_banker) return 1;
   // 杭州笃三老庄：庄家倍率固定 8
@@ -38,7 +38,7 @@ export interface SettleOutput {
 }
 
 /**
- * 无承包时的基础结算（HJ-P-ZIMO、HJ-P-DIANPAO、XS-F-HU）
+ * 无承包时的基础结算（HJ-P-ZIMO-RUZHANG、HJ-P-DIANPAO-RUZHANG、XS-F-HUPAI-GANGFEN）
  * 自摸：三笔原应赔分各自按庄闲倍率计算，赢家收合计
  * 点炮：只有放铳者付一笔
  */

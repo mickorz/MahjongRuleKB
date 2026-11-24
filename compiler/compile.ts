@@ -43,7 +43,7 @@ interface CompileResult {
 /** 按 ID 前缀段取目录 */
 function dirFor(id: string): string {
   const seg = id.split("-")[1];
-  return { R: "rules", T: "timing", N: "state", M: "state", F: "formulas", K: "tables", P: "settlement", V: "ui", I: "ui", A: "ui" }[seg] ?? "rules";
+  return { R: "guize", T: "shixu", N: "zhuangtai", M: "zhuangtai", F: "gongshi", K: "biaoge", P: "jiesuan", V: "jiemian", I: "jiemian", A: "jiemian" }[seg] ?? "guize";
 }
 
 /** 重写正文里的依赖引用：`HJ-xxx` → 按 aliases 替换；base_rule_ref / compares_to 不在正文里，不处理 */
@@ -237,7 +237,7 @@ export function compileVariant(base: LoadedRuleset, variant: LoadedRuleset): Com
 function writeOutput(dir: string, result: CompileResult, unresolved: import("../schemas/unresolved.ts").UnresolvedEntry[]) {
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });
-  const dirs = new Set<string>(["rules", "timing", "state", "formulas", "tables", "settlement", "ui"]);
+  const dirs = new Set<string>(["guize", "shixu", "zhuangtai", "gongshi", "biaoge", "jiesuan", "jiemian"]);
   for (const d of dirs) mkdirSync(join(dir, d), { recursive: true });
 
   for (const r of result.rules) {

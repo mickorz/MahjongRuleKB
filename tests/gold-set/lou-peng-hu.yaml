@@ -2,8 +2,8 @@
   name: 放过二筒后碰五万，整座清除后可重新判定二筒
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-M-LOU-PENG
-    - XS-M-LOU-HU
+    - XS-M-LOUPENG
+    - XS-M-LOUHU
   input:
     recorded:
       - 二筒
@@ -13,15 +13,15 @@
     can_peng: true
   verification:
     status: draft
-    source: XS-M-LOU-PENG、XS-M-LOU-HU；来源见对应原始规则章节
+    source: XS-M-LOUPENG、XS-M-LOUHU；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-M-LOU-002
   name: 放过二筒后首摸前再遇二筒，不能碰
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-M-LOU-PENG
-    - XS-M-LOU-HU
+    - XS-M-LOUPENG
+    - XS-M-LOUHU
   input:
     recorded:
       - 二筒
@@ -31,15 +31,15 @@
     can_peng: false
   verification:
     status: draft
-    source: XS-M-LOU-PENG、XS-M-LOU-HU；来源见对应原始规则章节
+    source: XS-M-LOUPENG、XS-M-LOUHU；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-M-LOU-003
   name: 放过 B 的二筒后 C 再打二筒，不能点炮胡
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-M-LOU-PENG
-    - XS-M-LOU-HU
+    - XS-M-LOUPENG
+    - XS-M-LOUHU
   input:
     win_lou:
       - 二筒
@@ -49,15 +49,15 @@
     can_hu: false
   verification:
     status: draft
-    source: XS-M-LOU-PENG、XS-M-LOU-HU；来源见对应原始规则章节
+    source: XS-M-LOUPENG、XS-M-LOUHU；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-M-LOU-004
   name: 碰五万接回行牌后再遇二筒，重新判定
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-M-LOU-PENG
-    - XS-M-LOU-HU
+    - XS-M-LOUPENG
+    - XS-M-LOUHU
   input:
     win_lou:
       - 二筒
@@ -67,6 +67,6 @@
     can_hu: true
   verification:
     status: draft
-    source: XS-M-LOU-PENG、XS-M-LOU-HU；来源见对应原始规则章节
+    source: XS-M-LOUPENG、XS-M-LOUHU；来源见对应原始规则章节
   automation:
     status: none

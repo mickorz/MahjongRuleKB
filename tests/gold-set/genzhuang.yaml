@@ -2,7 +2,7 @@
   name: 四张同牌面跟庄成立
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-R-GZ
+    - XS-R-RUAN-GEN
   input:
     tiles:
       - 二筒
@@ -23,7 +23,7 @@
   verification:
     status: verified
     by: 人工
-    source: XS-R-GZ；来源见对应原始规则章节
+    source: XS-R-RUAN-GEN；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -31,7 +31,7 @@
   name: 第 4 张是本局实际财神也成立
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-R-GZ
+    - XS-R-RUAN-GEN
   input:
     tiles:
       - 二筒
@@ -44,7 +44,7 @@
   verification:
     status: verified
     by: 人工
-    source: XS-R-GZ；来源见对应原始规则章节
+    source: XS-R-RUAN-GEN；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -52,7 +52,7 @@
   name: 第 2 张不同，跟庄不成立
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-R-GZ
+    - XS-R-RUAN-GEN
   input:
     tiles:
       - 二筒
@@ -65,7 +65,7 @@
   verification:
     status: verified
     by: 人工
-    source: XS-R-GZ；来源见对应原始规则章节
+    source: XS-R-RUAN-GEN；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -73,7 +73,7 @@
   name: 前三张不动用财神做替身
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-R-GZ
+    - XS-R-RUAN-GEN
   input:
     tiles:
       - 二筒
@@ -86,7 +86,7 @@
   verification:
     status: verified
     by: 人工
-    source: XS-R-GZ；来源见对应原始规则章节
+    source: XS-R-RUAN-GEN；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -94,7 +94,7 @@
   name: 骰子 5 和 3，S=8，首出 −24 其余各 +8
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-F-GZ
+    - XS-F-GENZHUANG-PEIFU
   input:
     dice:
       - 5
@@ -113,7 +113,7 @@
   verification:
     status: verified
     by: 人工
-    source: XS-F-GZ；来源见对应原始规则章节
+    source: XS-F-GENZHUANG-PEIFU；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -121,7 +121,7 @@
   name: 骰子 6 和 6，S=12，首出 −36
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-F-GZ
+    - XS-F-GENZHUANG-PEIFU
   input:
     dice:
       - 6
@@ -140,7 +140,7 @@
   verification:
     status: verified
     by: 人工
-    source: XS-F-GZ；来源见对应原始规则章节
+    source: XS-F-GENZHUANG-PEIFU；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts

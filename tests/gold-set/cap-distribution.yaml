@@ -2,8 +2,8 @@
   name: 局前 −214 可赔 0，不分配
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-P-CAP
-    - XS-R-CAP
+    - XS-P-TUODI-KEPEIFEN
+    - XS-R-TUODI
   input:
     starting_net: -214
     floor: -200
@@ -20,7 +20,7 @@
   verification:
     status: verified
     by: 人工
-    source: XS-P-CAP、XS-R-CAP；来源见对应原始规则章节
+    source: XS-P-TUODI-KEPEIFEN、XS-R-TUODI；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -28,7 +28,7 @@
   name: 局前 −190 跟庄应付 24，可赔 10 按 4/3/3 分配
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-P-CAP
+    - XS-P-TUODI-KEPEIFEN
   input:
     starting_net: -190
     floor: -200
@@ -54,7 +54,7 @@
   verification:
     status: verified
     by: 人工
-    source: XS-P-CAP；来源见对应原始规则章节
+    source: XS-P-TUODI-KEPEIFEN；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -62,7 +62,7 @@
   name: 局前 −190，先跟庄 24 再点炮 30，10 分先给跟庄
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-P-CAP
+    - XS-P-TUODI-KEPEIFEN
   input:
     starting_net: -190
     floor: -200
@@ -92,7 +92,7 @@
   verification:
     status: verified
     by: 人工
-    source: XS-P-CAP；来源见对应原始规则章节
+    source: XS-P-TUODI-KEPEIFEN；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -100,7 +100,7 @@
   name: 局前 −194 可赔 6，一笔由三家收按 2/2/2
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-P-CAP
+    - XS-P-TUODI-KEPEIFEN
   input:
     starting_net: -194
     floor: -200
@@ -126,7 +126,7 @@
   verification:
     status: verified
     by: 人工
-    source: XS-P-CAP；来源见对应原始规则章节
+    source: XS-P-TUODI-KEPEIFEN；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -134,7 +134,7 @@
   name: 局前 −195 可赔 5，按 2/2/1 分配余数从扣分座位起
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-P-CAP
+    - XS-P-TUODI-KEPEIFEN
   input:
     starting_net: -195
     floor: -200
@@ -160,7 +160,7 @@
   verification:
     status: verified
     by: 人工
-    source: XS-P-CAP；来源见对应原始规则章节
+    source: XS-P-TUODI-KEPEIFEN；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -168,7 +168,7 @@
   name: 局前 −180 可赔 20，单笔 15 全额分配
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-P-CAP
+    - XS-P-TUODI-KEPEIFEN
   input:
     starting_net: -180
     floor: -200
@@ -186,7 +186,7 @@
   verification:
     status: verified
     by: 人工
-    source: XS-P-CAP；来源见对应原始规则章节
+    source: XS-P-TUODI-KEPEIFEN；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts

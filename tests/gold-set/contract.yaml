@@ -2,7 +2,7 @@
   name: 庄家平胡自摸无承包
   ruleset_id: hangzhou-friends-4p
   rule_refs:
-    - HJ-P-CONTRACT
+    - HJ-P-CHENGBAO-RUZHANG
   input:
     original_payments:
       B: 8
@@ -21,7 +21,7 @@
   verification:
     status: verified
     by: 人工
-    source: HJ-P-CONTRACT；来源见对应原始规则章节
+    source: HJ-P-CHENGBAO-RUZHANG；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -29,7 +29,7 @@
   name: 庄家平胡自摸，庄家对闲家 B 承包成立
   ruleset_id: hangzhou-friends-4p
   rule_refs:
-    - HJ-P-CONTRACT
+    - HJ-P-CHENGBAO-RUZHANG
   input:
     original_payments:
       B: 8
@@ -51,7 +51,7 @@
   verification:
     status: verified
     by: 人工
-    source: HJ-P-CONTRACT；来源见对应原始规则章节
+    source: HJ-P-CHENGBAO-RUZHANG；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -59,7 +59,7 @@
   name: 闲家平胡自摸，庄家 A 对闲家 B 承包成立（反承包）
   ruleset_id: hangzhou-friends-4p
   rule_refs:
-    - HJ-P-CONTRACT
+    - HJ-P-CHENGBAO-RUZHANG
   input:
     original_payments:
       A: 8
@@ -81,7 +81,7 @@
   verification:
     status: verified
     by: 人工
-    source: HJ-P-CONTRACT；来源见对应原始规则章节
+    source: HJ-P-CHENGBAO-RUZHANG；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -89,7 +89,7 @@
   name: 链式承包，A 自摸时 B 付 S、C 付 2S
   ruleset_id: hangzhou-friends-4p
   rule_refs:
-    - HJ-P-CONTRACT
+    - HJ-P-CHENGBAO-RUZHANG
   input:
     original_payments:
       B: 8
@@ -114,7 +114,7 @@
   verification:
     status: verified
     by: 人工
-    source: HJ-P-CONTRACT；来源见对应原始规则章节
+    source: HJ-P-CHENGBAO-RUZHANG；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -122,8 +122,8 @@
   name: 点炮无承包，只有放铳者付
   ruleset_id: hangzhou-friends-4p
   rule_refs:
-    - HJ-P-CONTRACT
-    - HJ-P-DIANPAO
+    - HJ-P-CHENGBAO-RUZHANG
+    - HJ-P-DIANPAO-RUZHANG
   input:
     original_payments:
       A: 8
@@ -144,7 +144,7 @@
   verification:
     status: verified
     by: 人工
-    source: HJ-P-CONTRACT、HJ-P-DIANPAO；来源见对应原始规则章节
+    source: HJ-P-CHENGBAO-RUZHANG、HJ-P-DIANPAO-RUZHANG；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -152,8 +152,8 @@
   name: 点炮且放铳者是赢家的承包对方（1 倍改写）
   ruleset_id: hangzhou-friends-4p
   rule_refs:
-    - HJ-P-CONTRACT
-    - HJ-P-DIANPAO
+    - HJ-P-CHENGBAO-RUZHANG
+    - HJ-P-DIANPAO-RUZHANG
   input:
     original_payments:
       A: 8
@@ -176,7 +176,7 @@
   verification:
     status: verified
     by: 人工
-    source: HJ-P-CONTRACT、HJ-P-DIANPAO；来源见对应原始规则章节
+    source: HJ-P-CHENGBAO-RUZHANG、HJ-P-DIANPAO-RUZHANG；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -184,8 +184,8 @@
   name: 点炮且放铳者是赢家的倒承包对方（2 倍）
   ruleset_id: hangzhou-friends-4p
   rule_refs:
-    - HJ-P-CONTRACT
-    - HJ-P-DIANPAO
+    - HJ-P-CHENGBAO-RUZHANG
+    - HJ-P-DIANPAO-RUZHANG
   input:
     original_payments:
       A: 8
@@ -208,7 +208,7 @@
   verification:
     status: verified
     by: 人工
-    source: HJ-P-CONTRACT、HJ-P-DIANPAO；来源见对应原始规则章节
+    source: HJ-P-CHENGBAO-RUZHANG、HJ-P-DIANPAO-RUZHANG；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -216,8 +216,8 @@
   name: 庄家平胡抢杠无承包
   ruleset_id: hangzhou-friends-4p
   rule_refs:
-    - HJ-P-CONTRACT
-    - HJ-P-QIANG
+    - HJ-P-CHENGBAO-RUZHANG
+    - HJ-P-QIANGGANG-RUZHANG
   input:
     original_payments:
       B: 8
@@ -239,7 +239,7 @@
   verification:
     status: verified
     by: 人工
-    source: HJ-P-CONTRACT、HJ-P-QIANG；来源见对应原始规则章节
+    source: HJ-P-CHENGBAO-RUZHANG、HJ-P-QIANGGANG-RUZHANG；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
@@ -247,8 +247,8 @@
   name: 庄家平胡抢杠，加杠闲家同时承担倒承包
   ruleset_id: hangzhou-friends-4p
   rule_refs:
-    - HJ-P-CONTRACT
-    - HJ-P-QIANG
+    - HJ-P-CHENGBAO-RUZHANG
+    - HJ-P-QIANGGANG-RUZHANG
   input:
     original_payments:
       B: 8
@@ -273,7 +273,7 @@
   verification:
     status: verified
     by: 人工
-    source: HJ-P-CONTRACT、HJ-P-QIANG；来源见对应原始规则章节
+    source: HJ-P-CHENGBAO-RUZHANG、HJ-P-QIANGGANG-RUZHANG；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts

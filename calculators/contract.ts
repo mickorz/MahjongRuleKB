@@ -1,4 +1,4 @@
-// 三摊承包入账（HJ-P-CONTRACT、XS-P-CAP 之外的部分）
+// 三摊承包入账（HJ-P-CHENGBAO-RUZHANG、XS-P-TUODI-KEPEIFEN 之外的部分）
 // 承包关系：A 吃了 B 三摊 → 记 A→B（A 是取牌方，B 是供牌方）
 export type RulesetId = "hangzhou-friends-4p" | "xiaoshan-friends-4p";
 
@@ -26,7 +26,7 @@ function sum(values: number[]): number {
 }
 
 /**
- * 承包入账（HJ-P-CONTRACT）
+ * 承包入账（HJ-P-CHENGBAO-RUZHANG）
  * - 自摸：承包方付 S，反承包付 2S，链式叠加
  * - 点炮：只有放铳者付款；放铳者是赢家的承包对方按 1 倍 P，倒承包对方按 2 倍 P
  * - 抢杠：加杠者付 R，赢家参与的每项承包按 R 的 1 倍、倒承包按 2 倍叠加

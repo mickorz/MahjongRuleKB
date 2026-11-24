@@ -1,4 +1,4 @@
-- id: HJ-C-JOKER
+- id: HJ-C-CAISHEN
   name: 财神
   scope: four_player_friend_room
   status: disputed
@@ -8,7 +8,7 @@
   value: white_dragon
   description: 配置表写「沿用白板财神」，术语表写「本局实际财神由翻财神确定」，自相矛盾，待规则方裁决
   compiled_origin: base
-- id: HJ-C-BASE-SCORE
+- id: HJ-C-DIFEN
   name: 底分
   scope: four_player_friend_room
   status: confirmed
@@ -17,7 +17,7 @@
   origin: base
   value: 1
   compiled_origin: base
-- id: HJ-C-SCORE-CAP
+- id: HJ-C-FENGDING
   name: 封顶
   scope: four_player_friend_room
   status: confirmed
@@ -26,7 +26,7 @@
   origin: base
   value: none
   compiled_origin: base
-- id: HJ-C-ROUND-COUNT
+- id: HJ-C-JUSHU
   name: 局数
   scope: four_player_friend_room
   status: confirmed
@@ -36,7 +36,7 @@
   value: 8
   description: 8 局。未拖底且未满 8 局则继续
   compiled_origin: base
-- id: HJ-C-CONTRACT
+- id: HJ-C-SANTAN-CHENGBAO
   name: 三摊承包
   scope: four_player_friend_room
   status: confirmed
@@ -46,7 +46,7 @@
   value: enabled
   description: 原文未点名，按「未点名仍按杭麻」默认继承
   compiled_origin: base
-- id: XS-C-GEN-ZHUANG
+- id: XS-C-GENZHUANG
   name: 跟庄
   description: 软跟，固定开启
   scope: four_player_friend_room
@@ -67,7 +67,7 @@
   change_type: added
   value: fixed_on
   compiled_origin: variant
-- id: XS-C-QIANG-GANG-HU
+- id: XS-C-QIANGGANGHU
   name: 抢杠胡
   description: 补杠确认时无抢杠响应
   scope: four_player_friend_room
@@ -77,7 +77,7 @@
   origin: base
   value: disabled
   compiled_origin: base
-- id: XS-C-CAP-LIMIT
+- id: XS-C-TUODI-EDU
   name: 拖底额度
   description: 任一玩家整场累计净分 ≤ −200 时结束本场，该玩家最终净分按 −200 计
   scope: four_player_friend_room
@@ -88,7 +88,7 @@
   change_type: added
   value: 200
   compiled_origin: variant
-- id: HJ-C-PLAYER-COUNT
+- id: HJ-C-RENSHU
   name: 人数
   scope: four_player_friend_room
   status: confirmed
@@ -97,7 +97,7 @@
   origin: base
   value: 4
   compiled_origin: base
-- id: HJ-C-TILE-COUNT
+- id: HJ-C-PAISHU
   name: 牌数
   scope: four_player_friend_room
   status: confirmed
@@ -106,7 +106,7 @@
   origin: base
   value: 136
   compiled_origin: base
-- id: HJ-C-BANKER-MODE
+- id: HJ-C-LIANZHUANG-MOSHI
   name: 连庄模式
   description: 笃三老庄，每局固定三牢
   scope: four_player_friend_room
@@ -116,7 +116,7 @@
   origin: base
   value: du_san_lao_zhuang
   compiled_origin: base
-- id: HJ-C-BANKER-LEVEL
+- id: HJ-C-ZHUANGJIA-LAOSHU
   name: 庄家牢数
   scope: four_player_friend_room
   status: confirmed
@@ -125,7 +125,7 @@
   origin: base
   value: 3
   compiled_origin: base
-- id: HJ-C-BANKER-MULTIPLIER
+- id: HJ-C-ZHUANGJIA-BEILV
   name: 庄家倍率
   scope: four_player_friend_room
   status: confirmed
@@ -134,7 +134,7 @@
   origin: base
   value: 8
   compiled_origin: base
-- id: HJ-C-DISCARD-HU
+- id: HJ-C-ZHUANGXIAN-FANGCHONG
   name: 庄闲放铳
   description: 三牢局中庄闲之间可点炮胡
   scope: four_player_friend_room
@@ -144,7 +144,7 @@
   origin: base
   value: enabled
   compiled_origin: base
-- id: HJ-C-PENG-COUNTS-TAN
+- id: HJ-C-PENG-SUAN-TAN
   name: 碰算摊
   scope: four_player_friend_room
   status: confirmed
@@ -162,7 +162,7 @@
   origin: base
   value: enabled
   compiled_origin: base
-- id: HJ-C-SHI-FENG
+- id: HJ-C-SHIFENG
   name: 十风
   scope: four_player_friend_room
   status: confirmed
@@ -180,7 +180,7 @@
   origin: base
   value: disabled
   compiled_origin: base
-- id: HJ-C-WALL-KEEP
+- id: HJ-C-LIUJU-LIUDI-ZHANGSHU
   name: 流局留底张数
   scope: four_player_friend_room
   status: confirmed
@@ -189,7 +189,7 @@
   origin: base
   value: 20
   compiled_origin: base
-- id: HJ-C-KONG-MIN-WALL
+- id: HJ-C-GANG-ZUIDI-YUPAI
   name: 允许杠的最低余牌数
   description: 剩 21 张时禁止杠，允许最后一次常规摸牌
   scope: four_player_friend_room
@@ -199,7 +199,7 @@
   origin: base
   value: 22
   compiled_origin: base
-- id: HJ-C-DEAL-BATCH
+- id: HJ-C-FAIPAI-JIEZOU
   name: 发牌节奏
   description: 以庄家为起点逆时针，每人每次 4 张共 3 轮，再每人 1 张，庄家额外 1 张
   scope: four_player_friend_room

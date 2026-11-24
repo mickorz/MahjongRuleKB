@@ -98,7 +98,7 @@ describe("发布门槛", () => {
   it("Schema 拒绝 status confirmed 但 resolution 为空的未决项", () => {
     const result = unresolvedEntrySchema.safeParse({
       id: "XS-U-999",
-      card_ref: "XS-K-FAN",
+      card_ref: "XS-K-FANXING",
       description: "测试",
       status: "confirmed",
       release_blocker: true,

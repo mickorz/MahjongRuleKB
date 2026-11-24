@@ -2,7 +2,7 @@
   name: 杭州受限时可以暗杠
   ruleset_id: hangzhou-friends-4p
   rule_refs:
-    - HJ-R-PIAO
+    - HJ-R-PIAOCAI-XIANZHI
   input:
     restricted: true
     operation: an_gang
@@ -10,14 +10,14 @@
     allowed: true
   verification:
     status: draft
-    source: HJ-R-PIAO；来源见对应原始规则章节
+    source: HJ-R-PIAOCAI-XIANZHI；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-R-PIAO-002
   name: 杭州受限时禁止加杠
   ruleset_id: hangzhou-friends-4p
   rule_refs:
-    - HJ-R-PIAO
+    - HJ-R-PIAOCAI-XIANZHI
   input:
     restricted: true
     operation: jia_gang
@@ -25,14 +25,14 @@
     allowed: false
   verification:
     status: draft
-    source: HJ-R-PIAO；来源见对应原始规则章节
+    source: HJ-R-PIAOCAI-XIANZHI；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-R-PIAO-003
   name: 萧山受限时可以补杠
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-R-PIAO
+    - XS-R-PIAOCAI-XIANZHI
   input:
     restricted: true
     operation: jia_gang
@@ -40,14 +40,14 @@
     allowed: true
   verification:
     status: draft
-    source: XS-R-PIAO；来源见对应原始规则章节
+    source: XS-R-PIAOCAI-XIANZHI；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-R-PIAO-004
   name: 萧山受限时禁止直杠
   ruleset_id: xiaoshan-friends-4p
   rule_refs:
-    - XS-R-PIAO
+    - XS-R-PIAOCAI-XIANZHI
   input:
     restricted: true
     operation: ming_gang
@@ -55,6 +55,6 @@
     allowed: false
   verification:
     status: draft
-    source: XS-R-PIAO；来源见对应原始规则章节
+    source: XS-R-PIAOCAI-XIANZHI；来源见对应原始规则章节
   automation:
     status: none
