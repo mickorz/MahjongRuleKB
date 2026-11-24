@@ -17,3 +17,7 @@ node_modules/
 
 # 测试缓存
 node_modules/.vite/
+
+# dev-examples 运行产物（日志、PiBot 开发数据目录）
+dev-examples/*/data/
+dev-examples/*/*.log
