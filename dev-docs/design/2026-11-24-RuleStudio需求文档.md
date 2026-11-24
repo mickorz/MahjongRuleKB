@@ -1,7 +1,7 @@
 # Mahjong Rule Studio 需求文档
 
 > 依据：`dev-docs/design/新增规则聊天窗口.md`（设计讨论稿，含两版架构：自建 React + Hono 方案、PiBot 二开方案）、`dev-docs/planning/2025-11-24-执行计划.md`（v3.2 架构冻结版）、仓库实测（`git log`、`schemas/`、`compiler/`、`dev-docs/progress/执行进度.md`）、PiBot 源码核验（上游 `main` commit `152425f`：`AGENTS.md`、`NOTICE`、`.nvmrc`、`packages/brain/src/core/capability.ts`、`packages/brain-app/src/index.ts`、`packages/protocol/src/aggregate/api.ts`、`tools.ts`、`packages/plugins/src/brain/knowledge/tools.ts`、`apps/desktop/src/renderer/features/side-pane/SidePane.tsx`）
-> 评审依据：`dev-docs/design/2026-11-24-RuleStudio执行计划评审意见.md`（主要针对执行计划；需求文档同步修订受影响处）
+> 评审依据：`dev-docs/design/2026-11-24-RuleStudio执行计划评审意见.md`、`dev-docs/design/2026-11-24-RuleStudio执行计划评审意见-第2轮.md`（主要针对执行计划；需求文档同步修订受影响处）
 > 日期：2026-11-24
 > 状态：初稿，待评审
 > 已定决策：第一阶段本地单人使用；以 PiBot 为开发基座，作为 submodule 放在 `thirdparties/PiBot`，后续开发基于它修改
@@ -14,6 +14,7 @@
 | v1.1 | 2026-11-24 | 合并 `main` 后更新第一节第 9 行的现状描述 |
 | v1.2 | 2026-11-24 | 按评审意见修订（`dev-docs/design/2026-11-24-RuleStudio执行计划评审意见.md`）：第一节第 7 至 9 行按实测补充环境与 fork 状态；I-1 改为显式工具白名单，I-9 改为显式状态机，新增 I-13、I-14；FR-01、FR-10、FR-19 修订；8.1 的 G1 改为解析加校验、G5 默认关闭；AD-1、AD-3、AD-5 修订，新增 AD-13；10.3 事务改为显式状态机并支持新建文件回滚；安全表、验收（AC-3、AC-6，新增 AC-14、AC-15）、风险、待决策同步。实测校正两项并按实测写入：`corepack` 命令在 Node 26 上不可用；`unresolved.yaml` 的宽泛 catch 已在 `23e9dff` 修复 |
 | v1.3 | 2026-11-24 | 合并 `main` 后同步：第一节新增第 11 行（`content_hash`、KB Phase 3 / 4 完成）；I-4、FR-12、G3 扩展为「升版本并更新 `content_hash`」；R-13 标为已修复；示例中的示意 ID（`HJ-R-BANK-02`、`HJ-R-GANG-01`）按实测换成真实卡 `HJ-R-LUNZHUANG`、`HJ-K-GANGKAI` |
+| v1.4 | 2026-11-24 | 按第二轮评审意见修订：并入 `main` 的 `167b111`（测试基线 86）；事务改为先取写入锁再校验 Hash、写入前逐文件复查（I-9、10.3）；修订提案必须显式指定 `proposalId`（10.2）；Gold Set 授权后可开启自动运行（FR-19）；AC-2 的前缀长度与执行计划 A-1 统一为 2～4 位 |
 
 ## 一、对设计讨论稿前提的核对与纠正
 
@@ -32,6 +33,7 @@
 | 9 | 「新建独立仓库 MahjongRuleStudio」 | 用户已决定：在本仓库分支 `mickorz/Mahjong-Rule-Studio` 开发，PiBot 作为 submodule 放 `thirdparties/`。编写时该分支落后 `main` 一个提交（`23e9dff`），已于 2026-11-24 合并（`ab76048`）；fork `mickorz/PiBot` 已创建，submodule 已添加（`3f9136d`，跟踪 fork 的 `main`） | 与 `CLAUDE.md`「thirdparties 只读」冲突，需修订规范（见 AD-10） |
 | 10 | 「`compiled/xiaoshan/` 86 条规则」与「完整萧山 = (N − a) + b」 | 进度文档已修正公式为 **N + b**（modified 卡替换后自身进产物） | 需求文档沿用修正后公式 |
 | 11 | 文档编写后 `main` 的新变化 | `b6e06d4`：manifest 增加 `content_hash`（基础规则内容指纹），编译时比对，内容变化而版本未变则报错。`b78230f`：KB Phase 3（60 条 Gold Set、4 个计算纯函数）与 Phase 4（`AGENTS.md`）完成，测试 85 个 | I-4、FR-12、G3 扩展为「升版本并更新 `content_hash`」；Phase E 不再等待 KB Phase 3；Studio Skill 的内容来源 `AGENTS.md` 已就绪 |
+| 12 | 第二轮评审依据的是远程分支旧版（v1.1） | `main` 又新增 `167b111`（修 Phase 3 审查问题：新增 `npm run typecheck`、清零类型错误、测试 80）；本分支并入后 86 个测试、typecheck 通过 | 基线同步为 86；第二轮评审新增的 5 项（写锁顺序、`proposalId`、恢复用例、前缀长度、自动运行开关）写入本文档与执行计划 v2.2 |
 
 ## 二、目标
 
@@ -166,7 +168,7 @@
 | I-6 | `modified` 卡必须是完整有效规则 | 门禁按 KB 的槽位策略（base / inherited / modified / added）校验 |
 | I-7 | 影响判定、算分、结算金额的未决内容不得被 AI 默认为 `confirmed` | AI 只能产生 `unresolved` / `disputed` + `candidates`，由策划裁决并填 `resolution` |
 | I-8 | 应用前对每个触及文件做 Hash 校验 | 与提案生成时不一致 → 提案标记 `stale`，禁止覆盖，要求重新生成 |
-| I-9 | 多文件写入走显式状态机的事务 | `preparing` → `prepared` → `writing` → 提交或回滚；备份全部完成并核对后才允许写入；新建文件回滚时删除；崩溃后下次启动按事务日志与状态恢复（10.3） |
+| I-9 | 多文件写入走显式状态机的事务 | 先取写入锁再校验 Hash；`preparing` → `prepared` → `writing` → 提交或回滚；备份全部完成并核对后才允许写入，写入前逐文件复查；新建文件回滚时删除；崩溃后下次启动按事务日志与状态恢复（10.3） |
 | I-10 | 应用后不自动 `git commit` / `push` | 只改工作区 |
 | I-11 | 可以保存 ≠ 可以发布 | 存在未决或争议时允许保存草稿，编译产物 `releasable: false` |
 | I-12 | Agent 不提供文件路径 | 提案只含规则集 ID 与规则 ID；路径由服务端按注册表推导 |
@@ -197,7 +199,7 @@
 | FR-16 | 修改继承规则 | 「沿用但加限制」转为 `modified` + `base_rule_ref` 的完整卡 | SHOULD | D |
 | FR-17 | 底座影响分析 | 底座变更提案展示下游每个变种的 inherited / modified / 依赖卡清单与锁定状态；「升级变种锁定」作为独立提案 | SHOULD | D |
 | FR-18 | 未决项管理 | 新增、裁决 `unresolved.yaml` 条目；裁决必须填 `resolution`；blocker 影响 `releasable` | SHOULD | D |
-| FR-19 | Gold Set 门禁 | 默认关闭，只能由用户在界面主动触发；每个知识库目录首次执行前确认（显示执行目录、固定命令、超时）；有超时、取消、输出记录并写审计；Agent 无触发途径；本机无 Node 时明确「不支持」而非跳过 | LATER | E |
+| FR-19 | Gold Set 门禁 | 默认关闭，只能由用户在界面主动触发；每个知识库目录首次执行前确认（显示执行目录、固定命令、超时）；授权后用户可开启「应用后自动运行」（默认关，按知识库目录记忆）；有超时、取消、输出记录并写审计；Agent 无触发途径；本机无 Node 时明确「不支持」而非跳过 | LATER | E |
 | FR-20 | 审计与历史 | 应用、拒绝写入 PiBot 审计日志；提案历史列表 | SHOULD | E |
 
 ## 八、质量门禁
@@ -353,7 +355,7 @@ fork 内的工程规范以 PiBot `AGENTS.md` 为准：TypeScript strict、ESM、
 | `evidence[]` | `{ type: rule / source / config, id 或 source+section, title, excerpt }` |
 | `impact` | 底座变更时的下游影响分析 |
 | `gate` | 最近一次门禁报告 |
-| `session` | 产生它的会话与话题 ID（仅用于回链，不承担状态） |
+| `session` | 产生它的会话与话题 ID（仅用于回链，不承担状态）。修订提案必须显式指定 `proposalId`，不按会话自动合并 |
 | `createdAt`、`updatedAt` | 时间 |
 
 第一阶段不支持删除规则卡。提案独立于聊天记录：一个会话可产生多个提案；关闭窗口或重启后提案仍在。
@@ -363,14 +365,15 @@ fork 内的工程规范以 PiBot `AGENTS.md` 为准：TypeScript strict、ESM、
 ```mermaid
 flowchart TD
     A[点击应用] --> B[校验提案状态与门禁结果]
-    B --> C[逐文件校验 Hash]
-    C -->|不一致| STALE[标记提案过期 终止]
-    C --> D[获取写入锁 创建事务目录 状态 preparing]
+    B --> L[获取写入锁]
+    L --> C[逐文件校验 Hash]
+    C -->|不一致| ST[标记提案过期 释放锁 终止]
+    C --> D[创建事务目录 状态 preparing]
     D --> E[记录文件清单与 existedBefore 备份全部原文件]
     E --> F[逐个核对备份 Hash]
     F -->|不一致| RF[标记 recovery failed 终止]
     F --> G[状态 prepared]
-    G --> H[状态 writing 然后写入全部变更文件]
+    G --> H[状态 writing 逐文件先复查 Hash 再写入]
     H --> I[对真实文件系统复跑门禁]
     I -->|失败| RB[恢复原文件并删除新建文件 再核对 Hash]
     RB -->|通过| RBT[标记 rolled back 提案 failed]
@@ -381,6 +384,8 @@ flowchart TD
 ```
 
 每次状态迁移都原子写 `manifest.json`。写入只可能在 `writing` 及之后发生，所以日志里的状态本身就说明「规则文件可能已被改动」，恢复逻辑不依赖对代码顺序的假设。
+
+写入锁在 Hash 校验之前获取，校验、备份、写入全程持锁，避免「校验通过后、取锁前」被外部编辑插入。进入 `writing` 后每个文件写入前再比对一次原始 Hash，有变化即中止并回滚。从最后一次复查到实际写入之间仍有一个极短的窗口，没有操作系统级文件锁就无法消除；它由事务备份与写入后的门禁复验兜底。
 
 逐文件清单记录 `path`、`existedBefore`、原始与新 sha256。回滚时 `existedBefore: true` 的文件从 `originals/` 恢复并核对 Hash；`existedBefore: false` 的文件（`create_rule` 等新建文件，第一阶段就有）直接删除并清理因此产生的空目录。
 
@@ -415,7 +420,7 @@ flowchart TD
 | # | 验收项 | 对应 |
 | --- | --- | --- |
 | AC-1 | `git submodule status` 显示 `thirdparties/PiBot` 指向 fork 的固定 commit；`pnpm dev` 在 Windows 上启动桌面应用并完成一次对话 | Phase 0 |
-| AC-2 | KB 新增一个 `variants/<x>/`（任意两字母前缀）时，不改任何 Schema 代码即可通过校验与编译 | Phase A |
+| AC-2 | KB 新增一个 `variants/<x>/`（2～4 位大写字母前缀，夹具覆盖 2 位与 4 位）时，不改任何 Schema 代码即可通过校验与编译 | Phase A |
 | AC-3 | `npm run sync:check` 通过；KB 纯度测试通过（同步目录不引用 `node:` 模块）；`@pibot/mahjong-kb` 在 fork 内 `pnpm typecheck`、`pnpm lint` 通过 | Phase A |
 | AC-4 | 策划通过聊天问「萧山和杭州财神规则的区别」，AI 回答引用正确的规则 ID，并指出 `XS-C-JOKER` 为 `disputed`，不擅自裁决 | Phase B |
 | AC-5 | 「引用到对话」后 AI 能读取该卡全文、版本与来源 | Phase B |

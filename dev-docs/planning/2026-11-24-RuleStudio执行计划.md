@@ -1,7 +1,7 @@
 # Rule Studio 执行计划
 
 > 依据：`dev-docs/design/2026-11-24-RuleStudio需求文档.md`（FR、I、AD、AC 编号沿用）、`dev-docs/planning/2025-11-24-执行计划.md`（KB v3.2 冻结架构）、PiBot 上游 `main` commit `152425f`
-> 评审依据：`dev-docs/design/2026-11-24-RuleStudio执行计划评审意见.md`
+> 评审依据：`dev-docs/design/2026-11-24-RuleStudio执行计划评审意见.md`、`dev-docs/design/2026-11-24-RuleStudio执行计划评审意见-第2轮.md`
 > 日期：2026-11-24
 > 范围：Phase 0、A、B、C（第一阶段）；Phase D、E（第二阶段）
 > 执行方式：按阶段推进，每阶段完成即更新 `dev-docs/progress/执行进度.md` 与 `dev-docs/progress-result/<阶段>-执行报告.md`，再提交
@@ -14,6 +14,29 @@
 | v1.1 | 2026-11-24 | 任务 0.1 标记完成（合并提交 `ab76048`） |
 | v2 | 2026-11-24 | 按 `dev-docs/design/2026-11-24-RuleStudio执行计划评审意见.md` 修订：Phase A 拆出纯内存 Parser，修复 Compiler 修改输入；Phase B 增加麻将 Bot 工具白名单与运行时断言、索引防过期、预览组件 Spike；Phase C 事务改为显式状态机并支持新建文件回滚；Phase E 的 Gold Set 执行改为默认关闭并需授权；环境要求写明 `engines` 与 `packageManager`；Zod 改为默认不迁移；同步 0.2、0.3、0.8 的完成状态与分支策略。逐项见下表 |
 | v2.1 | 2026-11-24 | 合并 `main`（`b6e06d4`、`b78230f`）后同步：KB Phase 3、Phase 4 已完成，Phase E 不再被阻塞；`main` 新增 `content_hash`（基础内容指纹），底座变更规则扩展为「升版本并更新指纹」；编译器修改输入的问题已单独修复并加回归测试，A-4 与 AC-14 相应标注；KB 测试增至 85 个；同步目录必须类型检查零错误（新增 `typecheck` 脚本） |
+| v2.2 | 2026-11-24 | 按第二轮评审意见修订（`dev-docs/design/2026-11-24-RuleStudio执行计划评审意见-第2轮.md`）：并入 `main` 的 `167b111`（测试基线 86；`typecheck` 脚本已由 main 加入并清零类型错误）；新增「进入 Phase A 的前置条件」核对表；事务改为先取写入锁再校验 Hash、写入前逐文件复查；提案更新必须显式指定 `proposalId`；事务恢复用例补全；ID 前缀统一为 2～4 位；Gold Set 授权后可选自动运行。评审中标为未解决的四项 P0 在 v2 已处理，逐条核对见下表 |
+
+### 第二轮评审逐条核对
+
+第二轮评审读取的是 GitHub 远程分支（当时停在 `3f9136d`，文档 v1.1）；本地分支当时已是 v2.1（`402572e`），尚未推送。下表按本地实际逐条核对。
+
+| 评审项 | 评审结论 | 核对结果 | 本轮处理 |
+| --- | --- | --- | --- |
+| P0 内存 Parser | 未解决 | v2 已写入 A-3（`parseRuleset({ kind, files })`）与 C-4 | 补上评审给的调用链图；设计不变 |
+| P0 Compiler 输入不可变 | 未解决 | v2 已写入 A-4、A-9、AC-14；代码已修复（`fe38158`），评审引用的 `meta.depends_on = ...` 在当前代码中已不存在 | 无需再改 |
+| P0 事务崩溃恢复 | 只有 `prepared` | v2 已改为显式状态机（C-5、需求文档 10.3） | 采纳新增的「先取写锁再校验 Hash、写入前复查」 |
+| P0 Agent 工具白名单 | 部分解决 | v2 已有白名单常量与运行时断言（B-7、AC-6、需求文档 AD-13） | 无需再改 |
+| P0 开发分支落后 main 三个提交 | 属实（针对远程分支） | 本地已并入前两个；第三个 `167b111` 本轮并入（`e4d92a4`） | 测试基线 86（main 80 + 本分支 6），typecheck 通过 |
+| 测试数量 31 / 80、AGENTS.md 不存在 | 按 v1.1 与远程分支判断 | 本地已随 `b78230f` 并入 `AGENTS.md`，A-6 已标完成 | 基线数字同步为 86 |
+| A-7 与 A-3 冲突（同步含 CLI 的 validator.ts） | 按 v1.1 判断 | v2 已拆为 `parser/`、`compiler/`、`cli/`，只同步前两者 | 保留 v2 的目录方案。评审建议的 `compiler/parser.ts` + `compiler/load.ts` + `compiler/cli/` 与它等价，差别只在磁盘 Loader 放在 `cli/` 还是 `compiler/` |
+| `config.ui.yaml` 宽泛 catch | 属实 | v2 已列入 A-3 | 无需再改 |
+| Hash 校验与写入锁顺序 | 新增 | 成立：先校验后取锁留有外部编辑的竞争窗口 | 采纳（C-5、需求文档 10.3） |
+| C-3 同会话草稿自动更新 | 新增 | 成立：v2 写的「同会话草稿自动 update」会覆盖同会话的其他提案 | 采纳：更新必须指定 `proposalId` |
+| C-11 恢复用例 | 新增细化 | v2 已有中断恢复、备份损坏、新建文件回滚 | 补全为评审列的五类 |
+| A-1 与 AC-2 前缀长度不一致 | 新增 | 成立：A-1 允许 2～4 位，AC-2 写「任意两字母」 | 采纳：统一为 2～4 位，夹具覆盖 2 位与 4 位 |
+| A-5 Zod 条件化 | 按 v1.1 判断 | v2 已改为默认不迁移 | 无需再改 |
+| B-9 预览组件 Spike | 按 v1.1 判断 | v2 已有 S-10（评审编号 S-9） | 无需再改 |
+| E-2 Gold Set 执行授权 | 按 v1.1 判断 | v2 已改为默认关闭、用户触发、首次确认、固定命令 | 补「授权后可开启应用后自动运行」 |
 
 ### v2 修订明细（按评审意见）
 
@@ -111,7 +134,7 @@ PiBot fork 以 submodule 进入 `thirdparties/`，本机能 `pnpm dev` 启动并
 
 ### 目标
 
-KB 的领域层拆成不触碰文件系统、不修改输入的纯函数：Parser（内存中的文件内容 → 规则集结构）、Validator（结构校验）、Kernel（编译）；磁盘读写与命令行留在 `cli/`。不再依赖目录名与硬编码前缀，能在内存中解析、校验、编译任意规则集。纯领域目录（`schemas/`、`parser/`、`compiler/`）一键整体同步进 fork，并有漂移检查与纯度检查。**全部在 KB 仓库内完成，KB 现有 85 个测试必须持续通过。**
+KB 的领域层拆成不触碰文件系统、不修改输入的纯函数：Parser（内存中的文件内容 → 规则集结构）、Validator（结构校验）、Kernel（编译）；磁盘读写与命令行留在 `cli/`。不再依赖目录名与硬编码前缀，能在内存中解析、校验、编译任意规则集。纯领域目录（`schemas/`、`parser/`、`compiler/`）一键整体同步进 fork，并有漂移检查与纯度检查。**全部在 KB 仓库内完成，KB 现有 86 个测试必须持续通过。**
 
 ### 目标目录结构
 
@@ -132,6 +155,14 @@ KB 根目录
 
 「同步」= `npm run sync:studio` 整体复制进 fork 的目录；`cli/` 不进 fork。门禁（C-4）的用法：把提案变更叠加到索引保存的 `files` 映射上，交给 `parseRuleset`，全程不落盘。
 
+磁盘加载与内存加载共用同一套解析逻辑：
+
+```text
+规则集目录 ── cli/loader.ts（读目录为 files）──┐
+                                             ├──> parseRuleset({ kind, files }) ──> validateRuleset ──> kernel.compileBase / compileVariant
+提案变更（内存中的 files 映射）──────────────┘
+```
+
 ### 任务
 
 | # | 任务 | 文件 | 产出 |
@@ -145,7 +176,7 @@ KB 根目录
 | A-7 | 同步脚本 | 新建 `scripts/sync-studio-kb.mjs`：**只整体复制三个纯领域目录** `schemas/`、`parser/`、`compiler/` 到 `$FORK/packages/mahjong-kb/src/kb/`（相对结构与导入路径不改）；`cli/`、`tests/`、`dev-examples/` 不同步。在目标目录生成 `GENERATED.md` 说明来源与禁止手改；写 `SYNC.lock.json`（每个文件的 sha256）；`--check` 模式逐文件比对，不一致、缺失或多出文件即非零退出。`package.json` 加 `"sync:studio"`、`"sync:check"` | 脚本 + 锁文件 |
 | A-8 | fork 侧包定义 | `$FORK/packages/mahjong-kb/package.json`（`@pibot/mahjong-kb`，`"pibot": { "layer": "L2" }`，exports `./kb`，依赖 `zod`（与 KB 同主版本）、`yaml`）、`tsconfig.json`、`src/index.ts`（re-export）；`src/kb.test.ts` 校验 vendored 文件哈希与 `SYNC.lock.json` 一致 | 可被 fork 引用的包 |
 | A-9 | 测试 | 清单见下表；更新 `rule-ids` / `variant-refs` / `compile` 测试以适配新模块路径与签名。现有测试只经 `execSync` 跑 CLI，抓不到输入被修改的问题，所以不可变性与顺序测试必须直接调用 kernel | 测试 |
-| A-10 | 文档与脚本入口 | `package.json`：`validate` → `node cli/validate.ts`，`compile` → `node cli/compile.ts`，新增 `typecheck` → `tsc --noEmit`（fork 的 `pnpm typecheck` 是 strict，同步目录必须零类型错误；现状 `compiler/` 有 16 个既有类型错误（`compile.ts` 14、`validator.ts` 2），`tests/` 有 18 个，Phase A 一并清零）；`tsconfig.json` 的 `include` 加 `parser`、`cli`；`docs/development.md`（中英）补新目录与 `sync:studio` / `sync:check`；`README.md` 目录结构补 `parser/`、`cli/`、`scripts/`；进度文档与 `progress-result/PA-执行报告.md` | 文档 |
+| A-10 | 文档与脚本入口 | `package.json`：`validate` → `node cli/validate.ts`，`compile` → `node cli/compile.ts`，新增 `typecheck` 已由 `main` 的 `167b111` 加入（`tsc --noEmit`）并清零既有类型错误，合并后通过；fork 的 `pnpm typecheck` 是 strict，同步目录须持续保持零类型错误；`tsconfig.json` 的 `include` 加 `parser`、`cli`；`docs/development.md`（中英）补新目录与 `sync:studio` / `sync:check`；`README.md` 目录结构补 `parser/`、`cli/`、`scripts/`；进度文档与 `progress-result/PA-执行报告.md` | 文档 |
 
 #### A-9 测试清单
 
@@ -153,7 +184,7 @@ KB 根目录
 
 | 测试 | 文件 | 验收目标 |
 | --- | --- | --- |
-| 新前缀不改 Schema | `tests/compiler/id-prefix.test.ts` | 夹具变种不改 Schema 即可解析、校验、编译；规则卡、config、config.ui、unresolved 的前缀错误都被报出 |
+| 新前缀不改 Schema | `tests/compiler/id-prefix.test.ts` | 夹具覆盖 2 位与 4 位前缀（A-1 允许 2～4 位大写字母），不改 Schema 即可解析、校验、编译；规则卡、config、config.ui、unresolved 的前缀错误都被报出；1 位与 5 位前缀被 Schema 拒绝 |
 | 纯度 | `tests/compiler/purity.test.ts` | `schemas/`、`parser/`、`compiler/` 下任何文件不 `import "node:*"`、不读写 `process` |
 | 输入不可变 | `tests/compiler/kernel.test.ts` | 深冻结输入后编译不抛错；编译前后输入 `structuredClone` 深比较一致 |
 | 重复编译 | 同上 | 同一输入连续编译两次，结果深比较一致 |
@@ -175,10 +206,22 @@ KB 根目录
 
 ### 验收
 
-- AC-2：新增 `variants/<x>/`（任意前缀）不改 Schema 即可通过校验与编译
+- AC-2：新增 `variants/<x>/`（2～4 位大写字母前缀，与 A-1 一致）不改 Schema 即可通过校验与编译
 - AC-3：`npm run sync:check` 通过；`$FORK` 内 `pnpm typecheck`、`pnpm lint` 对 `@pibot/mahjong-kb` 通过
-- `npm test` 全绿（现有 85 个 + 新增）
+- `npm test` 全绿（现有 86 个 + 新增）
 - AC-14：编译器不修改输入；同一输入重复编译、多个变种按不同顺序编译，结果一致（`kernel.test.ts`）
+- `npm run typecheck` 通过
+
+### 进入 Phase A 的前置条件
+
+第二轮评审给出的四个前置条件，当前状态：
+
+| # | 条件 | 状态 |
+| --- | --- | --- |
+| 1 | 同步 `main` | 已完成：`b6e06d4`、`b78230f`、`167b111` 均已并入（`e4d92a4`） |
+| 2 | 确定纯内存 Parser 接口 | 已确定：A-3 的 `parseRuleset({ kind, files })` |
+| 3 | 明确领域代码同步边界 | 已确定：只同步 `schemas/`、`parser/`、`compiler/`，`cli/` 不同步 |
+| 4 | Compiler 不可变性纳入验收 | 已确定：A-4 约束、A-9 测试、AC-14；代码已修复（`fe38158`） |
 - `npm run compile` 产物与迁移前一致（`git diff compiled/` 为空）
 
 ## Phase B：Mahjong Capability 只读
@@ -241,15 +284,15 @@ Agent 可生成结构化提案，策划在 UI 审阅 Diff、证据、影响与�
 | --- | --- | --- | --- |
 | C-1 | 提案 Schema 与存储 | `packages/mahjong-contract/src/proposal.ts`：`Proposal`、`ProposalChange`、`ProposalStatus`、`GateReport`、`ImpactAnalysis` 的 zod Schema（字段见需求文档 10.2）；`packages/mahjong/src/store/proposal-repository.ts`：读写 `<kb>/.rule-studio/proposals/<id>.json`，原子写（临时文件 + rename），单写入锁 | 存储层 |
 | C-2 | 路径推导 | `src/brain/paths.ts`：按规则集注册表与规则 ID 推导目标文件路径（复用 `dirFor` 与前缀），config / manifest / unresolved 的路径固定；Agent 传入的任何路径字段一律拒绝 | 路径规则 |
-| C-3 | 提案工具 | `src/brain/tools.ts` 扩展：`mahjong_propose_change`（输入：`summary`、`rationale`、`evidence[]`、`changes[]`，每项 `{ ruleset, ruleId, op, content }`；服务端补 `before`、`path`、Hash；已有同会话草稿则 `update`）、`mahjong_proposal_read`、`mahjong_proposal_validate`、`mahjong_proposal_update`；工具 `details` 带 `proposalId` 供渲染层画卡片 | 工具 |
+| C-3 | 提案工具 | `src/brain/tools.ts` 扩展：`mahjong_propose_change`（输入：`summary`、`rationale`、`evidence[]`、`changes[]`，每项 `{ ruleset, ruleId, op, content }`；服务端补 `before`、`path`、Hash；不带 `proposalId` 时一律新建提案，带 `proposalId` 时只更新该提案，不按会话自动合并，避免覆盖同会话的其他提案）、`mahjong_proposal_read`、`mahjong_proposal_validate`、`mahjong_proposal_update`；工具 `details` 带 `proposalId` 供渲染层画卡片 | 工具 |
 | C-4 | 质量门禁 | `src/brain/gate/run.ts`：不落盘的叠加——`files = { ...索引中该规则集的原始 files, ...提案变更的路径与内容 }`，交给 `@pibot/mahjong-kb` 的 `parseRuleset` 得到候选规则集；G1 解析错误（`parseRuleset` 的 `errors`）加 `validateRuleset(rs, base?, registry)`；G2 `kernel.compileBase / compileVariant`（纯函数，A-4，不污染索引）；G3 版本规则；G4 下游锁定状态（逐变种：锁定匹配则试编译，失配标「待升级」并列出 `base_rule_ref` / `depends_on` / `compares_to` 命中的卡）；所有错误一次性列入 `GateReport` | 门禁 |
-| C-5 | 应用 RPC 与事务 | `src/brain/mutation/apply.ts`：`mahjong.proposals.apply`；状态机与启动恢复表见需求文档 10.3（`preparing` → `prepared` → `writing` → `committed` / `rolled_back`，异常为 `recovery_failed`）；每次状态迁移原子写 `manifest.json`（临时文件 + rename）。事务清单逐文件记录 `path`、`existedBefore`、原始与新 sha256；**备份全部完成并核对 Hash 之后，才进入允许写入的状态**。回滚规则：`existedBefore: true` 恢复 `originals/` 并核对 Hash；`existedBefore: false`（`create_rule` 等新建文件，Phase C 即有）删除本次新建的文件并清理因此产生的空目录。`src/brain/mutation/recovery.ts`：`start()` 时按状态恢复（见需求文档 10.3 表）；`mahjong.proposals.reject`；审计写入（Spike S-5 结论）；事件 `mahjong.proposals.changed` | 写入层 |
+| C-5 | 应用 RPC 与事务 | `src/brain/mutation/apply.ts`：`mahjong.proposals.apply`；状态机与启动恢复表见需求文档 10.3（`preparing` → `prepared` → `writing` → `committed` / `rolled_back`，异常为 `recovery_failed`）；每次状态迁移原子写 `manifest.json`（临时文件 + rename）。**先取写入锁，再做 Hash 校验与备份**（顺序反过来会留出外部编辑的竞争窗口）。事务清单逐文件记录 `path`、`existedBefore`、原始 Hash（新建文件为 null）与新 sha256；**备份全部完成并核对 Hash 之后，才进入允许写入的状态**；进入 `writing` 后每个文件写入前再比对一次原始 Hash，有变化即中止并回滚，提案标记过期。回滚规则：`existedBefore: true` 恢复 `originals/` 并核对 Hash；`existedBefore: false`（`create_rule` 等新建文件，Phase C 即有）删除本次新建的文件并清理因此产生的空目录。`src/brain/mutation/recovery.ts`：`start()` 时按状态恢复（见需求文档 10.3 表）；`mahjong.proposals.reject`；审计写入（Spike S-5 结论）；事件 `mahjong.proposals.changed` | 写入层 |
 | C-6 | Diff 计算 | `src/brain/proposals/diff.ts`：逐文件生成行级 Diff（新增 / 修改 / 删除行），供 UI 展示；若 Spike S-8 结论允许复用 `@pibot/workspaces/ui` 的 Diff 组件则直接复用 | Diff |
 | C-7 | UI：卡片 | `features/mahjong/ProposalCard.tsx`：在聊天中按工具名与 `details.proposalId` 渲染：状态、文件数、门禁摘要、按钮「查看详情」「应用」「拒绝」；应用前若 `status !== ready` 或门禁未过则禁用并说明 | 卡片 |
 | C-8 | UI：详情与验证 | `features/mahjong/ProposalDetail.tsx`（理由、证据链接、逐文件 Diff、影响分析、门禁报告、事务步骤记录）、`features/mahjong/GateReportView.tsx`（「验证」子视图）；大型 JSON 可折叠 | 详情 |
 | C-9 | 版本规则落地 | G3：目标为底座且变更含 `rulesets/hangzhou/**` 但无 manifest `version` 升级 → 失败，错误文案指向「需在同一提案升 manifest.version」。底座变更提案还必须携带新的 `content_hash`（`main` 的 `b6e06d4` 引入的基础内容指纹）：由服务端在生成提案时用 `rulesetContentHash` 按提案应用后的内容计算，写进 `update_manifest`，Agent 不提供；未携带或算错时 G2 编译因指纹不符失败。Skill 增加该规则与 `update_manifest` 用法 | 规则 |
 | C-10 | 运行时目录 | KB `.gitignore` 加 `.rule-studio/`；`<kb>/.rule-studio/README.md`（由 Capability 首次创建时写入）说明该目录是运行时数据 | 忽略规则 |
-| C-11 | 测试 | 门禁各层正反用例（缺槽位、引用悬空、未升版、下游失配）；事务：正常提交、门禁失败回滚、Hash 不一致过期；分别在 `preparing`、`prepared`、`writing` 三种状态下中断后的启动恢复（规则文件与事务前一致；新建文件被删除）；备份损坏时进入 `recovery_failed` 且保留现场；并发第二次 apply 被锁拒绝；fake-llm 跑「引用 → 提案 → 应用」链路 | 测试 |
+| C-11 | 测试 | 门禁各层正反用例（缺槽位、引用悬空、未升版、下游失配）；事务：正常提交、门禁失败回滚、Hash 不一致过期；备份过程中崩溃（`preparing`）、备份完成未写入时崩溃（`prepared`）、写入过程中崩溃（`writing`）三种中断后的启动恢复（规则文件与事务前一致）；新建文件回滚（`create_rule` 的文件被删除、空目录被清理）；恢复时原始文件备份缺失或 Hash 不符 → `recovery_failed` 并保留现场；回滚失败进入 `recovery_failed` 后不自动重试；取锁后校验 Hash 发现外部修改 → 提案过期、不写入；并发第二次 apply 被锁拒绝；fake-llm 跑「引用 → 提案 → 应用」链路 | 测试 |
 | C-12 | 文档与进度 | `$FORK/packages/mahjong/README.md` 补提案与事务；KB `docs/how-to-guides.md`（中英）加「通过对话修改规则」；进度文档与 `PC-执行报告.md` | 文档 |
 
 ### 关键约束
@@ -299,7 +342,7 @@ Gold Set 接入门禁；审计与提案历史完整；上游合并流程演练�
 | # | 任务 | 要点 | 产出 |
 | --- | --- | --- | --- |
 | E-1 | KB Phase 3 | **已完成（`main` 提交 `b78230f`）**：60 条 Gold Set、4 个计算纯函数、回归测试 | KB 测试体系 |
-| E-2 | G5 宿主端口与授权 | 运行知识库目录里的 `npm test` 等于执行该目录的代码（`package.json` 脚本与依赖），按外部代码对待：**默认关闭**；只能由用户在界面主动触发；每个知识库目录首次执行前弹确认，显示执行目录、固定命令与超时；命令固定为 `npm test -- --reporter=json`，不接受 Agent 或用户拼接；有超时、取消、输出记录（截断保存）并写入审计；不向 Agent 提供任何可触发它的工具，也不授予通用 Shell 权限。`packages/mahjong-contract` 定义 `KbTestPort`（输入 KB 根目录，输出解析后的 Vitest JSON 报告）；`apps/desktop/src/main/` 实现端口（`node:child_process`，带超时与 `AbortSignal`）；brain 侧端口缺失时返回显式「不支持」；门禁报告增加 G5 区块 | 门禁扩展 |
+| E-2 | G5 宿主端口与授权 | 运行知识库目录里的 `npm test` 等于执行该目录的代码（`package.json` 脚本与依赖），按外部代码对待：**默认关闭**；只能由用户在界面主动触发；每个知识库目录首次执行前弹确认，显示执行目录、固定命令与超时；授权后用户可自行开启「应用后自动运行」（开关默认关，按知识库目录记忆）；命令固定为 `npm test -- --reporter=json`，不接受 Agent 或用户拼接；有超时、取消、输出记录（截断保存）并写入审计；不向 Agent 提供任何可触发它的工具，也不授予通用 Shell 权限。`packages/mahjong-contract` 定义 `KbTestPort`（输入 KB 根目录，输出解析后的 Vitest JSON 报告）；`apps/desktop/src/main/` 实现端口（`node:child_process`，带超时与 `AbortSignal`）；brain 侧端口缺失时返回显式「不支持」；门禁报告增加 G5 区块 | 门禁扩展 |
 | E-3 | 审计与历史 | `mahjong.proposals.list` 支持全部状态；「提案」子视图增加历史筛选；应用 / 拒绝 / 回滚均入审计（Spike S-5） | 历史 |
 | E-4 | 上游合并演练 | 在 fork 中执行一次「`git fetch upstream` → 合并 `upstream/main` 到 fork 的 `main` → `pnpm check` → 推送 fork → 更新 submodule 指针与 `REFERENCES.md`」，记录耗时与冲突点，更新工作流指南 | 演练记录 |
 | E-5 | 进度 | `PE-执行报告.md`；更新 `REFERENCES.md` 固定 commit | 文档 |
@@ -341,7 +384,7 @@ Gold Set 接入门禁；审计与提案历史完整；上游合并流程演练�
 | AC | 内容 | 阶段 | 验证方式 |
 | --- | --- | --- | --- |
 | AC-1 | submodule 与桌面应用可运行 | 0 | 手动：`git submodule status`、`pnpm dev`、完成一次对话 |
-| AC-2 | 新前缀不改 Schema | A | 自动：`tests/compiler/id-prefix.test.ts` |
+| AC-2 | 新前缀（2～4 位）不改 Schema | A | 自动：`tests/compiler/id-prefix.test.ts`（2 位与 4 位夹具） |
 | AC-3 | 同步无漂移、领域层纯净、fork 包通过检查 | A | 自动：`npm run sync:check`、`purity.test.ts`、`pnpm typecheck`、`pnpm lint` |
 | AC-4 | 财神差异问答正确 | B | 手动：对照 `XS-C-JOKER` 元数据核对回答 |
 | AC-5 | 引用后读取全文 | B | 手动 |
