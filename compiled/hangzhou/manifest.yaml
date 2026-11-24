@@ -1,5 +1,6 @@
 ruleset_id: hangzhou-friends-4p
 version: 1.0.0
+content_hash: 8e9bf676451069dba0ab9c310ef0b7b9277b5ddf4ae42af2bcc434a9bd0ba848
 scope:
   player_count: 4
   room_type: friends
