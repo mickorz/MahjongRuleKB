@@ -1,5 +1,8 @@
 # npm 依赖慢：换国内镜像而不是挂代理
 
+> 背景：本文记录于 PiBot 基座评估期间（该方案已于 2026-11-24 终止，见 `dev-docs/progress/执行进度.md`）。
+> 镜像配置与测速结论对任何 npm / pnpm 项目通用，故保留。
+
 ## 现象
 
 PiBot fork（`thirdparties/PiBot`）`pnpm install` 跑了 **36 分 5 秒**，日志里反复刷同一行 `Downloading @biomejs/cli-linux-x64@2.5.15: 23.96 MB/24.65 MB`，看起来像卡死，实际一直在动。
