@@ -13,6 +13,7 @@
 | v1 | 2026-11-24 | 初稿：核对设计稿前提、确定范围与不变量、功能需求、架构决策、验收与风险 |
 | v1.1 | 2026-11-24 | 合并 `main` 后更新第一节第 9 行的现状描述 |
 | v1.2 | 2026-11-24 | 按评审意见修订（`dev-docs/design/2026-11-24-RuleStudio执行计划评审意见.md`）：第一节第 7 至 9 行按实测补充环境与 fork 状态；I-1 改为显式工具白名单，I-9 改为显式状态机，新增 I-13、I-14；FR-01、FR-10、FR-19 修订；8.1 的 G1 改为解析加校验、G5 默认关闭；AD-1、AD-3、AD-5 修订，新增 AD-13；10.3 事务改为显式状态机并支持新建文件回滚；安全表、验收（AC-3、AC-6，新增 AC-14、AC-15）、风险、待决策同步。实测校正两项并按实测写入：`corepack` 命令在 Node 26 上不可用；`unresolved.yaml` 的宽泛 catch 已在 `23e9dff` 修复 |
+| v1.3 | 2026-11-24 | 合并 `main` 后同步：第一节新增第 11 行（`content_hash`、KB Phase 3 / 4 完成）；I-4、FR-12、G3 扩展为「升版本并更新 `content_hash`」；R-13 标为已修复；示例中的示意 ID（`HJ-R-BANK-02`、`HJ-R-GANG-01`）按实测换成真实卡 `HJ-R-LUNZHUANG`、`HJ-K-GANGKAI` |
 
 ## 一、对设计讨论稿前提的核对与纠正
 
@@ -30,6 +31,7 @@
 | 8 | 未提及 | KB 用 Zod 3（`^3.24.0`），PiBot 锁定 Zod `4.6.5` | 默认不迁移：进 fork 的 `@pibot/mahjong-kb` 作为独立包继续用 Zod 3，RPC 契约用 Zod 4，二者只交换普通对象（AD-5） |
 | 9 | 「新建独立仓库 MahjongRuleStudio」 | 用户已决定：在本仓库分支 `mickorz/Mahjong-Rule-Studio` 开发，PiBot 作为 submodule 放 `thirdparties/`。编写时该分支落后 `main` 一个提交（`23e9dff`），已于 2026-11-24 合并（`ab76048`）；fork `mickorz/PiBot` 已创建，submodule 已添加（`3f9136d`，跟踪 fork 的 `main`） | 与 `CLAUDE.md`「thirdparties 只读」冲突，需修订规范（见 AD-10） |
 | 10 | 「`compiled/xiaoshan/` 86 条规则」与「完整萧山 = (N − a) + b」 | 进度文档已修正公式为 **N + b**（modified 卡替换后自身进产物） | 需求文档沿用修正后公式 |
+| 11 | 文档编写后 `main` 的新变化 | `b6e06d4`：manifest 增加 `content_hash`（基础规则内容指纹），编译时比对，内容变化而版本未变则报错。`b78230f`：KB Phase 3（60 条 Gold Set、4 个计算纯函数）与 Phase 4（`AGENTS.md`）完成，测试 85 个 | I-4、FR-12、G3 扩展为「升版本并更新 `content_hash`」；Phase E 不再等待 KB Phase 3；Studio Skill 的内容来源 `AGENTS.md` 已就绪 |
 
 ## 二、目标
 
@@ -56,10 +58,10 @@
 | # | 场景 | 用户动作 | 期望结果 | 覆盖需求 |
 | --- | --- | --- | --- | --- |
 | S1 | 规则问答 | 「萧山和杭州的财神规则有什么区别？」 | AI 读取 `HJ-C-JOKER`、`XS-C-JOKER`、`HJ-R-CAISHEN`、`XS-M-PIAO` 与对应原始资料，指出 `XS-C-JOKER` 为 `disputed` + `release_blocker`，不擅自裁决 | FR-07、FR-03 |
-| S2 | 引用修改底座 | 左栏点开 `HJ-R-BANK-02`，「引用到对话」，输入「连庄条件补充流局时原庄连庄的例外」 | 产生一个提案：修改 `rulesets/hangzhou/rules/hj-r-bank-02.md` + 升 `manifest.version`；展示 Diff、证据、门禁结果；点击应用后写入，`sources/` 不变 | FR-05、FR-08、FR-09、FR-10、FR-11、FR-12 |
+| S2 | 引用修改底座 | 左栏点开 `HJ-R-LUNZHUANG`（轮庄），「引用到对话」，输入「轮庄条件补充流局时原庄连庄的例外」 | 产生一个提案：修改 `rulesets/hangzhou/rules/hj-r-lunzhuang.md` + 升 `manifest.version` 并更新 `content_hash`；展示 Diff、证据、门禁结果；点击应用后写入，`sources/` 不变 | FR-05、FR-08、FR-09、FR-10、FR-11、FR-12 |
 | S3 | 底座升版后的变种 | S2 应用后 | 提示「萧山仍锁定杭州 1.0.0，N 张卡受影响（其中 M 张 modified 需复核）」（数字由影响分析实时得出）；策划可发起「升级萧山锁定到新版本」提案，门禁对萧山重新编译通过后应用 | FR-17 |
 | S4 | 新建地方变种 | 「新增桐庐麻将，基础规则参考杭州」 | 创建 `variants/tonglu/`（manifest、`id_prefix: TL`、空 config、空 unresolved），按对话逐条生成 added / modified 卡；只写差异；编译产物 `releasable` 状态正确 | FR-15、FR-16 |
-| S5 | 修改继承规则 | 「萧山沿用杭州杠开判定，但增加一项限制」 | AI 生成 `origin: variant` + `change_type: modified` + `base_rule_ref: HJ-R-GANG-01` 的**完整有效卡**，含「杭麻」对照槽，而非一句差异说明 | FR-16、I-6 |
+| S5 | 修改继承规则 | 「萧山沿用杭州杠上开花（`HJ-K-GANGKAI`），但增加一项限制」 | AI 生成 `origin: variant` + `change_type: modified` + `base_rule_ref: HJ-K-GANGKAI` 的**完整有效卡**，含「杭麻」对照槽，而非一句差异说明 | FR-16、I-6 |
 | S6 | 裁决未决项 | 策划口头裁决「翻财神由翻财神决定」 | 提案：`XS-U-001` 填 `resolution`、`status: confirmed`；同步更新 `XS-C-JOKER`；门禁通过后萧山 blocker 减一 | FR-18 |
 | S7 | 资料矛盾 | 萧山配置表与术语表矛盾 | AI 不得默认任一方；产生 `disputed` + `candidates`，要求策划确认 | I-7 |
 
@@ -94,27 +96,28 @@
 桌面端三栏。PiBot 已有：左侧会话栏、中间聊天、右侧 Side Pane（现有页签：任务 / 变更 / 浏览器 / 预览）。Studio 新增：Side Pane 页签「规则」、聊天内的 Proposal 卡片、设置中的知识库目录。
 
 ```text
-+----------------------+--------------------------------+-------------------------------+
-| 会话栏（PiBot 既有）  | 聊天（PiBot 既有）              | 规则（新增页签）               |
-|                      |                                | -------------------------------|
-| 新对话               | [规则集：杭州麻将 v1.0.0]        | [浏览] [提案] [验证]            |
-| ------------------- |                                |                               |
-| 规则问答 ...         | 策划：`HJ-R-BANK-02` 连庄条件    | 规则集                         |
-| 萧山财神差异 ...     |   补充流局时原庄连庄的例外        |   杭州麻将  base  1.0.0        |
-| 新建桐庐 ...         |                                |   萧山麻将  variant 0.1.0      |
-|                      | AI：                            |   桐庐麻将  variant 0.1.0      |
-|                      |   [工具] mahjong_read_rule       | 类型：判定 时序 计数 记录       |
-|                      |   [工具] mahjong_read_source     |       公式 查表 入账 界面       |
-|                      |   [工具] mahjong_propose_change  | 搜索：[ID 或关键词]             |
-|                      |   +----------------------------+ | -----------------------------|
-|                      |   | 规则修改提案  等待确认      | | hj-r-bank-02  连庄与换庄      |
-|                      |   | 修改 2 个文件               | |   -> 预览页签打开卡全文        |
-|                      |   | 门禁：通过                   | |   [引用到对话]                |
-|                      |   | [查看详情] [应用] [拒绝]    | | -----------------------------|
-|                      |   +----------------------------+ | [提案] 列表与详情：理由 证据    |
-|                      |                                |   逐文件 Diff  影响分析  门禁   |
-|                      | 输入消息...                     | [验证] 门禁报告                 |
-+----------------------+--------------------------------+-------------------------------+
++----------------------+------------------------------------+---------------------------------+
+| 会话栏（PiBot 既有） | 聊天（PiBot 既有）                 | 规则（新增页签）                |
+|                      |                                    |                                 |
+| 新对话               | [规则集：杭州麻将 v1.0.0]          | [浏览] [提案] [验证]            |
+|  ------------------- |                                    |                                 |
+| 规则问答 ...         | 策划：`HJ-R-LUNZHUANG` 轮庄条件    | 规则集                          |
+| 萧山财神差异 ...     |   补充流局时原庄连庄的例外         |   杭州麻将  base  1.0.0         |
+| 新建桐庐 ...         |                                    |   萧山麻将  variant 0.1.0       |
+|                      | AI：                               |   桐庐麻将  variant 0.1.0       |
+|                      |   [工具] mahjong_read_rule         | 类型：判定 时序 计数 记录       |
+|                      |   [工具] mahjong_read_source       |     公式 查表 入账 界面         |
+|                      |   [工具] mahjong_propose_change    | 搜索：[ID 或关键词]             |
+|                      |   +----------------------------+   |  ------------------------------ |
+|                      |   | 规则修改提案  等待确认     |   | hj-r-lunzhuang 轮庄             |
+|                      |   | 修改 2 个文件              |   |   -> 预览页签打开卡全文         |
+|                      |   | 门禁：通过                 |   |   [引用到对话]                  |
+|                      |   | [查看详情] [应用] [拒绝]   |   |                                 |
+|                      |   +----------------------------+   |  ------------------------------ |
+|                      |                                    | [提案] 列表与详情：理由 证据    |
+|                      |                                    |   逐文件 Diff  影响分析  门禁   |
+|                      | 输入消息...                        | [验证] 门禁报告                 |
++----------------------+------------------------------------+---------------------------------+
 ```
 
 ### 5.2 右侧「规则」页签
@@ -158,7 +161,7 @@
 | I-1 | 麻将 Bot 下发给模型的工具集合等于显式白名单，不含任何通用写文件、补丁、Shell、通用工作区修改工具 | Agent 只能产生 Proposal。白名单按阶段启用；运行中的工具发现也只能加载白名单所在分组。**移除 PiBot Capability 不等于收回工具**：命令执行、文件写入等由 PiBot 内核提供，必须单独限制（AD-13） |
 | I-2 | 正式写入只由 UI「应用」按钮触发的 RPC 执行 | Agent 在对话中说「已修改」不产生任何写入 |
 | I-3 | `sources/` 只读；`compiled/` 只由编译器生成 | Capability 的路径白名单不包含对二者的写权限 |
-| I-4 | 杭州底座任何卡或配置变更，必须在同一提案内升 `manifest.version` | 否则门禁失败，错误信息明确指向缺失项 |
+| I-4 | 杭州底座任何卡或配置变更，必须在同一提案内升 `manifest.version` 并更新 `content_hash` | `content_hash`（基础内容指纹）由服务端按提案应用后的内容计算，Agent 不提供；缺任一项门禁失败，错误信息明确指向缺失项 |
 | I-5 | 变种 `base.version` 不自动跟随底座 | 底座升版后下游锁定失配是「待升级」提示：不阻塞底座提案应用，但阻塞该变种可发布 |
 | I-6 | `modified` 卡必须是完整有效规则 | 门禁按 KB 的槽位策略（base / inherited / modified / added）校验 |
 | I-7 | 影响判定、算分、结算金额的未决内容不得被 AI 默认为 `confirmed` | AI 只能产生 `unresolved` / `disputed` + `candidates`，由策划裁决并填 `resolution` |
@@ -187,7 +190,7 @@
 | FR-09 | 提案审核 | 查看理由、证据、逐文件 Diff（新增 / 修改）、影响分析、门禁结果；继续讨论后 Agent 可修订提案；拒绝 | MUST | C |
 | FR-10 | 质量门禁 | 对提案做不落盘的内存叠加，运行 KB 的解析、结构校验与编译，一次性列出全部错误，输出结构化报告（见第八节）；下游锁定状态作为提示项 | MUST | C |
 | FR-11 | 应用 | 显式点击 → Hash 校验 → 事务写入 → 门禁复验 → 提交或回滚并报告；更新索引；事件通知前端 | MUST | C |
-| FR-12 | 版本升级 | 底座变更提案未含 manifest 升版 → 门禁失败并指出缺失；Agent 可补 `update_manifest` 变更 | MUST | C |
+| FR-12 | 版本升级与内容指纹 | 底座变更提案必须含 `update_manifest`（新 `version` 与服务端计算的新 `content_hash`），否则门禁失败并指出缺失；Agent 可补该变更 | MUST | C |
 | FR-13 | 会话与历史 | 复用 PiBot 多会话；提案独立于会话持久化，重启后可继续处理 | MUST | C |
 | FR-14 | 模型配置 | 复用 PiBot 模型 Provider；要求 Tool Calling | MUST | B |
 | FR-15 | 新建变种 | 通过对话创建 `variants/<dir>/`：manifest（含 `id_prefix`、base 锁定）、空 config、空 unresolved；后续只写差异 | SHOULD | D |
@@ -217,7 +220,7 @@ flowchart TD
 | --- | --- | --- | --- |
 | G1 解析与结构校验 | 逐文件解析（YAML 元数据 Zod）后：ID 唯一、ID 前缀与 manifest 的 `id_prefix` 一致（规则卡、config、config.ui、未决清单）、ID 前缀段与类型一致、必填槽位、引用闭合 | `@pibot/mahjong-kb`（同步自 KB `parser/` 与 `compiler/validator.ts`）；所有错误一次列出 | 失败则禁止应用 |
 | G2 编译 | 版本锁定、映射冲突、依赖闭合、发布门槛汇总 | `@pibot/mahjong-kb`（同步自 KB `compiler/kernel.ts`），编译到内存不落盘，不修改输入 | 失败则禁止应用 |
-| G3 版本规则 | 目标为底座时，变更集是否含 `manifest.version` 升级 | Capability 内规则 | 失败则禁止应用 |
+| G3 版本规则 | 目标为底座时，变更集是否含 `manifest.version` 升级与新的 `content_hash`；指纹不符由 G2 编译报出 | Capability 内规则，加 `@pibot/mahjong-kb` 的 `rulesetContentHash` | 失败则禁止应用 |
 | G4 下游锁定状态 | 目标为底座时，逐个变种：锁定版本是否匹配；匹配则试编译，失配则标「待升级」 | `@pibot/mahjong-kb` | **只展示**，不计入本提案通过条件（I-5） |
 | G5 Gold Set | KB `npm test`（执行知识库目录内的代码） | 宿主端口运行，结果解析；默认关闭，用户触发，首次确认，固定命令 | 第二阶段；不计入自动通过条件；无 Node 时显式「不支持」 |
 
@@ -345,7 +348,7 @@ fork 内的工程规范以 PiBot `AGENTS.md` 为准：TypeScript strict、ESM、
 | `id`、`status` | `draft` / `ready` / `approved` / `applied` / `rejected` / `stale` / `failed` |
 | `targetRuleset` | 规则集 ID |
 | `baseRevision` | 提案生成时的 `rulesetVersion` 与每个触及文件的 sha256 |
-| `changes[]` | `op`：`create_rule` / `update_rule` / `create_config` / `update_config` / `update_manifest` / `create_variant` / `create_unresolved` / `resolve_unresolved`；`ruleId`；`before`；`after`（完整文件内容）；`path`（服务端推导） |
+| `changes[]` | `op`：`create_rule` / `update_rule` / `create_config` / `update_config` / `update_manifest` / `create_variant` / `create_unresolved` / `resolve_unresolved`；`ruleId`；`before`；`after`（完整文件内容）；`path`（服务端推导）；`update_manifest` 里的 `content_hash` 由服务端按提案应用后的内容计算 |
 | `rationale` | 修改理由 |
 | `evidence[]` | `{ type: rule / source / config, id 或 source+section, title, excerpt }` |
 | `impact` | 底座变更时的下游影响分析 |
@@ -424,7 +427,7 @@ flowchart TD
 | AC-11 | 通过聊天新建桐庐变种并生成不少于 3 张 added 与 1 张 modified 卡，编译产物 `releasable` 与 blocker 数正确 | Phase D |
 | AC-12 | 裁决 `XS-U-001` 后，萧山 blocker 从 3 减到 2 | Phase D |
 | AC-13 | 用户触发 Gold Set 后结果展示在「验证」子视图，首次执行有确认；无 Node 机器显示「不支持」 | Phase E |
-| AC-14 | 编译器不修改输入；同一输入重复编译、多个变种按不同顺序编译，结果一致 | Phase A |
+| AC-14 | 编译器不修改输入；同一输入重复编译、多个变种按不同顺序编译，结果一致（已由 `tests/compiler/compile-purity.test.ts` 提前覆盖，Phase A 迁移后保留） | Phase A |
 | AC-15 | 事务在 `preparing`、`prepared`、`writing` 任一状态中断后，下次启动恢复，规则文件与事务前一致；新建文件被删除 | Phase C |
 
 ## 十三、风险
@@ -443,7 +446,7 @@ flowchart TD
 | R-10 | 两个仓库协同增加认知负担 | 中 | 中 | 工作流指南文档；同步脚本一键完成 |
 | R-11 | 移除 Capability 后 PiBot 内核仍向麻将 Bot 提供命令执行、文件写入等工具 | 中 | 高 | 显式白名单加运行时断言（AD-13、AC-6）；Spike S-9 |
 | R-12 | Gold Set 门禁执行了不可信知识库目录里的代码 | 低 | 中 | 默认关闭、用户触发、首次确认、固定命令（I-14） |
-| R-13 | Compiler 修改输入，门禁结果被污染（第二个变种或复用内存索引时） | 高（未修复时） | 高 | Phase A 的不可变约束与 `kernel.test.ts`（I-13、AC-14） |
+| R-13 | Compiler 修改输入，门禁结果被污染（第二个变种或复用内存索引时） | 已修复 | 高 | 已于 2026-11-24 修复并加回归测试 `tests/compiler/compile-purity.test.ts`；Phase A 迁移时保留约束（I-13、AC-14） |
 
 ## 十四、待决策
 

@@ -13,6 +13,7 @@
 | v1 | 2026-11-24 | 初稿 |
 | v1.1 | 2026-11-24 | 任务 0.1 标记完成（合并提交 `ab76048`） |
 | v2 | 2026-11-24 | 按 `dev-docs/design/2026-11-24-RuleStudio执行计划评审意见.md` 修订：Phase A 拆出纯内存 Parser，修复 Compiler 修改输入；Phase B 增加麻将 Bot 工具白名单与运行时断言、索引防过期、预览组件 Spike；Phase C 事务改为显式状态机并支持新建文件回滚；Phase E 的 Gold Set 执行改为默认关闭并需授权；环境要求写明 `engines` 与 `packageManager`；Zod 改为默认不迁移；同步 0.2、0.3、0.8 的完成状态与分支策略。逐项见下表 |
+| v2.1 | 2026-11-24 | 合并 `main`（`b6e06d4`、`b78230f`）后同步：KB Phase 3、Phase 4 已完成，Phase E 不再被阻塞；`main` 新增 `content_hash`（基础内容指纹），底座变更规则扩展为「升版本并更新指纹」；编译器修改输入的问题已单独修复并加回归测试，A-4 与 AC-14 相应标注；KB 测试增至 85 个；同步目录必须类型检查零错误（新增 `typecheck` 脚本） |
 
 ### v2 修订明细（按评审意见）
 
@@ -21,7 +22,7 @@
 | 评审项 | 处理 | 落点 | 实测校正 |
 | --- | --- | --- | --- |
 | P0-1 领域层内存加载 | 采纳：新增纯内存 `parseRuleset({ kind, files })`，拆成 Parser / Validator / Kernel / CLI | A-3、A-4、C-4、Phase A 关键约束 | 评审建议的 `parser/yaml.ts` 未单列：KB 没有独立的 YAML 处理逻辑，`parseYaml` 直接在 `parser/ruleset.ts` 里调用 |
-| P0-2 Compiler 修改输入 | 采纳：kernel 不修改输入、输出独立、结果与编译次数和变种顺序无关；加对应测试 | A-4、A-9、AC-14 | 属实。补充两点：现有测试只经 `execSync` 跑 CLI，抓不到该问题；今天只有一个变种，`compiled/` 未受影响，但第二个变种与 Studio 复用内存索引都会触发 |
+| P0-2 Compiler 修改输入 | 采纳：kernel 不修改输入、输出独立、结果与编译次数和变种顺序无关；加对应测试。**已于合并 `main` 后单独修复**，回归测试在 `tests/compiler/compile-purity.test.ts` | A-4、A-9、AC-14 | 属实。补充两点：现有测试只经 `execSync` 跑 CLI，抓不到该问题；今天只有一个变种，`compiled/` 未受影响，但第二个变种与 Studio 复用内存索引都会触发 |
 | P0-3 事务状态机 | 采纳：`preparing`、`prepared`、`writing`、`committed`、`rolled_back`、`recovery_failed`，新建文件回滚 | C-5、C-11、AC-15、需求文档 10.3 | 评审描述的「备份到一半崩溃」在原流程下不会丢数据：原流程是全部备份完成后才开始写，此时规则文件尚未改动。真正的缺口有两个：单一 `prepared` 状态无法从日志判断是否已开始写入，安全依赖代码顺序；新建文件没有回滚规则，而 `create_rule` 在 Phase C 就有，不止 Phase D |
 | P0-4 Bot 工具权限 | 采纳：显式白名单、运行时断言、Spike S-9 | B-7、B-11、AC-6、需求文档 I-1、AD-13 | 属实。补充：PiBot 的命令执行、电脑操作、记忆、审查、浏览器、连接应用、Office 等工具组由内核提供（`packages/brain/src/runtime/tools/tool-catalog.ts`），不随 Capability 移除；运行中的 `tool_discover` 还能继续加载分组，白名单必须同时约束它 |
 | P1 A-3 前缀校验范围 | 采纳：覆盖规则卡、config、config.ui、unresolved | A-3 | 无 |
@@ -52,9 +53,9 @@ flowchart LR
 | Phase B | 规则浏览、引用、只读问答 | fork | 4 - 6 天 | Phase A | AC-4、AC-5、AC-6 |
 | Phase C | 提案、门禁、应用、事务 | fork + KB（.gitignore） | 5 - 7 天 | Phase B | AC-7、AC-8、AC-9、AC-15 |
 | Phase D | 新建变种、影响分析、未决管理 | fork | 4 - 6 天 | Phase C | AC-10、AC-11、AC-12 |
-| Phase E | Gold Set 门禁、审计历史、上游合并演练 | fork + KB | 2 - 3 天 | KB Phase 3 | AC-13 |
+| Phase E | Gold Set 门禁、审计历史、上游合并演练 | fork + KB | 2 - 3 天 | KB Phase 3（已完成） | AC-13 |
 
-KB Phase 3（Gold Set）按 KB 自身计划独立推进，只阻塞 Phase E，不阻塞 B、C、D。
+KB Phase 3（Gold Set）与 Phase 4（`AGENTS.md`）已在 `main` 完成（`b78230f`），Phase E 不再被阻塞。
 
 **第一阶段真正的交付物**：策划在 PiBot 桌面应用里，通过聊天修改一张杭州规则卡，看到 Diff 与门禁结果，点击应用后写入工作区；期间 `sources/` 不变、Agent 没有写盘能力、失败可回滚。
 
@@ -110,7 +111,7 @@ PiBot fork 以 submodule 进入 `thirdparties/`，本机能 `pnpm dev` 启动并
 
 ### 目标
 
-KB 的领域层拆成不触碰文件系统、不修改输入的纯函数：Parser（内存中的文件内容 → 规则集结构）、Validator（结构校验）、Kernel（编译）；磁盘读写与命令行留在 `cli/`。不再依赖目录名与硬编码前缀，能在内存中解析、校验、编译任意规则集。纯领域目录（`schemas/`、`parser/`、`compiler/`）一键整体同步进 fork，并有漂移检查与纯度检查。**全部在 KB 仓库内完成，KB 现有 31 个测试必须持续通过。**
+KB 的领域层拆成不触碰文件系统、不修改输入的纯函数：Parser（内存中的文件内容 → 规则集结构）、Validator（结构校验）、Kernel（编译）；磁盘读写与命令行留在 `cli/`。不再依赖目录名与硬编码前缀，能在内存中解析、校验、编译任意规则集。纯领域目录（`schemas/`、`parser/`、`compiler/`）一键整体同步进 fork，并有漂移检查与纯度检查。**全部在 KB 仓库内完成，KB 现有 85 个测试必须持续通过。**
 
 ### 目标目录结构
 
@@ -122,7 +123,7 @@ KB 根目录
 │   └── ruleset.ts           parseRuleset({ kind, files })
 ├── compiler/                纯函数（同步）
 │   ├── validator.ts         validateRuleset(rs, base?, registry)
-│   └── kernel.ts            compileBase / compileVariant / dirFor / rewriteBody
+│   └── kernel.ts            compileBase / compileVariant / rulesetContentHash / dirFor / rewriteBody
 └── cli/                     磁盘读写与命令行（不同步）
     ├── loader.ts            读目录为 files 映射；从目录位置推断 kind
     ├── validate.ts          node cli/validate.ts [dir] [--json]
@@ -138,13 +139,13 @@ KB 根目录
 | A-1 | manifest 增加 `id_prefix` | `schemas/manifest.ts`：base 与 variant manifest 均加 `id_prefix: z.string().regex(/^[A-Z]{2,4}$/)`（必填）；`rulesets/hangzhou/manifest.yaml` 加 `id_prefix: HJ`；`variants/xiaoshan/manifest.yaml` 加 `id_prefix: XS` | Schema 与数据 |
 | A-2 | ID 格式通用化 | `schemas/rule.ts`、`schemas/config.ts`、`schemas/unresolved.ts`：正则改为 `/^[A-Z]{2,4}-.../`；删除 `startsWith("HJ-")` / `startsWith("XS-")` 的 Zod 检查（前缀归属由校验器按注册表核对，Zod 只管结构） | Schema |
 | A-3 | 拆分 Parser / Validator / Loader / CLI | 新建 `parser/markdown.ts`（`splitFrontMatter`、`extractSlots`、`extractBodyRefs`，自 `validator.ts` 迁出）与 `parser/ruleset.ts`：`parseRuleset({ kind, files })`，输入「相对路径（统一 `/` 分隔）→ 文件内容」映射，输出不含磁盘路径的规则集对象（`kind`、`files`、manifest、config、configUi、rules、unresolved、`errors`）；**逐文件收集解析错误**（`{ file, message }`），不在第一张坏卡处中止。`compiler/validator.ts` 只剩纯校验 `validateRuleset(rs, base?, registry)`（`registry = { baseIdPrefix, variantIdPrefix }`，取自两边 manifest 的 `id_prefix`）：新增 `type RuleSetKind = "base" \| "variant"`，核对**规则卡、`config.yaml`、`config.ui.yaml`、`unresolved.yaml`** 的 ID 前缀（base = 底座前缀；variant = 变种前缀），`base_rule_ref` / `compares_to` 目标带底座前缀；删除 `rs.dir.startsWith("variants")`。新建 `cli/loader.ts`（读目录为 `files` 映射；从目录位置推断 kind）、`cli/validate.ts`（`node cli/validate.ts [dir] [--json]`）。可选文件只忽略「不存在」：`config.ui.yaml` 改为与 `unresolved.yaml` 一致（后者已在 `23e9dff` 修复），存在但解析失败必须报错 | Parser、校验器、CLI |
-| A-4 | 编译器纯函数化与不可变 | 新建 `compiler/kernel.ts`：迁移 `compileBase`、`compileVariant`、`dirFor`、`rewriteBody` 与依赖闭合检查，输入为 `parseRuleset` 的输出，输出为结果对象，**不触碰文件系统**；`rewriteBody` 与闭合正则用注册表前缀构造。**修复输入被修改的问题**：现状 `compile.ts` 对规则做浅拷贝（第 44、99、106、111 行）后就地改写共享的 `meta.depends_on`（第 153 行），而 CLI 循环里多个变种共用同一个 `base`（第 275、287 行），第二个变种会拿到被污染的杭州规则。kernel 的三条硬性要求：不修改任何输入对象；输出拥有独立的嵌套元数据（`structuredClone`）；同一输入编译任意次、多个变种按任意顺序编译，结果一致。`compiler/compile.ts` 迁为 `cli/compile.ts`：加载 → 校验 → 调 kernel → `writeOutput`；增加 `--out <dir>`（默认 `compiled/`） | kernel + CLI |
+| A-4 | 编译器纯函数化与不可变 | 新建 `compiler/kernel.ts`：迁移 `compileBase`、`compileVariant`、`rulesetContentHash`、`dirFor`、`rewriteBody` 与依赖闭合检查，输入为 `parseRuleset` 的输出，输出为结果对象，**不触碰文件系统**；`rewriteBody` 与闭合正则用注册表前缀构造。**不修改输入**：`compile.ts` 浅拷贝后就地改写共享 `meta.depends_on` 的问题已于 2026-11-24 单独修复（回归测试 `tests/compiler/compile-purity.test.ts`），迁移时连同该测试的约束一起保留。kernel 的三条硬性要求：不修改任何输入对象；输出拥有独立的嵌套元数据（`structuredClone`）；同一输入编译任意次、多个变种按任意顺序编译，结果一致。`compiler/compile.ts` 迁为 `cli/compile.ts`：加载 → 校验 → 调 kernel → `writeOutput`；增加 `--out <dir>`（默认 `compiled/`） | kernel + CLI |
 | A-5 | Zod 版本策略 | **默认不迁移**：KB 与 `@pibot/mahjong-kb` 继续用 Zod 3（独立依赖），PiBot 的 RPC 契约用 Zod 4；两者只交换普通对象与类型，不互相嵌入 Schema 实例。本任务改为验证双主版本在 fork 内可共存：`pnpm install`、`pnpm typecheck`、`pnpm lint`（含 `tools/dev/domain-boundaries.ts`）、`mahjong-kb` 测试。仅当边界检查禁止双 Zod 主版本，或确有共享 Schema 实例的需要时，才回到「KB 迁移 Zod 4」方案（S-7 时间盒，出现行为差异即停） | 验证结论 |
-| A-6 | KB `AGENTS.md` | 执行 KB Phase 4.1：目录约定、ID 规范、四种引用、如何查规则、如何读完整规则集、`compiled/` 不可手改、`modified` 卡必须完整、底座升版规则、未决项规则。**该文件是 Studio Skill 的唯一内容来源** | `AGENTS.md` |
+| A-6 | KB `AGENTS.md` | **已由 `main` 完成（`b78230f`），无需再做。**原计划：执行 KB Phase 4.1：目录约定、ID 规范、四种引用、如何查规则、如何读完整规则集、`compiled/` 不可手改、`modified` 卡必须完整、底座升版规则、未决项规则。**该文件是 Studio Skill 的唯一内容来源** | `AGENTS.md` |
 | A-7 | 同步脚本 | 新建 `scripts/sync-studio-kb.mjs`：**只整体复制三个纯领域目录** `schemas/`、`parser/`、`compiler/` 到 `$FORK/packages/mahjong-kb/src/kb/`（相对结构与导入路径不改）；`cli/`、`tests/`、`dev-examples/` 不同步。在目标目录生成 `GENERATED.md` 说明来源与禁止手改；写 `SYNC.lock.json`（每个文件的 sha256）；`--check` 模式逐文件比对，不一致、缺失或多出文件即非零退出。`package.json` 加 `"sync:studio"`、`"sync:check"` | 脚本 + 锁文件 |
 | A-8 | fork 侧包定义 | `$FORK/packages/mahjong-kb/package.json`（`@pibot/mahjong-kb`，`"pibot": { "layer": "L2" }`，exports `./kb`，依赖 `zod`（与 KB 同主版本）、`yaml`）、`tsconfig.json`、`src/index.ts`（re-export）；`src/kb.test.ts` 校验 vendored 文件哈希与 `SYNC.lock.json` 一致 | 可被 fork 引用的包 |
 | A-9 | 测试 | 清单见下表；更新 `rule-ids` / `variant-refs` / `compile` 测试以适配新模块路径与签名。现有测试只经 `execSync` 跑 CLI，抓不到输入被修改的问题，所以不可变性与顺序测试必须直接调用 kernel | 测试 |
-| A-10 | 文档与脚本入口 | `package.json`：`validate` → `node cli/validate.ts`，`compile` → `node cli/compile.ts`；`tsconfig.json` 的 `include` 加 `parser`、`cli`；`docs/development.md`（中英）补新目录与 `sync:studio` / `sync:check`；`README.md` 目录结构补 `parser/`、`cli/`、`scripts/`；进度文档与 `progress-result/PA-执行报告.md` | 文档 |
+| A-10 | 文档与脚本入口 | `package.json`：`validate` → `node cli/validate.ts`，`compile` → `node cli/compile.ts`，新增 `typecheck` → `tsc --noEmit`（fork 的 `pnpm typecheck` 是 strict，同步目录必须零类型错误；现状 `compiler/` 有 16 个既有类型错误（`compile.ts` 14、`validator.ts` 2），`tests/` 有 18 个，Phase A 一并清零）；`tsconfig.json` 的 `include` 加 `parser`、`cli`；`docs/development.md`（中英）补新目录与 `sync:studio` / `sync:check`；`README.md` 目录结构补 `parser/`、`cli/`、`scripts/`；进度文档与 `progress-result/PA-执行报告.md` | 文档 |
 
 #### A-9 测试清单
 
@@ -161,6 +162,8 @@ KB 根目录
 | 产物不变 | `tests/compiler/compile.test.ts` | 修复前后 `npm run compile` 的 `compiled/` 无 diff |
 | 解析错误收集 | `tests/compiler/parser.test.ts` | 两张坏卡的两个错误都报出；`config.ui.yaml` 存在但格式错误时报错，不存在时通过 |
 
+其中「输入不可变」「重复编译」「多变种顺序」三项以及「输出不与输入共享引用」已由 `tests/compiler/compile-purity.test.ts`（2026-11-24）覆盖，迁移到 `kernel.test.ts` 时保留；本表新增的是纯度、新前缀、解析错误收集三项。
+
 ### 关键约束
 
 - 纯度：`schemas/`、`parser/`、`compiler/` 不得 `import "node:*"`、不得读写 `process`；文件读写只在 `cli/`。由 `purity.test.ts` 强制。
@@ -174,7 +177,7 @@ KB 根目录
 
 - AC-2：新增 `variants/<x>/`（任意前缀）不改 Schema 即可通过校验与编译
 - AC-3：`npm run sync:check` 通过；`$FORK` 内 `pnpm typecheck`、`pnpm lint` 对 `@pibot/mahjong-kb` 通过
-- `npm test` 全绿（原 31 个 + 新增）
+- `npm test` 全绿（现有 85 个 + 新增）
 - AC-14：编译器不修改输入；同一输入重复编译、多个变种按不同顺序编译，结果一致（`kernel.test.ts`）
 - `npm run compile` 产物与迁移前一致（`git diff compiled/` 为空）
 
@@ -244,7 +247,7 @@ Agent 可生成结构化提案，策划在 UI 审阅 Diff、证据、影响与�
 | C-6 | Diff 计算 | `src/brain/proposals/diff.ts`：逐文件生成行级 Diff（新增 / 修改 / 删除行），供 UI 展示；若 Spike S-8 结论允许复用 `@pibot/workspaces/ui` 的 Diff 组件则直接复用 | Diff |
 | C-7 | UI：卡片 | `features/mahjong/ProposalCard.tsx`：在聊天中按工具名与 `details.proposalId` 渲染：状态、文件数、门禁摘要、按钮「查看详情」「应用」「拒绝」；应用前若 `status !== ready` 或门禁未过则禁用并说明 | 卡片 |
 | C-8 | UI：详情与验证 | `features/mahjong/ProposalDetail.tsx`（理由、证据链接、逐文件 Diff、影响分析、门禁报告、事务步骤记录）、`features/mahjong/GateReportView.tsx`（「验证」子视图）；大型 JSON 可折叠 | 详情 |
-| C-9 | 版本规则落地 | G3：目标为底座且变更含 `rulesets/hangzhou/**` 但无 manifest `version` 升级 → 失败，错误文案指向「需在同一提案升 manifest.version」；Skill 增加该规则与 `update_manifest` 用法 | 规则 |
+| C-9 | 版本规则落地 | G3：目标为底座且变更含 `rulesets/hangzhou/**` 但无 manifest `version` 升级 → 失败，错误文案指向「需在同一提案升 manifest.version」。底座变更提案还必须携带新的 `content_hash`（`main` 的 `b6e06d4` 引入的基础内容指纹）：由服务端在生成提案时用 `rulesetContentHash` 按提案应用后的内容计算，写进 `update_manifest`，Agent 不提供；未携带或算错时 G2 编译因指纹不符失败。Skill 增加该规则与 `update_manifest` 用法 | 规则 |
 | C-10 | 运行时目录 | KB `.gitignore` 加 `.rule-studio/`；`<kb>/.rule-studio/README.md`（由 Capability 首次创建时写入）说明该目录是运行时数据 | 忽略规则 |
 | C-11 | 测试 | 门禁各层正反用例（缺槽位、引用悬空、未升版、下游失配）；事务：正常提交、门禁失败回滚、Hash 不一致过期；分别在 `preparing`、`prepared`、`writing` 三种状态下中断后的启动恢复（规则文件与事务前一致；新建文件被删除）；备份损坏时进入 `recovery_failed` 且保留现场；并发第二次 apply 被锁拒绝；fake-llm 跑「引用 → 提案 → 应用」链路 | 测试 |
 | C-12 | 文档与进度 | `$FORK/packages/mahjong/README.md` 补提案与事务；KB `docs/how-to-guides.md`（中英）加「通过对话修改规则」；进度文档与 `PC-执行报告.md` | 文档 |
@@ -295,7 +298,7 @@ Gold Set 接入门禁；审计与提案历史完整；上游合并流程演练�
 
 | # | 任务 | 要点 | 产出 |
 | --- | --- | --- | --- |
-| E-1 | KB Phase 3 | 按 KB 执行计划完成 Gold Set、calculators、Vitest（独立文档，本计划不展开） | KB 测试体系 |
+| E-1 | KB Phase 3 | **已完成（`main` 提交 `b78230f`）**：60 条 Gold Set、4 个计算纯函数、回归测试 | KB 测试体系 |
 | E-2 | G5 宿主端口与授权 | 运行知识库目录里的 `npm test` 等于执行该目录的代码（`package.json` 脚本与依赖），按外部代码对待：**默认关闭**；只能由用户在界面主动触发；每个知识库目录首次执行前弹确认，显示执行目录、固定命令与超时；命令固定为 `npm test -- --reporter=json`，不接受 Agent 或用户拼接；有超时、取消、输出记录（截断保存）并写入审计；不向 Agent 提供任何可触发它的工具，也不授予通用 Shell 权限。`packages/mahjong-contract` 定义 `KbTestPort`（输入 KB 根目录，输出解析后的 Vitest JSON 报告）；`apps/desktop/src/main/` 实现端口（`node:child_process`，带超时与 `AbortSignal`）；brain 侧端口缺失时返回显式「不支持」；门禁报告增加 G5 区块 | 门禁扩展 |
 | E-3 | 审计与历史 | `mahjong.proposals.list` 支持全部状态；「提案」子视图增加历史筛选；应用 / 拒绝 / 回滚均入审计（Spike S-5） | 历史 |
 | E-4 | 上游合并演练 | 在 fork 中执行一次「`git fetch upstream` → 合并 `upstream/main` 到 fork 的 `main` → `pnpm check` → 推送 fork → 更新 submodule 指针与 `REFERENCES.md`」，记录耗时与冲突点，更新工作流指南 | 演练记录 |
@@ -350,7 +353,7 @@ Gold Set 接入门禁；审计与提案历史完整；上游合并流程演练�
 | AC-11 | 新建桐庐变种 | D | 手动 |
 | AC-12 | 裁决未决减少 blocker | D | 自动：门禁报告 blocker 数 |
 | AC-13 | Gold Set 门禁 | E | 手动（有 / 无 Node 两种机器） |
-| AC-14 | 编译器不修改输入，结果与编译次数、变种顺序无关 | A | 自动：`kernel.test.ts` |
+| AC-14 | 编译器不修改输入，结果与编译次数、变种顺序无关（已由 `compile-purity.test.ts` 提前覆盖，Phase A 迁移后保留） | A | 自动：`kernel.test.ts`、`compile-purity.test.ts` |
 | AC-15 | 事务在任一阶段中断后可恢复；新建文件可回滚 | C | 自动：`apply.test.ts`、`recovery.test.ts` |
 
 ## 风险与应对
