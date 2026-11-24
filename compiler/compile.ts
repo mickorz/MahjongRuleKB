@@ -6,7 +6,8 @@
 // 编译器只做确定性的数据处理，不解释规则。
 import { readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync, statSync } from "node:fs";
 import { createHash } from "node:crypto";
-import { join, relative, dirname } from "node:path";
+import { join, relative, dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { stringify as toYaml } from "yaml";
 import { loadRuleset, splitFrontMatter, type LoadedRuleset, type LoadedRule } from "./validator.ts";
 import type { RuleMeta, VariantRuleMeta } from "../schemas/rule.ts";
@@ -19,8 +20,9 @@ interface CompiledRule extends LoadedRule {
 }
 
 export function rulesetContentHash(rs: LoadedRuleset): string {
+  // 正文统一成 LF 再参与指纹：git 的 autocrlf 会改变工作区换行符，指纹不能依赖检出环境
   const payload = {
-    rules: rs.rules.map((r) => ({ id: r.meta.id, meta: r.meta, body: r.body })).sort((a, b) => a.id.localeCompare(b.id)),
+    rules: rs.rules.map((r) => ({ id: r.meta.id, meta: r.meta, body: r.body.replace(/\r\n/g, "\n") })).sort((a, b) => a.id.localeCompare(b.id)),
     config: rs.config,
     configUi: rs.configUi,
   };
@@ -49,8 +51,8 @@ function rewriteBody(body: string, aliases: Record<string, string>): string {
 }
 
 /** 杭州 pass-through：直接复制，不加变体标记 */
-function compileBase(base: LoadedRuleset): CompileResult {
-  return {
+export function compileBase(base: LoadedRuleset): CompileResult {
+  const result: CompileResult = {
     rules: base.rules.map((r) => ({ ...r, origin: "base" as const })),
     config: base.config,
     configUi: base.configUi,
@@ -59,10 +61,12 @@ function compileBase(base: LoadedRuleset): CompileResult {
     blockers: [],
     counts: { inherited: 0, replaced: 0, added: 0, configMerged: 0 },
   };
+  // 结果深拷贝后返回：调用方拿不到输入里的任何对象，隔着输出也改不到输入
+  return structuredClone(result);
 }
 
 /** 萧山：合并 */
-function compileVariant(base: LoadedRuleset, variant: LoadedRuleset): CompileResult {
+export function compileVariant(base: LoadedRuleset, variant: LoadedRuleset): CompileResult {
   const vm = variant.manifest as { base: { ruleset_id: string; version: string }; ruleset_id: string; version: string; scope: Record<string, unknown> };
   const bm = base.manifest as { ruleset_id: string; version: string; scope: Record<string, unknown> };
 
@@ -169,8 +173,9 @@ function compileVariant(base: LoadedRuleset, variant: LoadedRuleset): CompileRes
   // P2-C.5 重写依赖引用（规则别名 + 配置别名）
   const allAliases = { ...aliases, ...configAliases };
   for (const r of out) {
+    // out 里是浅拷贝，meta 仍可能与输入共享：必须生成新的 meta，不能就地改写
     const meta = r.meta as RuleMeta;
-    meta.depends_on = meta.depends_on.map((d) => allAliases[d] ?? d);
+    r.meta = { ...meta, depends_on: meta.depends_on.map((d) => allAliases[d] ?? d) };
     r.body = rewriteBody(r.body, allAliases);
   }
 
@@ -208,7 +213,7 @@ function compileVariant(base: LoadedRuleset, variant: LoadedRuleset): CompileRes
   }
   const uniqueBlockers = [...new Set(blockers)];
 
-  return {
+  const result: CompileResult = {
     rules: out,
     config,
     configUi,
@@ -223,6 +228,8 @@ function compileVariant(base: LoadedRuleset, variant: LoadedRuleset): CompileRes
     blockers: uniqueBlockers,
     counts: { inherited: inheritedCount, replaced, added, configMerged },
   };
+  // 结果深拷贝后返回：调用方拿不到输入里的任何对象，隔着输出也改不到输入
+  return structuredClone(result);
 }
 
 /** 写产物 */
@@ -292,21 +299,26 @@ function writeOutput(dir: string, result: CompileResult, unresolved: unknown[]) 
   writeFileSync(join(dir, "compile-report.md"), report, "utf8");
 }
 
-// 主流程
-const base = loadRuleset("rulesets/hangzhou");
-if (validateRuleset(base).length) throw new Error("rulesets/hangzhou 校验未通过，先跑 node compiler/validator.ts");
+/** 主流程：校验并编译杭州与 variants/ 下全部变种，写入 compiled/ */
+function main() {
+  const base = loadRuleset("rulesets/hangzhou");
+  if (validateRuleset(base).length) throw new Error("rulesets/hangzhou 校验未通过，先跑 node compiler/validator.ts");
 
-writeOutput("compiled/hangzhou", compileBase(base), []);
+  writeOutput("compiled/hangzhou", compileBase(base), []);
 
-const variantsDir = "variants";
-for (const name of readdirSync(variantsDir)) {
-  const vdir = join(variantsDir, name);
-  if (!statSync(vdir).isDirectory()) continue;
-  const variant = loadRuleset(vdir);
-  const errs = validateRuleset(variant, base);
-  if (errs.length) throw new Error(`${vdir} 校验未通过：\n${errs.map((e) => `  ${e.file} ${e.path} ${e.message}`).join("\n")}`);
-  const result = compileVariant(base, variant);
-  writeOutput(join("compiled", name), result, variant.unresolved);
-  console.log(`[compiled] ${name}: ${result.rules.length} 条规则（继承 ${result.counts.inherited} / 替换 ${result.counts.replaced} / 新增 ${result.counts.added}），配置 ${result.config.length} 项，${result.manifest.releasable ? "可发布" : `不可发布（${result.blockers.length} 个阻塞）`}`);
+  const variantsDir = "variants";
+  for (const name of readdirSync(variantsDir)) {
+    const vdir = join(variantsDir, name);
+    if (!statSync(vdir).isDirectory()) continue;
+    const variant = loadRuleset(vdir);
+    const errs = validateRuleset(variant, base);
+    if (errs.length) throw new Error(`${vdir} 校验未通过：\n${errs.map((e) => `  ${e.file} ${e.path} ${e.message}`).join("\n")}`);
+    const result = compileVariant(base, variant);
+    writeOutput(join("compiled", name), result, variant.unresolved);
+    console.log(`[compiled] ${name}: ${result.rules.length} 条规则（继承 ${result.counts.inherited} / 替换 ${result.counts.replaced} / 新增 ${result.counts.added}），配置 ${result.config.length} 项，${result.manifest.releasable ? "可发布" : `不可发布（${result.blockers.length} 个阻塞）`}`);
+  }
+  console.log(`[compiled] hangzhou: ${base.rules.length} 条规则（pass-through）`);
 }
-console.log(`[compiled] hangzhou: ${base.rules.length} 条规则（pass-through）`);
+
+// 直接运行时执行（argv[1] 是本文件路径）；被测试 import 时不跑主流程
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();
