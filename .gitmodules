@@ -1,0 +1,4 @@
+[submodule "thirdparties/PiBot"]
+	path = thirdparties/PiBot
+	url = https://github.com/mickorz/PiBot.git
+	branch = main

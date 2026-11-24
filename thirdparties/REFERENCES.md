@@ -6,7 +6,7 @@
 
 | ID | 项目 | 仓库 | 本地路径 | 固定 commit | License | 复用策略 | 研究目的 |
 |---|---|---|---|---|---|---|---|
-<!-- 暂无条目。引入第一个第三方项目时，按上表列格式新增一行，ID 从 REF-001 起连续编号。 -->
+| REF-001 | PiBot | 上游 `https://github.com/w01fb0ss/PiBot`；fork `https://github.com/mickorz/PiBot`（submodule 指向 fork，`.gitmodules` 跟踪分支 `main`） | `thirdparties/PiBot` | `152425febf89487f6494e002122646fdd3bb041a`（2026-11-24 引入，与上游 `main` 一致） | Apache-2.0（仓库内 `LICENSE`；`NOTICE` 注明 Pi Bot 名称与 Logo 不在许可范围内） | 开发基座（fork，允许在 fork 内修改；与「只读参考」的规则修订见 `dev-docs/planning/2026-11-24-RuleStudio执行计划.md` 任务 0.7） | Mahjong Rule Studio 的桌面工作台与 Agent 运行时底座；在 PiBot 分层内新增 Mahjong Capability（见 `dev-docs/design/2026-11-24-RuleStudio需求文档.md`） |
 
 ## Submodule 引入与登记流程
 
