@@ -1,6 +1,7 @@
 # Mahjong Rule Studio 需求文档
 
 > 依据：`dev-docs/design/新增规则聊天窗口.md`（设计讨论稿，含两版架构：自建 React + Hono 方案、PiBot 二开方案）、`dev-docs/planning/2025-11-24-执行计划.md`（v3.2 架构冻结版）、仓库实测（`git log`、`schemas/`、`compiler/`、`dev-docs/progress/执行进度.md`）、PiBot 源码核验（上游 `main` commit `152425f`：`AGENTS.md`、`NOTICE`、`.nvmrc`、`packages/brain/src/core/capability.ts`、`packages/brain-app/src/index.ts`、`packages/protocol/src/aggregate/api.ts`、`tools.ts`、`packages/plugins/src/brain/knowledge/tools.ts`、`apps/desktop/src/renderer/features/side-pane/SidePane.tsx`）
+> 评审依据：`dev-docs/design/2026-11-24-RuleStudio执行计划评审意见.md`（主要针对执行计划；需求文档同步修订受影响处）
 > 日期：2026-11-24
 > 状态：初稿，待评审
 > 已定决策：第一阶段本地单人使用；以 PiBot 为开发基座，作为 submodule 放在 `thirdparties/PiBot`，后续开发基于它修改
@@ -11,6 +12,7 @@
 | --- | --- | --- |
 | v1 | 2026-11-24 | 初稿：核对设计稿前提、确定范围与不变量、功能需求、架构决策、验收与风险 |
 | v1.1 | 2026-11-24 | 合并 `main` 后更新第一节第 9 行的现状描述 |
+| v1.2 | 2026-11-24 | 按评审意见修订（`dev-docs/design/2026-11-24-RuleStudio执行计划评审意见.md`）：第一节第 7 至 9 行按实测补充环境与 fork 状态；I-1 改为显式工具白名单，I-9 改为显式状态机，新增 I-13、I-14；FR-01、FR-10、FR-19 修订；8.1 的 G1 改为解析加校验、G5 默认关闭；AD-1、AD-3、AD-5 修订，新增 AD-13；10.3 事务改为显式状态机并支持新建文件回滚；安全表、验收（AC-3、AC-6，新增 AC-14、AC-15）、风险、待决策同步。实测校正两项并按实测写入：`corepack` 命令在 Node 26 上不可用；`unresolved.yaml` 的宽泛 catch 已在 `23e9dff` 修复 |
 
 ## 一、对设计讨论稿前提的核对与纠正
 
@@ -24,9 +26,9 @@
 | 4 | 「PiBot 自带知识库只支持 Obsidian / Notion 只读检索」 | **属实**。`knowledge/tools.ts` 只有 `knowledge_search` 与 `knowledge_read` | 规则提案、写入、校验必须自建 Mahjong Capability |
 | 5 | 「PiBot 工作区变更恢复仅 macOS」 | **属实**。README 原文：Every change is listed, reviewable and, on macOS, restorable from automatic checkpoints | Windows 下事务备份与回滚必须自建，不可依赖 PiBot |
 | 6 | 「PiBot 采用 Apache-2.0，可 Fork 二开」 | **属实但有限制**。`NOTICE` 明确「Pi Bot / PiBot」名称与 Logo 不在许可范围内，fork 不得以暗示背书的方式使用 | 二开产品必须改名（Mahjong Rule Studio），保留 LICENSE / NOTICE / THIRD_PARTY_NOTICES 并注明衍生关系 |
-| 7 | 未提及 | PiBot 要求 Node `26.11.1`（`.nvmrc`）与 pnpm 12；本机 Node `24.18.0`，未安装 pnpm | 环境前置任务；KB 的 Node 24 代码可在 Node 26 下运行 |
-| 8 | 未提及 | KB 用 Zod 3（`^3.24.0`），PiBot 锁定 Zod `4.6.5` | KB 领域代码若要进 fork 复用，KB 需迁移到 Zod 4，由 KB 现有测试验证 |
-| 9 | 「新建独立仓库 MahjongRuleStudio」 | 用户已决定：在本仓库分支 `mickorz/Mahjong-Rule-Studio` 开发，PiBot 作为 submodule 放 `thirdparties/`。编写时该分支落后 `main` 一个提交（`23e9dff`），已于 2026-11-24 合并（`ab76048`） | 与 `CLAUDE.md`「thirdparties 只读」冲突，需修订规范（见 AD-10） |
+| 7 | 未提及 | PiBot `.nvmrc` 指定 Node `26.11.1`，`engines.node` 为 `^22.12.0 \|\| ^24.0.0 \|\| >=26.0.0`，`packageManager` 固定 `pnpm@12.14.0`；本机 Node `24.18.0`（满足 engines，与 `.nvmrc` 不同），未安装 pnpm。Node.js 从 25 起不再捆绑 Corepack，26.11.1 上没有 `corepack` 命令 | 环境前置任务：正式开发用 26.11.1，pnpm 用 `npm i -g pnpm@12.14.0` 安装；KB 的 Node 24 代码可在 Node 26 下运行 |
+| 8 | 未提及 | KB 用 Zod 3（`^3.24.0`），PiBot 锁定 Zod `4.6.5` | 默认不迁移：进 fork 的 `@pibot/mahjong-kb` 作为独立包继续用 Zod 3，RPC 契约用 Zod 4，二者只交换普通对象（AD-5） |
+| 9 | 「新建独立仓库 MahjongRuleStudio」 | 用户已决定：在本仓库分支 `mickorz/Mahjong-Rule-Studio` 开发，PiBot 作为 submodule 放 `thirdparties/`。编写时该分支落后 `main` 一个提交（`23e9dff`），已于 2026-11-24 合并（`ab76048`）；fork `mickorz/PiBot` 已创建，submodule 已添加（`3f9136d`，跟踪 fork 的 `main`） | 与 `CLAUDE.md`「thirdparties 只读」冲突，需修订规范（见 AD-10） |
 | 10 | 「`compiled/xiaoshan/` 86 条规则」与「完整萧山 = (N − a) + b」 | 进度文档已修正公式为 **N + b**（modified 卡替换后自身进产物） | 需求文档沿用修正后公式 |
 
 ## 二、目标
@@ -119,7 +121,7 @@
 
 | 子视图 | 内容 |
 | --- | --- |
-| 浏览 | 规则集切换（类型、版本、基础锁定、是否可发布）；按 11 类筛选；按 ID / 名称 / 正文关键词搜索；每条显示 ID、名称、状态、blocker 标记；点击在「预览」页签打开卡全文（复用 PiBot 既有 FilePreviewPane）；「引用到对话」 |
+| 浏览 | 规则集切换（类型、版本、基础锁定、是否可发布）；按 11 类筛选；按 ID / 名称 / 正文关键词搜索；每条显示 ID、名称、状态、blocker 标记；点击在「预览」页签打开卡全文（优先复用 PiBot 既有 FilePreviewPane，可行性待 Spike 确认）；「引用到对话」 |
 | 提案 | 全部提案（按状态筛选）；详情：修改理由、证据引用（可点开规则或原始资料）、逐文件 Diff、影响分析、门禁报告；操作：应用、拒绝、继续讨论 |
 | 验证 | 最近一次门禁报告的结构化展示：结构校验、编译、版本规则、下游锁定状态、Gold Set（第二阶段） |
 
@@ -153,7 +155,7 @@
 
 | # | 不变量 | 说明 |
 | --- | --- | --- |
-| I-1 | Agent 工具集不含任何通用写文件、补丁、Shell 工具 | Agent 只能产生 Proposal。PiBot 的 `write_file` / `apply_patch` / 命令执行工具不注册给麻将 Bot |
+| I-1 | 麻将 Bot 下发给模型的工具集合等于显式白名单，不含任何通用写文件、补丁、Shell、通用工作区修改工具 | Agent 只能产生 Proposal。白名单按阶段启用；运行中的工具发现也只能加载白名单所在分组。**移除 PiBot Capability 不等于收回工具**：命令执行、文件写入等由 PiBot 内核提供，必须单独限制（AD-13） |
 | I-2 | 正式写入只由 UI「应用」按钮触发的 RPC 执行 | Agent 在对话中说「已修改」不产生任何写入 |
 | I-3 | `sources/` 只读；`compiled/` 只由编译器生成 | Capability 的路径白名单不包含对二者的写权限 |
 | I-4 | 杭州底座任何卡或配置变更，必须在同一提案内升 `manifest.version` | 否则门禁失败，错误信息明确指向缺失项 |
@@ -161,10 +163,12 @@
 | I-6 | `modified` 卡必须是完整有效规则 | 门禁按 KB 的槽位策略（base / inherited / modified / added）校验 |
 | I-7 | 影响判定、算分、结算金额的未决内容不得被 AI 默认为 `confirmed` | AI 只能产生 `unresolved` / `disputed` + `candidates`，由策划裁决并填 `resolution` |
 | I-8 | 应用前对每个触及文件做 Hash 校验 | 与提案生成时不一致 → 提案标记 `stale`，禁止覆盖，要求重新生成 |
-| I-9 | 多文件写入走事务 | 备份 → 写入 → 门禁复验 → 通过则提交，失败则回滚；崩溃后下次启动按事务日志恢复 |
+| I-9 | 多文件写入走显式状态机的事务 | `preparing` → `prepared` → `writing` → 提交或回滚；备份全部完成并核对后才允许写入；新建文件回滚时删除；崩溃后下次启动按事务日志与状态恢复（10.3） |
 | I-10 | 应用后不自动 `git commit` / `push` | 只改工作区 |
 | I-11 | 可以保存 ≠ 可以发布 | 存在未决或争议时允许保存草稿，编译产物 `releasable: false` |
 | I-12 | Agent 不提供文件路径 | 提案只含规则集 ID 与规则 ID；路径由服务端按注册表推导 |
+| I-13 | 领域层是纯函数 | 解析、校验、编译不触碰文件系统、不修改输入；结果与编译次数、变种顺序无关（AD-3） |
+| I-14 | Gold Set 门禁只能由用户显式触发 | 运行知识库目录里的 `npm test` 等于执行该目录的代码：默认关闭、首次确认、固定命令；Agent 没有任何可触发它的工具（FR-19） |
 
 ## 七、功能需求
 
@@ -172,7 +176,7 @@
 
 | ID | 需求 | 描述 | 优先级 | 阶段 |
 | --- | --- | --- | --- | --- |
-| FR-01 | 知识库工作区 | 选择、切换 KB 根目录；校验目录含 `rulesets/`、`compiler/`、`package.json`；持久化；未设置时在「规则」页签提示并引导选择 | MUST | B |
+| FR-01 | 知识库工作区 | 选择、切换 KB 根目录；校验目录含 `rulesets/`、`schemas/`、`package.json`；持久化；未设置时在「规则」页签提示并引导选择 | MUST | B |
 | FR-02 | 规则集发现 | 扫描 `rulesets/*` 与 `variants/*` 的 manifest；展示 kind、version、base 锁定、`id_prefix`、是否可发布（读 `compiled/*/manifest.yaml` 的 `releasable`，无产物时实时编译） | MUST | B |
 | FR-03 | 规则浏览 | 按规则集、类型、状态筛选；按 ID、名称、正文关键词搜索；查看卡全文；查看来源定位；查看 `base_rule_ref` / `compares_to` / `depends_on` 三类关系与反向依赖 | MUST | B |
 | FR-04 | 原始资料阅读 | 只读打开 `sources/` 下文件；从规则卡的 `sources[].section` 跳转到对应章节 | MUST | B |
@@ -181,7 +185,7 @@
 | FR-07 | 只读问答与比较 | Agent 通过只读工具回答；比较两个规则集或两张规则卡；工具调用过程可见 | MUST | B |
 | FR-08 | 提案生成 | `mahjong_propose_change` 产生结构化提案：变更列表、理由、证据引用；每项变更含规则集、规则 ID、操作类型、完整新内容；服务端补齐路径与原文件 Hash | MUST | C |
 | FR-09 | 提案审核 | 查看理由、证据、逐文件 Diff（新增 / 修改）、影响分析、门禁结果；继续讨论后 Agent 可修订提案；拒绝 | MUST | C |
-| FR-10 | 质量门禁 | 对提案做内存叠加后运行 KB 的结构校验与编译，输出结构化报告（见第八节）；下游锁定状态作为提示项 | MUST | C |
+| FR-10 | 质量门禁 | 对提案做不落盘的内存叠加，运行 KB 的解析、结构校验与编译，一次性列出全部错误，输出结构化报告（见第八节）；下游锁定状态作为提示项 | MUST | C |
 | FR-11 | 应用 | 显式点击 → Hash 校验 → 事务写入 → 门禁复验 → 提交或回滚并报告；更新索引；事件通知前端 | MUST | C |
 | FR-12 | 版本升级 | 底座变更提案未含 manifest 升版 → 门禁失败并指出缺失；Agent 可补 `update_manifest` 变更 | MUST | C |
 | FR-13 | 会话与历史 | 复用 PiBot 多会话；提案独立于会话持久化，重启后可继续处理 | MUST | C |
@@ -190,7 +194,7 @@
 | FR-16 | 修改继承规则 | 「沿用但加限制」转为 `modified` + `base_rule_ref` 的完整卡 | SHOULD | D |
 | FR-17 | 底座影响分析 | 底座变更提案展示下游每个变种的 inherited / modified / 依赖卡清单与锁定状态；「升级变种锁定」作为独立提案 | SHOULD | D |
 | FR-18 | 未决项管理 | 新增、裁决 `unresolved.yaml` 条目；裁决必须填 `resolution`；blocker 影响 `releasable` | SHOULD | D |
-| FR-19 | Gold Set 门禁 | 应用后可选运行 KB `npm test`；本机无 Node 时明确「不支持」而非跳过 | LATER | E |
+| FR-19 | Gold Set 门禁 | 默认关闭，只能由用户在界面主动触发；每个知识库目录首次执行前确认（显示执行目录、固定命令、超时）；有超时、取消、输出记录并写审计；Agent 无触发途径；本机无 Node 时明确「不支持」而非跳过 | LATER | E |
 | FR-20 | 审计与历史 | 应用、拒绝写入 PiBot 审计日志；提案历史列表 | SHOULD | E |
 
 ## 八、质量门禁
@@ -199,23 +203,23 @@
 
 ```mermaid
 flowchart TD
-    P[提案变更集] --> G1[结构校验]
+    P[提案变更集] --> G1[解析与结构校验]
     G1 --> G2[编译]
     G2 --> G3[版本规则]
     G3 --> Q{目标规则集全部通过}
     Q -->|否| FAIL[门禁失败 禁止应用]
     Q -->|是| G4[下游锁定状态]
     G4 --> OK[门禁通过 允许应用]
-    OK -.-> G5[Gold Set 第二阶段]
+    OK -.-> G5[Gold Set 默认关闭 第二阶段]
 ```
 
 | 层 | 内容 | 实现 | 对应用的影响 |
 | --- | --- | --- | --- |
-| G1 结构校验 | YAML 元数据 Zod、ID 唯一、ID 前缀段与类型一致、必填槽位、引用闭合、config 可解析、未决清单引用 | `@pibot/mahjong-kb`（同步自 KB `compiler/validator.ts`） | 失败则禁止应用 |
-| G2 编译 | 版本锁定、映射冲突、依赖闭合、发布门槛汇总 | `@pibot/mahjong-kb`（同步自 KB `compiler/compile.ts` 纯函数部分），编译到内存不落盘 | 失败则禁止应用 |
+| G1 解析与结构校验 | 逐文件解析（YAML 元数据 Zod）后：ID 唯一、ID 前缀与 manifest 的 `id_prefix` 一致（规则卡、config、config.ui、未决清单）、ID 前缀段与类型一致、必填槽位、引用闭合 | `@pibot/mahjong-kb`（同步自 KB `parser/` 与 `compiler/validator.ts`）；所有错误一次列出 | 失败则禁止应用 |
+| G2 编译 | 版本锁定、映射冲突、依赖闭合、发布门槛汇总 | `@pibot/mahjong-kb`（同步自 KB `compiler/kernel.ts`），编译到内存不落盘，不修改输入 | 失败则禁止应用 |
 | G3 版本规则 | 目标为底座时，变更集是否含 `manifest.version` 升级 | Capability 内规则 | 失败则禁止应用 |
 | G4 下游锁定状态 | 目标为底座时，逐个变种：锁定版本是否匹配；匹配则试编译，失配则标「待升级」 | `@pibot/mahjong-kb` | **只展示**，不计入本提案通过条件（I-5） |
-| G5 Gold Set | KB `npm test` | 宿主端口运行，结果解析 | 第二阶段；无 Node 时显式「不支持」 |
+| G5 Gold Set | KB `npm test`（执行知识库目录内的代码） | 宿主端口运行，结果解析；默认关闭，用户触发，首次确认，固定命令 | 第二阶段；不计入自动通过条件；无 Node 时显式「不支持」 |
 
 **通过条件**：G1 + G2 + G3 对目标规则集全部通过。
 
@@ -230,11 +234,11 @@ flowchart TD
 
 | ID | 决策 | 理由 | 代价与缓解 |
 | --- | --- | --- | --- |
-| AD-1 | **fork PiBot 作为开发基座**。submodule 路径 `thirdparties/PiBot`，指向我方 fork；上游 `w01fb0ss/PiBot` 固定 commit `152425f` 作为合并基线 | 注册 Capability 必须修改 `packages/protocol/src/aggregate/*` 与 `packages/brain-app/src/index.ts`；Plugin SDK 只支持 MCP，不能注册 RPC 与 UI | 上游更新需手动合并；固定 commit、按需合并、登记 REFERENCES |
+| AD-1 | **fork PiBot 作为开发基座**。submodule 路径 `thirdparties/PiBot`，指向 fork `mickorz/PiBot`（跟踪其 `main`，开发直接在该分支上）；上游 `w01fb0ss/PiBot` 的 `upstream/main`（初始为 `152425f`）作为合并基线 | 注册 Capability 必须修改 `packages/protocol/src/aggregate/*` 与 `packages/brain-app/src/index.ts`；Plugin SDK 只支持 MCP，不能注册 RPC 与 UI | 上游更新需手动合并；固定 commit、按需合并、登记 REFERENCES |
 | AD-2 | **仓库边界**：KB 仓库保持「规则知识库」（数据、schemas、compiler、tests）；Studio 代码全部在 fork 内：`packages/mahjong-kb`、`packages/mahjong-contract`、`packages/mahjong`、`apps/desktop` 渲染层。KB 目录在运行时作为工作区打开 | KB 不混入桌面应用代码；KB 可独立测试与演进 | 两个仓库协同：KB 改领域代码后需同步（AD-3） |
-| AD-3 | **KB 领域代码以同步复制方式进 fork**，不在运行时 import。`schemas/` 与 `compiler/` 的纯函数部分同步到 `packages/mahjong-kb/src/kb/`，目录结构与相对导入保持不变；KB 侧提供 `npm run sync:studio` 与 `npm run sync:check`，后者逐文件比对哈希，不一致即失败 | 运行时 import 外部目录的 `.ts` 依赖 Electron 内置 Node 的类型剥离行为；Zod 3 / 4 冲突；策划机器可能没有 Node。同步检查让漂移无法被忽略 | 改 KB 领域代码后多一步同步；`sync:check` 进 fork 的 `pnpm check` 前置说明 |
+| AD-3 | **KB 领域代码以同步复制方式进 fork**，不在运行时 import。KB 的三个纯领域目录 `schemas/`、`parser/`、`compiler/` 整体同步到 `packages/mahjong-kb/src/kb/`，相对导入不变；`cli/` 不同步。KB 侧以纯度测试保证这三个目录不引用 `node:` 模块，并提供 `npm run sync:studio` 与 `npm run sync:check`（逐文件比对哈希，不一致、缺失或多出即失败） | 运行时 import 外部目录的 `.ts` 依赖 Electron 内置 Node 的类型剥离行为，且应用版本会绑死构建时的知识库代码版本；策划机器可能没有 Node。同步检查让漂移无法被忽略 | 改 KB 领域代码后多一步同步；`sync:check` 进 fork 的 `pnpm check` 前置说明 |
 | AD-4 | **门禁 G1 至 G4 在进程内运行**，对提案做内存叠加，不写盘、不起子进程。Gold Set（G5）需要 Node 时走宿主端口，端口缺失时返回显式「不支持」 | 策划无需安装 Node 即可使用门禁；符合 PiBot「`packages/*` 不为 Agent 命令 spawn 子进程」与「不支持就明说」的约束 | G5 在无 Node 机器上不可用，UI 明示 |
-| AD-5 | **KB 迁移到 Zod 4**，与 PiBot 对齐 | 同一份 schemas 在 KB（Zod 3）与 fork（Zod 4）下行为必须一致；迁移后由 KB 现有 31 个测试验证 | 迁移风险由 Spike S-7 先行验证 |
+| AD-5 | **Zod 保持双主版本：KB 与 `@pibot/mahjong-kb` 用 Zod 3，PiBot RPC 契约用 Zod 4**；不迁移 | 两者只交换普通对象与类型，不互相嵌入 Schema 实例；pnpm 允许工作区内多主版本共存；不迁移就没有「校验行为悄悄变化」的风险 | 需验证 fork 的边界检查不禁止双 Zod 主版本（Spike S-7）；不通过时才回到迁移方案 |
 | AD-6 | **提案存储用文件**：`<kb>/.rule-studio/` 下 JSON + 事务目录，加入 `.gitignore`。不用 SQLite | 提案与 KB 目录绑定、可 grep、随目录迁移；无需迁移脚本；PiBot 的 `node:sqlite` 留给需要查询能力时再引入 | 单写入锁；并发由本地单人前提保证 |
 | AD-7 | **Agent 领域知识用 PiBot Skill 承载**（SKILL.md，内容来自 KB `AGENTS.md`），工具由 Capability 注册并经 PiBot 策略引擎。只读工具与 `mahjong_propose_change` 均 allow（后者不写盘）；审批发生在 Proposal 卡，不用通用审批卡 | 不重复造审批；审批界面需要展示 Diff 与门禁，通用审批卡不够 | 需确认内置 Skill 的打包方式（Spike S-4） |
 | AD-8 | **裁剪 PiBot 功能**：组合根只保留桌面运行所需 Capability 与 mahjong；禁用电脑操作、浏览器、例程、远程、手机端、中继、外部 Agent、Office、图片 | 缩小攻击面与维护面 | 最小集合需实验确定（Spike S-2） |
@@ -242,6 +246,7 @@ flowchart TD
 | AD-10 | **修订 `CLAUDE.md` thirdparties 规则**：增加「开发基座（fork）」类别，允许在该类别下修改；`thirdparties/REFERENCES.md` 登记 REF-001 | 现行规则「只读」与用户决策冲突 | 规则修订随 Phase 0 提交 |
 | AD-11 | **ID 前缀由 manifest 声明**：manifest 增加 `id_prefix`；Zod 只校验通用格式；校验器按注册表核对前缀 | 新增地方麻将不改 Schema | Phase A 完成，KB 测试覆盖 |
 | AD-12 | **validator 与 compile 显式接收 `kind`**，不依赖目录名 | Studio 在内存中叠加时没有真实目录 | Phase A 完成 |
+| AD-13 | **麻将 Bot 使用显式工具白名单**（`MAHJONG_BOT_TOOL_ALLOWLIST`，按阶段启用），并有运行时测试断言实际下发给模型的工具集合 | PiBot 的命令执行、文件写入等工具由内核提供，移除 Capability 不会收回它们；工具发现还能在运行中继续加载分组 | 注入点由 Spike S-9 确定；找不到时在 fork 内加 Bot 级白名单字段 |
 
 ### 9.1 架构
 
@@ -303,7 +308,7 @@ flowchart TD
 
 | 位置 | 改动 | 阶段 |
 | --- | --- | --- |
-| `packages/mahjong-kb/`（新） | `@pibot/mahjong-kb`，L2，依赖 `zod`、`yaml`；`src/kb/` 为同步目录，顶部注明「生成自 MahjongRuleKB，勿手改」 | A、B |
+| `packages/mahjong-kb/`（新） | `@pibot/mahjong-kb`，L2，依赖 `zod`（与 KB 同主版本）、`yaml`；`src/kb/` 下的 `schemas/`、`parser/`、`compiler/` 为同步目录，顶部注明「生成自 MahjongRuleKB，勿手改」 | A、B |
 | `packages/mahjong-contract/`（新） | `@pibot/mahjong-contract`，L2，依赖 `protocol-base`、`zod`；RPC 方法表、事件表、工具规格、共享 Schema | B |
 | `packages/mahjong/`（新） | `@pibot/mahjong`，L2；`src/brain/capability.ts`、`registry.ts`、`repository.ts`、`source-reader.ts`、`workspace.ts`、`tools.ts`、`rpc.ts`、`proposals/`、`gate/`、`mutation/`、`store/` | B、C、D |
 | `packages/protocol/src/aggregate/api.ts` | spread `MahjongMethods`、`MahjongEvents`；事件加入 `EventEnvelopeSchema` | B |
@@ -313,7 +318,7 @@ flowchart TD
 | `apps/desktop/src/renderer/features/side-pane/use-side-pane.ts` | `SidePaneTab` 增加 `"rules"` | B |
 | `apps/desktop/src/renderer/features/settings/` | 知识库目录设置行 | B |
 | `apps/desktop/`（资源） | 内置 Skill | B |
-| `apps/desktop/src/main/` | G5 宿主端口（运行 `npm test`） | E |
+| `apps/desktop/src/main/` | G5 宿主端口（用户授权后运行固定的 `npm test`） | E |
 
 fork 内的工程规范以 PiBot `AGENTS.md` 为准：TypeScript strict、ESM、pnpm workspace；UI 文案走 `@pibot/i18n` 且中英同改；颜色只用 `@pibot/ui` 主题 token；每个 RPC 用 zod 定义；工具必经策略；合并前 `pnpm check`。本仓库 `CLAUDE.md` 对 fork 内代码不适用，但对 KB 仓库与本仓库文档适用。
 
@@ -328,7 +333,7 @@ fork 内的工程规范以 PiBot `AGENTS.md` 为准：TypeScript strict、ESM、
 │   └── ...
 ├── transactions/             # 事务，一目录一事务
 │   └── <tx-id>/
-│       ├── manifest.json     # 状态、文件列表、原始与新 Hash、时间
+│       ├── manifest.json     # 状态、文件清单（path、existedBefore、原始与新 Hash）、时间
 │       └── originals/        # 原文件备份，保持相对路径
 └── index.json                # 规则索引缓存，可重建，不作为事实源
 ```
@@ -357,17 +362,35 @@ flowchart TD
     A[点击应用] --> B[校验提案状态与门禁结果]
     B --> C[逐文件校验 Hash]
     C -->|不一致| STALE[标记提案过期 终止]
-    C --> D[获取写入锁 创建事务目录 状态 prepared]
-    D --> E[备份原文件到 originals]
-    E --> F[写入全部变更文件]
-    F --> G[对真实文件系统复跑门禁]
-    G -->|失败| RB[恢复 originals 标记 rolled back 提案 failed]
-    G -->|通过| CM[标记 committed 提案 applied]
-    CM --> H[更新索引 写审计 发事件 释放锁]
-    RB --> H
+    C --> D[获取写入锁 创建事务目录 状态 preparing]
+    D --> E[记录文件清单与 existedBefore 备份全部原文件]
+    E --> F[逐个核对备份 Hash]
+    F -->|不一致| RF[标记 recovery failed 终止]
+    F --> G[状态 prepared]
+    G --> H[状态 writing 然后写入全部变更文件]
+    H --> I[对真实文件系统复跑门禁]
+    I -->|失败| RB[恢复原文件并删除新建文件 再核对 Hash]
+    RB -->|通过| RBT[标记 rolled back 提案 failed]
+    RB -->|失败| RF
+    I -->|通过| CM[标记 committed 提案 applied]
+    CM --> J[更新索引 写审计 发事件 释放锁]
+    RBT --> J
 ```
 
-启动时扫描 `transactions/`：状态为 `prepared` 的事务一律回滚（尚未提交，恢复 originals 是安全默认）；`committed` 保留备份供人工查看；`rolled_back` 记录原因。
+每次状态迁移都原子写 `manifest.json`。写入只可能在 `writing` 及之后发生，所以日志里的状态本身就说明「规则文件可能已被改动」，恢复逻辑不依赖对代码顺序的假设。
+
+逐文件清单记录 `path`、`existedBefore`、原始与新 sha256。回滚时 `existedBefore: true` 的文件从 `originals/` 恢复并核对 Hash；`existedBefore: false` 的文件（`create_rule` 等新建文件，第一阶段就有）直接删除并清理因此产生的空目录。
+
+启动时扫描 `transactions/`，按状态恢复：
+
+| 状态 | 含义 | 恢复动作 |
+| --- | --- | --- |
+| `preparing` | 备份未完成，尚未写入任何规则文件 | 删除事务目录，提案回到可重新应用的状态 |
+| `prepared` | 备份完整，尚未写入 | 恢复原文件（幂等），标记 `rolled_back` |
+| `writing` | 可能已写入部分文件 | 恢复原文件、删除新建文件并核对 Hash，标记 `rolled_back`；核对失败则 `recovery_failed` |
+| `committed` | 已提交 | 保留结果与备份 |
+| `rolled_back` | 已回滚 | 保留记录 |
+| `recovery_failed` | 备份损坏，或恢复后 Hash 不符 | 保留现场，界面提示人工处理，不自动重试 |
 
 ## 十一、安全与权限
 
@@ -376,10 +399,11 @@ flowchart TD
 | 运行模式 | 本地单人，复用 PiBot 桌面应用（无遥测、密钥不出 brain、审计） |
 | 文件访问白名单 | Capability 只在 KB 根目录下读写；写：`rulesets/`、`variants/`、`.rule-studio/`；读：另加 `sources/`、`compiled/`、`schemas/`、`compiler/`、manifest；拒绝 `..` 与符号链接逃逸 |
 | 原始资料 | 只读 |
-| Agent 文件权限 | 只读 + 提案；不注册通用写文件、补丁、Shell 工具 |
+| Agent 工具权限 | 显式白名单（AD-13）：只读工具加提案工具；不含通用写文件、补丁、Shell、通用工作区修改工具；运行时测试断言 |
 | 正式写入 | 仅 UI 显式操作 |
 | 外部修改 | Hash 校验（策划可能同时用 VS Code 改 Markdown） |
 | 并发 | 单写入锁；同一时间只允许一个事务 |
+| 外部代码执行 | 仅 Gold Set（G5）：默认关闭、用户触发、首次确认、固定命令、超时与取消、审计；Agent 无触发途径 |
 | Git | 不自动 commit / push |
 | 路径来源 | 永远由服务端从规则集 ID 与规则 ID 推导，Agent 不传路径 |
 
@@ -389,38 +413,43 @@ flowchart TD
 | --- | --- | --- |
 | AC-1 | `git submodule status` 显示 `thirdparties/PiBot` 指向 fork 的固定 commit；`pnpm dev` 在 Windows 上启动桌面应用并完成一次对话 | Phase 0 |
 | AC-2 | KB 新增一个 `variants/<x>/`（任意两字母前缀）时，不改任何 Schema 代码即可通过校验与编译 | Phase A |
-| AC-3 | `npm run sync:check` 通过；`@pibot/mahjong-kb` 在 fork 内 `pnpm typecheck`、`pnpm lint` 通过 | Phase A |
+| AC-3 | `npm run sync:check` 通过；KB 纯度测试通过（同步目录不引用 `node:` 模块）；`@pibot/mahjong-kb` 在 fork 内 `pnpm typecheck`、`pnpm lint` 通过 | Phase A |
 | AC-4 | 策划通过聊天问「萧山和杭州财神规则的区别」，AI 回答引用正确的规则 ID，并指出 `XS-C-JOKER` 为 `disputed`，不擅自裁决 | Phase B |
 | AC-5 | 「引用到对话」后 AI 能读取该卡全文、版本与来源 | Phase B |
-| AC-6 | 麻将 Bot 的工具列表中不存在任何写文件、补丁、Shell 工具 | Phase B、C |
+| AC-6 | 麻将 Bot 实际运行时下发给模型的工具集合等于白名单，工具发现加载不到其他分组；对话中要求 AI 直接改文件会被拒绝并转为提案 | Phase B、C |
 | AC-7 | 通过聊天修改一张杭州规则卡：提案含卡文件与 manifest 升版；Diff 与门禁在 UI 可见；应用后 `sources/` 无变化，`npm run compile` 在 KB 目录通过 | Phase C |
 | AC-8 | 提案生成后用外部编辑器修改同一文件再点应用：提案标记过期，文件未被覆盖 | Phase C |
 | AC-9 | 人为制造门禁失败（例如删除必填槽位）：应用后文件恢复原样，提案 `failed` 并附报告 | Phase C |
 | AC-10 | 杭州升版后，萧山提案详情显示「锁定 1.0.0 待升级」及受影响卡清单；升级锁定提案应用后萧山编译通过 | Phase D |
 | AC-11 | 通过聊天新建桐庐变种并生成不少于 3 张 added 与 1 张 modified 卡，编译产物 `releasable` 与 blocker 数正确 | Phase D |
 | AC-12 | 裁决 `XS-U-001` 后，萧山 blocker 从 3 减到 2 | Phase D |
-| AC-13 | 应用后运行 Gold Set，结果展示在「验证」子视图；无 Node 机器显示「不支持」 | Phase E |
+| AC-13 | 用户触发 Gold Set 后结果展示在「验证」子视图，首次执行有确认；无 Node 机器显示「不支持」 | Phase E |
+| AC-14 | 编译器不修改输入；同一输入重复编译、多个变种按不同顺序编译，结果一致 | Phase A |
+| AC-15 | 事务在 `preparing`、`prepared`、`writing` 任一状态中断后，下次启动恢复，规则文件与事务前一致；新建文件被删除 | Phase C |
 
 ## 十三、风险
 
 | # | 风险 | 可能性 | 影响 | 应对 |
 | --- | --- | --- | --- | --- |
-| R-1 | PiBot 在本机 Windows 无法构建或运行（Node 26、pnpm 12、Electron、sandbox-runtime 补丁） | 中 | 高，全部阻塞 | Spike S-1 时间盒一天，最先执行；失败则回到自建方案评估 |
+| R-1 | PiBot 在本机 Windows 无法构建或运行（Node 26.11.1、pnpm 12.14.0、Electron、sandbox-runtime 补丁） | 中 | 高，全部阻塞 | Spike S-1 时间盒一天，最先执行；失败则回到自建方案评估 |
 | R-2 | 裁剪 PiBot Capability 后桌面应用无法启动 | 中 | 中 | Spike S-2 确定最小集合，必要时保留空壳 |
 | R-3 | 上游 PiBot 更新合并冲突（聚合文件被我们修改） | 高 | 中 | 聚合文件只做 spread，改动保持最小；固定 commit，按需合并 |
 | R-4 | KB 领域代码同步漂移 | 中 | 中 | `sync:check`；fork 的 `pnpm check` 说明中要求先跑 |
-| R-5 | Zod 4 迁移改变 KB 校验行为 | 中 | 中 | Spike S-7；KB 测试与人工核对 |
+| R-5 | fork 的边界检查不允许双 Zod 主版本共存 | 低 | 中 | Spike S-7；不通过时才迁移 KB 到 Zod 4（KB 测试与人工核对） |
 | R-6 | LLM 生成的规则卡不完整或格式错误 | 高 | 中 | 门禁拦截；Skill 明确写法；提案可修订；错误信息回传给 Agent 自纠 |
 | R-7 | 底座升版后变种编译失败被误判为提案失败 | 中 | 中 | 门禁分层：G4 只展示（I-5） |
 | R-8 | 策划机器没有 Node | 高 | 低（G1 至 G4 进程内）/ 中（G5） | G5 显式「不支持」 |
 | R-9 | 名称与 Logo 许可 | 低 | 低 | AD-9 |
 | R-10 | 两个仓库协同增加认知负担 | 中 | 中 | 工作流指南文档；同步脚本一键完成 |
+| R-11 | 移除 Capability 后 PiBot 内核仍向麻将 Bot 提供命令执行、文件写入等工具 | 中 | 高 | 显式白名单加运行时断言（AD-13、AC-6）；Spike S-9 |
+| R-12 | Gold Set 门禁执行了不可信知识库目录里的代码 | 低 | 中 | 默认关闭、用户触发、首次确认、固定命令（I-14） |
+| R-13 | Compiler 修改输入，门禁结果被污染（第二个变种或复用内存索引时） | 高（未修复时） | 高 | Phase A 的不可变约束与 `kernel.test.ts`（I-13、AC-14） |
 
 ## 十四、待决策
 
 | # | 决策 | 建议 | 阻塞 |
 | --- | --- | --- | --- |
-| 1 | fork 仓库名称与归属 | GitHub fork `mickorz/PiBot`（保留来源可见）；若需独立名，用 `mickorz/rule-studio-base` | Phase 0 |
+| 1 | fork 仓库名称与归属 | **已定（2026-11-24）**：GitHub fork `mickorz/PiBot`，submodule 跟踪其 `main` | 已解除 |
 | 2 | 是否在 MVP 就裁剪 PiBot 功能 | 是，Spike S-2 后定最小集合 | Phase 0 |
 | 3 | 原始资料选区引用是否进 MVP | 否，MVP 手动粘贴 | Phase B |
 | 4 | Gold Set 门禁是否要求策划机器安装 Node | 不要求；无 Node 时明示不支持 | Phase E |
@@ -445,13 +474,18 @@ flowchart TD
 - 设计讨论稿：本仓库 `dev-docs/design/新增规则聊天窗口.md`
 - KB 执行计划 v3.2：本仓库 `dev-docs/planning/2025-11-24-执行计划.md`
 - KB 进度：本仓库 `dev-docs/progress/执行进度.md`
+- 评审意见：本仓库 `dev-docs/design/2026-11-24-RuleStudio执行计划评审意见.md`
 - PiBot 上游仓库：<https://github.com/w01fb0ss/PiBot>（核验 commit `152425febf89487f6494e002122646fdd3bb041a`）
+- PiBot fork（开发基座）：<https://github.com/mickorz/PiBot>
 - PiBot 工程规范：<https://github.com/w01fb0ss/PiBot/blob/main/AGENTS.md>
 - PiBot Capability 接口：<https://github.com/w01fb0ss/PiBot/blob/main/packages/brain/src/core/capability.ts>
 - PiBot 组合根：<https://github.com/w01fb0ss/PiBot/blob/main/packages/brain-app/src/index.ts>
+- PiBot 内核工具目录（Capability 之外的内建工具组）：<https://github.com/w01fb0ss/PiBot/blob/main/packages/brain/src/runtime/tools/tool-catalog.ts>
 - PiBot 协议聚合（方法与事件）：<https://github.com/w01fb0ss/PiBot/blob/main/packages/protocol/src/aggregate/api.ts>
 - PiBot 协议聚合（工具）：<https://github.com/w01fb0ss/PiBot/blob/main/packages/protocol/src/aggregate/tools.ts>
 - PiBot 知识库工具：<https://github.com/w01fb0ss/PiBot/blob/main/packages/plugins/src/brain/knowledge/tools.ts>
 - PiBot NOTICE（名称与 Logo 条款）：<https://github.com/w01fb0ss/PiBot/blob/main/NOTICE>
 - PiBot README（平台支持、macOS 检查点恢复）：<https://github.com/w01fb0ss/PiBot/blob/main/README.md>
+- PiBot `package.json`（`engines` 与 `packageManager`）：<https://github.com/w01fb0ss/PiBot/blob/main/package.json>
+- Corepack 随 Node.js 分发的版本范围（14.19.0 起，不含 25.0.0）：<https://www.npmjs.com/package/corepack>
 - Apache License 2.0：<https://www.apache.org/licenses/LICENSE-2.0>
