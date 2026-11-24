@@ -12,8 +12,7 @@
   expected:
     can_peng: true
   verification:
-    status: verified
-    by: 人工
+    status: draft
     source: XS-M-LOU-PENG、XS-M-LOU-HU；来源见对应原始规则章节
   automation:
     status: none
@@ -31,8 +30,7 @@
   expected:
     can_peng: false
   verification:
-    status: verified
-    by: 人工
+    status: draft
     source: XS-M-LOU-PENG、XS-M-LOU-HU；来源见对应原始规则章节
   automation:
     status: none
@@ -50,8 +48,7 @@
   expected:
     can_hu: false
   verification:
-    status: verified
-    by: 人工
+    status: draft
     source: XS-M-LOU-PENG、XS-M-LOU-HU；来源见对应原始规则章节
   automation:
     status: none
@@ -69,8 +66,7 @@
   expected:
     can_hu: true
   verification:
-    status: verified
-    by: 人工
+    status: draft
     source: XS-M-LOU-PENG、XS-M-LOU-HU；来源见对应原始规则章节
   automation:
     status: none

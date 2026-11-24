@@ -10,8 +10,7 @@
   expected:
     multiplier: 8
   verification:
-    status: verified
-    by: 人工
+    status: draft
     source: HJ-K-GANGPIAO、HJ-K-PIAOGANG；来源见对应原始规则章节
   automation:
     status: none
@@ -27,8 +26,7 @@
   expected:
     multiplier: 16
   verification:
-    status: verified
-    by: 人工
+    status: draft
     source: HJ-K-GANGPIAO、HJ-K-PIAOGANG；来源见对应原始规则章节
   automation:
     status: none
@@ -44,8 +42,7 @@
   expected:
     multiplier: 16
   verification:
-    status: verified
-    by: 人工
+    status: draft
     source: HJ-K-GANGPIAO、HJ-K-PIAOGANG；来源见对应原始规则章节
   automation:
     status: none
@@ -61,8 +58,7 @@
   expected:
     multiplier: 32
   verification:
-    status: verified
-    by: 人工
+    status: draft
     source: HJ-K-GANGPIAO、HJ-K-PIAOGANG；来源见对应原始规则章节
   automation:
     status: none
@@ -78,8 +74,7 @@
   expected:
     multiplier: 128
   verification:
-    status: verified
-    by: 人工
+    status: draft
     source: HJ-K-GANGPIAO、HJ-K-PIAOGANG；来源见对应原始规则章节
   automation:
     status: none
@@ -95,8 +90,7 @@
   expected:
     multiplier: 256
   verification:
-    status: verified
-    by: 人工
+    status: draft
     source: HJ-K-GANGPIAO、HJ-K-PIAOGANG；来源见对应原始规则章节
   automation:
     status: none
