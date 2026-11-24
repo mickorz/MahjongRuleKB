@@ -15,6 +15,7 @@
 | v2 | 2026-11-24 | 按 `dev-docs/design/2026-11-24-RuleStudio执行计划评审意见.md` 修订：Phase A 拆出纯内存 Parser，修复 Compiler 修改输入；Phase B 增加麻将 Bot 工具白名单与运行时断言、索引防过期、预览组件 Spike；Phase C 事务改为显式状态机并支持新建文件回滚；Phase E 的 Gold Set 执行改为默认关闭并需授权；环境要求写明 `engines` 与 `packageManager`；Zod 改为默认不迁移；同步 0.2、0.3、0.8 的完成状态与分支策略。逐项见下表 |
 | v2.1 | 2026-11-24 | 合并 `main`（`b6e06d4`、`b78230f`）后同步：KB Phase 3、Phase 4 已完成，Phase E 不再被阻塞；`main` 新增 `content_hash`（基础内容指纹），底座变更规则扩展为「升版本并更新指纹」；编译器修改输入的问题已单独修复并加回归测试，A-4 与 AC-14 相应标注；KB 测试增至 85 个；同步目录必须类型检查零错误（新增 `typecheck` 脚本） |
 | v2.2 | 2026-11-24 | 按第二轮评审意见修订（`dev-docs/design/2026-11-24-RuleStudio执行计划评审意见-第2轮.md`）：并入 `main` 的 `167b111`（测试基线 86；`typecheck` 脚本已由 main 加入并清零类型错误）；新增「进入 Phase A 的前置条件」核对表；事务改为先取写入锁再校验 Hash、写入前逐文件复查；提案更新必须显式指定 `proposalId`；事务恢复用例补全；ID 前缀统一为 2～4 位；Gold Set 授权后可选自动运行。评审中标为未解决的四项 P0 在 v2 已处理，逐条核对见下表 |
+| v2.3 | 2026-11-24 | 任务 0.4 标记进行中：Node 26.11.1、pnpm 12.14.0 已装，fork 历史已补全；`pnpm install` 等磁盘空间；新增环境搭建指南与两篇经验文档（nvm 镜像 latest 滞后、失效 corepack 垫片） |
 
 ### 第二轮评审逐条核对
 
@@ -114,7 +115,7 @@ PiBot fork 以 submodule 进入 `thirdparties/`，本机能 `pnpm dev` 启动并
 | 0.1 | 合并 `main` | `git checkout mickorz/Mahjong-Rule-Studio && git merge main`（落后一个提交 `23e9dff`，发布门槛修复）。**已完成 2026-11-24，合并提交 `ab76048`** | 分支与 `main` 同步 |
 | 0.2 | 创建 fork | GitHub fork `w01fb0ss/PiBot` → `mickorz/PiBot`。**已完成 2026-11-24**（`gh api repos/mickorz/PiBot` 确认 parent 为 `w01fb0ss/PiBot`，HEAD 与上游同为 `152425f`）。分支策略：开发直接在 fork 的 `main` 上，不另设开发分支；与上游的差异用 `upstream/main` 比较 | fork 仓库 |
 | 0.3 | 添加 submodule | **已完成 2026-11-24**（提交 `3f9136d`）：`thirdparties/PiBot` → `https://github.com/mickorz/PiBot.git`，`.gitmodules` 跟踪分支 `main`，固定 commit `152425f`；gh 克隆自动添加了 `upstream` 远程。当前为浅克隆（depth 50），补全历史见 0.4 | `.gitmodules`、gitlink |
-| 0.4 | 环境安装与冒烟 | 建议先补全 fork 历史：`git -C thirdparties/PiBot fetch --unshallow origin`（合并上游、二分定位都需要完整历史）；安装 Node 26.11.1，`npm i -g pnpm@12.14.0`；`cd thirdparties/PiBot && pnpm install && pnpm dev`；设置 `PIBOT_DATA_DIR` 隔离开发数据；配置模型，完成一次对话；执行 `pnpm check` 记录基线结果 | 可运行的应用；`pnpm check` 基线 |
+| 0.4 | 环境安装与冒烟 | **进行中（2026-11-24）**：Node 26.11.1、pnpm 12.14.0 已装，fork 历史已补全；`pnpm install` 等 C 盘腾出空间后再做（当时仅剩 5.2 GB）。步骤与环境指南见 `dev-docs/guides/2026-11-24-RuleStudio环境搭建.md`。原计划：建议先补全 fork 历史：`git -C thirdparties/PiBot fetch --unshallow origin`（合并上游、二分定位都需要完整历史）；安装 Node 26.11.1，`npm i -g pnpm@12.14.0`；`cd thirdparties/PiBot && pnpm install && pnpm dev`；设置 `PIBOT_DATA_DIR` 隔离开发数据；配置模型，完成一次对话；执行 `pnpm check` 记录基线结果 | 可运行的应用；`pnpm check` 基线 |
 | 0.5 | 命名与许可 | fork 内：`apps/desktop/package.json` 的 `name` / `productName`、`appId`、窗口标题、关于页、i18n 应用名改为 Mahjong Rule Studio；`NOTICE` 追加「Derived from Pi Bot, Copyright 2026 The Pi Bot Authors, Apache-2.0」；README 顶部注明 fork 来源与用途；若 `pnpm lint` 校验应用名一致性，运行 `pnpm sync:agents` | 改名提交 |
 | 0.6 | Spike S-2 功能裁剪 | 在 `packages/brain-app/src/index.ts` `capabilities()` 中逐个移除无关 Capability（computer-use、browser、routines、remote、external-agents、office、images、memory 按需），每移除一个跑 `pnpm dev` + `pnpm typecheck`；记录哪些是桌面启动硬依赖 | 最小 Capability 集合清单，写入 `$FORK` 的 README「Rule Studio 裁剪说明」 |
 | 0.7 | 规范修订 | **须在首次修改 fork 内代码之前完成**（`REFERENCES.md` 已按「开发基座」登记，与现行「只读参考」条文暂时不一致）。本仓库 `CLAUDE.md` thirdparties 一节：新增「开发基座（fork）」类别，规则：指向我方 fork、在 fork 内修改、固定 commit、`REFERENCES.md` 标注复用策略为「开发基座」；保留「只读参考」类别的原有约束 | `CLAUDE.md` 修订 |
