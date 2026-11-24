@@ -1,0 +1,31 @@
+# 杭州麻将好友房 —— 界面参数
+# 第一阶段纯继承，地方玩法不可覆盖
+- id: HJ-C-UI-TURN-TIMER
+  origin: base
+  name: 出牌与响应倒计时
+  value: 10
+  unit: 秒
+  source: "3.2.1"
+- id: HJ-C-UI-LONG-PRESS
+  origin: base
+  name: 长按查看牌桌阈值
+  value: 500
+  unit: 毫秒
+  source: "5.2"
+- id: HJ-C-UI-OPENING-ANIM
+  origin: base
+  name: 对局开始动画总时长
+  value: 865
+  unit: 毫秒
+  source: "4.1"
+- id: HJ-C-UI-SCORE-WAN
+  origin: base
+  name: 积分换算万位阈值
+  value: 100000
+  description: 达到六位换算成「万」保留 3 位小数
+  source: "3.2.3"
+- id: HJ-C-UI-NICKNAME-MAX
+  origin: base
+  name: 昵称最大显示字符数
+  value: 10
+  source: "3.2.3"

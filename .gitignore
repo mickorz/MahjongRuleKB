@@ -10,3 +10,10 @@ dist/
 
 # 说明：dev-docs/、dev-examples/、thirdparties/ 均随仓库入库，不要 ignore。
 # thirdparties/ 下如需排除某个本地只读目录，在此单独追加该目录条目。
+node_modules/
+
+# 本地临时文件
+*.tmp
+
+# 测试缓存
+node_modules/.vite/
