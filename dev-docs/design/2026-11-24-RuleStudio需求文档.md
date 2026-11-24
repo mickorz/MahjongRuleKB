@@ -10,6 +10,7 @@
 | 版本 | 日期 | 变更 |
 | --- | --- | --- |
 | v1 | 2026-11-24 | 初稿：核对设计稿前提、确定范围与不变量、功能需求、架构决策、验收与风险 |
+| v1.1 | 2026-11-24 | 合并 `main` 后更新第一节第 9 行的现状描述 |
 
 ## 一、对设计讨论稿前提的核对与纠正
 
@@ -25,7 +26,7 @@
 | 6 | 「PiBot 采用 Apache-2.0，可 Fork 二开」 | **属实但有限制**。`NOTICE` 明确「Pi Bot / PiBot」名称与 Logo 不在许可范围内，fork 不得以暗示背书的方式使用 | 二开产品必须改名（Mahjong Rule Studio），保留 LICENSE / NOTICE / THIRD_PARTY_NOTICES 并注明衍生关系 |
 | 7 | 未提及 | PiBot 要求 Node `26.11.1`（`.nvmrc`）与 pnpm 12；本机 Node `24.18.0`，未安装 pnpm | 环境前置任务；KB 的 Node 24 代码可在 Node 26 下运行 |
 | 8 | 未提及 | KB 用 Zod 3（`^3.24.0`），PiBot 锁定 Zod `4.6.5` | KB 领域代码若要进 fork 复用，KB 需迁移到 Zod 4，由 KB 现有测试验证 |
-| 9 | 「新建独立仓库 MahjongRuleStudio」 | 用户已决定：在本仓库分支 `mickorz/Mahjong-Rule-Studio` 开发，PiBot 作为 submodule 放 `thirdparties/`。该分支落后 `main` 一个提交（`23e9dff`） | 启动前先合并 `main`；与 `CLAUDE.md`「thirdparties 只读」冲突，需修订规范（见 AD-10） |
+| 9 | 「新建独立仓库 MahjongRuleStudio」 | 用户已决定：在本仓库分支 `mickorz/Mahjong-Rule-Studio` 开发，PiBot 作为 submodule 放 `thirdparties/`。编写时该分支落后 `main` 一个提交（`23e9dff`），已于 2026-11-24 合并（`ab76048`） | 与 `CLAUDE.md`「thirdparties 只读」冲突，需修订规范（见 AD-10） |
 | 10 | 「`compiled/xiaoshan/` 86 条规则」与「完整萧山 = (N − a) + b」 | 进度文档已修正公式为 **N + b**（modified 卡替换后自身进产物） | 需求文档沿用修正后公式 |
 
 ## 二、目标

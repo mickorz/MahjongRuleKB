@@ -10,6 +10,7 @@
 | 版本 | 日期 | 变更 |
 | --- | --- | --- |
 | v1 | 2026-11-24 | 初稿 |
+| v1.1 | 2026-11-24 | 任务 0.1 标记完成（合并提交 `ab76048`） |
 
 ## 总览
 
@@ -64,7 +65,7 @@ PiBot fork 以 submodule 进入 `thirdparties/`，本机能 `pnpm dev` 启动并
 
 | # | 任务 | 操作要点 | 产出 |
 | --- | --- | --- | --- |
-| 0.1 | 合并 `main` | `git checkout mickorz/Mahjong-Rule-Studio && git merge main`（落后一个提交 `23e9dff`，发布门槛修复） | 分支与 `main` 同步 |
+| 0.1 | 合并 `main` | `git checkout mickorz/Mahjong-Rule-Studio && git merge main`（落后一个提交 `23e9dff`，发布门槛修复）。**已完成 2026-11-24，合并提交 `ab76048`** | 分支与 `main` 同步 |
 | 0.2 | 创建 fork | GitHub fork `w01fb0ss/PiBot` → `mickorz/PiBot`（待决策 1）；fork 内建分支 `rule-studio`，`main` 只做上游镜像 | fork 仓库 |
 | 0.3 | 添加 submodule | `git submodule add <fork-url> thirdparties/PiBot`；`git -C thirdparties/PiBot checkout rule-studio`；确认 `git submodule status` 指向 `152425f`（fork 尚无改动时与上游一致） | `.gitmodules`、gitlink |
 | 0.4 | 环境安装与冒烟 | 安装 Node 26.11.1 与 pnpm 12；`cd thirdparties/PiBot && pnpm install && pnpm dev`；设置 `PIBOT_DATA_DIR` 隔离开发数据；配置模型，完成一次对话；执行 `pnpm check` 记录基线结果 | 可运行的应用；`pnpm check` 基线 |
