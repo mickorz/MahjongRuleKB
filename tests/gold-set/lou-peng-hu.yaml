@@ -1,0 +1,76 @@
+- id: TC-M-LOU-001
+  name: 放过二筒后碰五万，整座清除后可重新判定二筒
+  ruleset_id: xiaoshan-friends-4p
+  rule_refs:
+    - XS-M-LOU-PENG
+    - XS-M-LOU-HU
+  input:
+    recorded:
+      - 二筒
+    cleared_by: 碰五万
+    later_tile: 二筒
+  expected:
+    can_peng: true
+  verification:
+    status: verified
+    by: 人工
+    source: 萧山文档 M-LOU-PENG / M-LOU-HU 验收
+  automation:
+    status: none
+- id: TC-M-LOU-002
+  name: 放过二筒后首摸前再遇二筒，不能碰
+  ruleset_id: xiaoshan-friends-4p
+  rule_refs:
+    - XS-M-LOU-PENG
+    - XS-M-LOU-HU
+  input:
+    recorded:
+      - 二筒
+    cleared_by: null
+    later_tile: 二筒
+  expected:
+    can_peng: false
+  verification:
+    status: verified
+    by: 人工
+    source: 萧山文档 M-LOU-PENG / M-LOU-HU 验收
+  automation:
+    status: none
+- id: TC-M-LOU-003
+  name: 放过 B 的二筒后 C 再打二筒，不能点炮胡
+  ruleset_id: xiaoshan-friends-4p
+  rule_refs:
+    - XS-M-LOU-PENG
+    - XS-M-LOU-HU
+  input:
+    win_lou:
+      - 二筒
+    discarder: C
+    later_tile: 二筒
+  expected:
+    can_hu: false
+  verification:
+    status: verified
+    by: 人工
+    source: 萧山文档 M-LOU-PENG / M-LOU-HU 验收
+  automation:
+    status: none
+- id: TC-M-LOU-004
+  name: 碰五万接回行牌后再遇二筒，重新判定
+  ruleset_id: xiaoshan-friends-4p
+  rule_refs:
+    - XS-M-LOU-PENG
+    - XS-M-LOU-HU
+  input:
+    win_lou:
+      - 二筒
+    cleared_by: 碰五万
+    later_tile: 二筒
+  expected:
+    can_hu: true
+  verification:
+    status: verified
+    by: 人工
+    source: 萧山文档 M-LOU-PENG / M-LOU-HU 验收
+  automation:
+    status: none

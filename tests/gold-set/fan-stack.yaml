@@ -1,0 +1,128 @@
+- id: TC-K-STACK-001
+  name: 平胡与清七对同时成立取清七对
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-K-STACK
+  input:
+    scenario: 一万到七万各两张，同时满足平胡 1 倍和清七对 4 倍
+  expected:
+    final_fan_multiplier: 4
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档 2.3.4.2 番型互斥与优先级
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts
+- id: TC-K-STACK-002
+  name: 普通爆头与七客同时成立取七客
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-K-STACK
+  input:
+    scenario: 摸牌前六组对子加一张财神，摸到七万可同时按四组顺子加一对、七组对子完成
+  expected:
+    final_fan_multiplier: 4
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档 2.3.4.2 番型互斥与优先级
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts
+- id: TC-K-STACK-003
+  name: 单杠配飘 1 次
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-K-STACK
+  input:
+    scenario: 组合档 = 1 × 2 × 4
+  expected:
+    final_fan_multiplier: 8
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档 2.3.4.2 番型互斥与优先级
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts
+- id: TC-K-STACK-004
+  name: 二连杠配双财飘
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-K-STACK
+  input:
+    scenario: 组合档 = 1 × 4 × 8
+  expected:
+    final_fan_multiplier: 32
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档 2.3.4.2 番型互斥与优先级
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts
+- id: TC-K-STACK-005
+  name: 三连杠补牌爆头
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-K-STACK
+  input:
+    scenario: 组合档 = 1 × 8 × 2
+  expected:
+    final_fan_multiplier: 16
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档 2.3.4.2 番型互斥与优先级
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts
+- id: TC-K-STACK-006
+  name: 豪华七对配双财飘
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-K-STACK
+  input:
+    scenario: 组合档 = 4 × 1 × 8
+  expected:
+    final_fan_multiplier: 32
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档 2.3.4.2 番型互斥与优先级
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts
+- id: TC-K-STACK-007
+  name: 先飘 1 次连杠 2 次后补牌爆头
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-K-STACK
+  input:
+    scenario: 按飘杠查同档倍数
+  expected:
+    final_fan_multiplier: 16
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档 2.3.4.2 番型互斥与优先级
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts
+- id: TC-K-STACK-008
+  name: 先飘 2 次连杠 3 次后补牌爆头
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-K-STACK
+  input:
+    scenario: 按飘杠查同档倍数
+  expected:
+    final_fan_multiplier: 64
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档 2.3.4.2 番型互斥与优先级
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts

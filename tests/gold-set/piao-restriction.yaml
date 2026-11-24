@@ -1,0 +1,64 @@
+- id: TC-R-PIAO-001
+  name: 杭州受限时可以暗杠
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-R-PIAO
+  input:
+    restricted: true
+    operation: an_gang
+  expected:
+    allowed: true
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档飘财限制规则
+  automation:
+    status: none
+- id: TC-R-PIAO-002
+  name: 杭州受限时禁止加杠
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-R-PIAO
+  input:
+    restricted: true
+    operation: jia_gang
+  expected:
+    allowed: false
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档飘财限制规则
+  automation:
+    status: none
+- id: TC-R-PIAO-003
+  name: 萧山受限时可以补杠
+  ruleset_id: xiaoshan-friends-4p
+  rule_refs:
+    - XS-R-PIAO
+  input:
+    restricted: true
+    operation: jia_gang
+  expected:
+    allowed: true
+  verification:
+    status: verified
+    by: 人工
+    source: 萧山文档飘财限制规则
+  automation:
+    status: none
+- id: TC-R-PIAO-004
+  name: 萧山受限时禁止直杠
+  ruleset_id: xiaoshan-friends-4p
+  rule_refs:
+    - XS-R-PIAO
+  input:
+    restricted: true
+    operation: ming_gang
+  expected:
+    allowed: false
+  verification:
+    status: verified
+    by: 人工
+    source: 萧山文档飘财限制规则
+  automation:
+    status: none
