@@ -47,7 +47,7 @@ describe("rulesets/hangzhou", () => {
     }
   });
 
-  it("卡数与 coverage.md 统计一致（60 张）", () => {
-    expect(rs.rules.length).toBe(60);
+  it("卡数与 coverage.md 统计一致（61 张）", () => {
+    expect(rs.rules.length).toBe(61);
   });
 });
