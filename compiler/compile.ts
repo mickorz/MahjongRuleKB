@@ -133,6 +133,7 @@ function compileVariant(base: LoadedRuleset, variant: LoadedRuleset): CompileRes
       const bc = baseConfigById.get(c.base_rule_ref!) as Extract<ConfigItem, { origin: "base" }>;
       config.push({ ...bc, id: bc.id, status: c.status, release_blocker: c.release_blocker, description: c.description ?? bc.description, origin: "base" } as ConfigItem);
       handledBase.add(bc.id);
+      configAliases[c.id] = bc.id;
       configMerged++;
     }
   }
@@ -175,8 +176,14 @@ function compileVariant(base: LoadedRuleset, variant: LoadedRuleset): CompileRes
   for (const c of [...config, ...configUi]) {
     if (c.release_blocker && c.status !== "confirmed") blockers.push(`${c.id} (${c.status})`);
   }
+  // unresolved.yaml 的 blocker 必须参与发布门槛。若关联对象已被上面扫描到，不重复报告；
+  // 若关联对象没有自身 blocker，则仍报告未决条目，避免未决项被 status: confirmed 的目标掩盖。
+  const scannedBlockerTargets = new Set(blockers.map((b) => b.split(" (")[0]));
   for (const u of variant.unresolved) {
-    if (u.release_blocker && u.status !== "confirmed") continue; // 未决清单条目与它指向的卡 / 配置项是同一个问题，不在 blocker 里重复报，只在 unresolved.yaml 里体现
+    const resolvedTarget = configAliases[u.card_ref] ?? aliases[u.card_ref] ?? u.card_ref;
+    if (u.release_blocker && u.status !== "confirmed" && !scannedBlockerTargets.has(resolvedTarget)) {
+      blockers.push(`${u.id} (${u.status})`);
+    }
   }
   const uniqueBlockers = [...new Set(blockers)];
 

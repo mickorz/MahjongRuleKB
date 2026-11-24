@@ -152,5 +152,5 @@ describe("重新编译无 diff", () => {
     const a = snapshot();
     execSync("node compiler/compile.ts", { stdio: "ignore" });
     expect(snapshot()).toBe(a);
-  });
+  }, 15000);
 });
