@@ -18,6 +18,7 @@
 | v2.3 | 2026-11-24 | 任务 0.4 标记进行中：Node 26.11.1、pnpm 12.14.0 已装，fork 历史已补全；`pnpm install` 等磁盘空间；新增环境搭建指南与两篇经验文档（nvm 镜像 latest 滞后、失效 corepack 垫片） |
 | v2.4 | 2026-11-24 | 合并 `main` 的 `decdf12`（第一阶段冻结，`962f488`）后同步：测试基线 88；KB Phase 3 口径改为「工程完成、Gold Set 27 verified / 33 draft」；写明版本递增由 Studio 门禁 G3 检查（KB 编译器不做这项检查，`AGENTS.md` 第 4 条）；Gold Set 门禁报告区分测试通过与人工核验；补充与第一阶段冻结的关系 |
 | v2.5 | 2026-11-24 | 任务 0.4 环境部分完成：补上此前未检出的 submodule（`thirdparties/PiBot` 一直为空目录）；`~/.npmrc` 改为 npmmirror 镜像并去掉代理（实测约 4 倍）；`pnpm install` 36 分 5 秒、1457 包、依赖全在 E 盘（**不需要清理 C 盘**）；`pnpm check` 基线记录（3347 通过 / 1 失败 / 1 跳过）；`pnpm dev` 首屏 18.7 秒。AC-1 的「完成一次对话」待人工配模型。新增四篇经验文档 |
+| v2.6 | 2026-11-24 | 任务 0.7 完成：`CLAUDE.md` thirdparties 一节拆为「只读参考」与「开发基座（fork）」两类，新增两仓库提交顺序、禁止只改不推、上游同步与验证、命名与许可、裁剪说明六条约束；`REFERENCES.md` 维护规则同步（补丁REF-001 复用策略指向新条文） |
 
 ### 第二轮评审逐条核对
 
@@ -120,7 +121,7 @@ PiBot fork 以 submodule 进入 `thirdparties/`，本机能 `pnpm dev` 启动并
 | 0.4 | 环境安装与冒烟 | **环境部分已完成（2026-11-24），仅剩 AC-1 的「完成一次对话」待人工配模型**。实测：submodule 补检、`pnpm install` 36 分 5 秒 / 1457 包 / 依赖全在 E 盘、`pnpm check` 基线 3347 通过 / 1 失败（zh-CN locale）/ 1 跳过、`pnpm dev` 首屏 18.7 秒、`smoke:renderer` 通过而 `smoke:owner` 在 Windows 上稳定失败于清理阶段。步骤、镜像配置与已知失败见 `dev-docs/guides/2026-11-24-RuleStudio环境搭建.md`。原计划：建议先补全 fork 历史；安装 Node 26.11.1，`npm i -g pnpm@12.14.0`；`cd thirdparties/PiBot && pnpm install && pnpm dev`；设置 `PIBOT_DATA_DIR` 隔离开发数据；配置模型，完成一次对话；执行 `pnpm check` 记录基线结果 | 可运行的应用；`pnpm check` 基线 |
 | 0.5 | 命名与许可 | fork 内：`apps/desktop/package.json` 的 `name` / `productName`、`appId`、窗口标题、关于页、i18n 应用名改为 Mahjong Rule Studio；`NOTICE` 追加「Derived from Pi Bot, Copyright 2026 The Pi Bot Authors, Apache-2.0」；README 顶部注明 fork 来源与用途；若 `pnpm lint` 校验应用名一致性，运行 `pnpm sync:agents` | 改名提交 |
 | 0.6 | Spike S-2 功能裁剪 | 在 `packages/brain-app/src/index.ts` `capabilities()` 中逐个移除无关 Capability（computer-use、browser、routines、remote、external-agents、office、images、memory 按需），每移除一个跑 `pnpm dev` + `pnpm typecheck`；记录哪些是桌面启动硬依赖 | 最小 Capability 集合清单，写入 `$FORK` 的 README「Rule Studio 裁剪说明」 |
-| 0.7 | 规范修订 | **须在首次修改 fork 内代码之前完成**（`REFERENCES.md` 已按「开发基座」登记，与现行「只读参考」条文暂时不一致）。本仓库 `CLAUDE.md` thirdparties 一节：新增「开发基座（fork）」类别，规则：指向我方 fork、在 fork 内修改、固定 commit、`REFERENCES.md` 标注复用策略为「开发基座」；保留「只读参考」类别的原有约束 | `CLAUDE.md` 修订 |
+| 0.7 | 规范修订 | **已完成 2026-11-24**：`CLAUDE.md` thirdparties 一节拆为「通用规则」「只读参考」「开发基座（fork）」三块；开发基座新增六条：指向我方 fork、改动先去 fork 提交并推送、禁止只改不推与只改指针、上游同步后必须跑该仓库检查、改名时保留 NOTICE 与 Apache-2.0 声明、裁剪保留说明。`REFERENCES.md` 维护规则与 REF-001 复用策略同步指向新条文。原计划：**须在首次修改 fork 内代码之前完成**（`REFERENCES.md` 已按「开发基座」登记，与现行「只读参考」条文暂时不一致） | `CLAUDE.md` 修订 |
 | 0.8 | 登记 | `thirdparties/REFERENCES.md` 新增 REF-001。**已完成 2026-11-24**（提交 `3f9136d`）：上游 `w01fb0ss/PiBot` 与 fork `mickorz/PiBot`、本地路径 `thirdparties/PiBot`、固定 commit `152425febf89487f6494e002122646fdd3bb041a`、License Apache-2.0（NOTICE 名称与 Logo 除外）、复用策略「开发基座」、研究目的 | 表格行 |
 | 0.9 | 工作流指南 | `dev-docs/guides/2026-11-24-PiBot基座工作流.md`：目录约定、两仓库提交顺序、fork 分支策略（`main` 直接开发，`upstream/main` 为上游基线）、上游合并步骤、环境变量、`pnpm check` 前置 | 指南文档 |
 | 0.10 | 经验沉淀 | 0.4 中遇到的每个坑（Node 版本、pnpm、Windows 原生模块、sandbox 补丁等）各写一篇 `dev-docs/experience/` | 经验文档 |

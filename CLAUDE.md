@@ -71,12 +71,28 @@
 
 ## 第三方参考项目：`thirdparties/` 与清单 `thirdparties/REFERENCES.md`
 
-`thirdparties/` 存放只读的外部参考项目（本地目录或 Git Submodule）；`thirdparties/REFERENCES.md` 是参考项目清单（地址、License、固定 commit、研究目的），随仓库入库。
+`thirdparties/` 存放外部项目，分两类：**只读参考**（本地目录或 Submodule，只查阅不改）与**开发基座**（我方 fork 的 Submodule，允许在 fork 内修改）；`thirdparties/REFERENCES.md` 是项目清单（地址、License、固定 commit、复用策略、研究目的），随仓库入库。
 
-### 规则
+### 通用规则
 
-1. **引入必登记**：每引入一个第三方项目（无论本地目录还是 Submodule），必须同步更新 `thirdparties/REFERENCES.md`：ID（REF-xxx 连续编号）、仓库地址、本地路径、固定 commit、License、复用策略、研究目的。
-2. **只读参考**：仅用于查阅方法论、模板和文档结构，不得直接修改任何第三方项目内容。
-3. **Submodule 固定 commit**：Submodule 固定明确 commit 并随仓库提交（克隆后 `git submodule update --init --recursive` 还原）；`.gitignore` 默认不忽略 `thirdparties/`，直接引入即可；不入库的本地只读目录单独追加 ignore 条目。
-4. **升级方式**：本地目录用重新下载/克隆覆盖；Submodule 用 `git submodule update --remote` 固定新 commit 并更新清单。
-5. **复用前检查**：复用第三方代码前核对其 License 与版权声明；无 License 的仓库只读研究、禁止复制代码。
+1. **引入必登记**：每引入一个第三方项目（无论本地目录、Submodule 还是开发基座），必须同步更新 `thirdparties/REFERENCES.md`：ID（REF-xxx 连续编号）、仓库地址、本地路径、固定 commit、License、复用策略、研究目的。
+2. **Submodule 固定 commit**：Submodule 固定明确 commit 并随仓库提交（克隆后 `git submodule update --init --recursive` 还原）；`.gitignore` 默认不忽略 `thirdparties/`，直接引入即可；不入库的本地只读目录单独追加 ignore 条目。
+3. **复用前检查**：复用第三方代码前核对其 License 与版权声明；无 License 的仓库只读研究、禁止复制代码。
+
+### 只读参考
+
+适用于复用策略标为「只读参考」的项目（如 REF-002 PrdGameSkill）。
+
+4. **只读**：仅用于查阅方法论、模板和文档结构，不得直接修改任何第三方项目内容。
+5. **升级方式**：本地目录用重新下载/克隆覆盖；Submodule 用 `git submodule update --remote` 固定新 commit 并更新清单。
+
+### 开发基座（fork）
+
+适用于复用策略标为「开发基座」的项目（如 REF-001 PiBot）：本产品直接在对方代码上二次开发，必须在 fork 里改。
+
+6. **指向我方 fork**：Submodule 的 url 必须是我方 fork；上游地址只作为上游基线写进 `REFERENCES.md`。
+7. **改动先去 fork 提交并推送**：两仓库顺序固定——先在 fork 内提交并推送到 fork，再回本仓库 `git add thirdparties/<项目名>` 固定新 gitlink。
+8. **禁止只改不推、禁止只改指针**：不得在 submodule 工作区留下未提交、未推送的改动，也不得只提交 gitlink 而不推 fork（否则别人拉下来拿不到代码）。
+9. **上游同步与验证**：合并上游用 `git fetch upstream && git merge upstream/main`，合并后必须跑该仓库的检查命令（如 `pnpm check`）并记录基线；冲突点与耗时写进工作流指南 `dev-docs/guides/`。
+10. **命名与许可**：改名或二次分发时保留上游 `NOTICE` 与 Apache-2.0 声明，并在 `NOTICE` / README 注明 fork 来源与用途。
+11. **裁剪要留说明**：移除上游功能时，在该仓库 README 写「裁剪说明」（移除哪些能力、保留哪些、为什么），并在本仓库进度文档登记。
