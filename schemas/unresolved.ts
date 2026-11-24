@@ -17,3 +17,4 @@ export const unresolvedEntrySchema = z.object({
 
 export const unresolvedListSchema = z.array(unresolvedEntrySchema);
 export type UnresolvedEntry = z.infer<typeof unresolvedEntrySchema>;
+export type UnresolvedList = UnresolvedEntry[];

@@ -28,7 +28,7 @@ function loadCompiled(dir: string) {
     .sort()
     .map((file) => {
       const { meta, body } = splitFrontMatter(readFileSync(file, "utf8"));
-      return { meta, body, file };
+      return { meta: meta as { id: string; change_type?: string; base_rule_ref?: string; compares_to?: string[]; depends_on: string[] }, body, file };
     });
   const config = parseYaml(readFileSync(join(dir, "config.yaml"), "utf8")) as { id: string; value: unknown; status?: string; compiled_origin: string }[];
   const configUi = parseYaml(readFileSync(join(dir, "config.ui.yaml"), "utf8")) as { id: string }[];

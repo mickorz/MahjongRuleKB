@@ -12,7 +12,7 @@
   verification:
     status: verified
     by: 人工
-    source: 杭州文档流局时机规则
+    source: HJ-T-WALL；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-T-WALL-002
@@ -30,7 +30,7 @@
   verification:
     status: verified
     by: 人工
-    source: 杭州文档流局时机规则
+    source: HJ-T-WALL；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-T-WALL-003
@@ -47,7 +47,7 @@
   verification:
     status: verified
     by: 人工
-    source: 萧山文档流局时机规则
+    source: XS-T-WALL；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-T-WALL-004
@@ -65,6 +65,6 @@
   verification:
     status: verified
     by: 人工
-    source: 萧山文档流局时机规则
+    source: XS-T-WALL；来源见对应原始规则章节
   automation:
     status: none

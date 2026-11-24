@@ -6,7 +6,8 @@
   "scripts": {
     "validate": "node compiler/validator.ts",
     "compile": "node compiler/compile.ts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "yaml": "^2.6.0",

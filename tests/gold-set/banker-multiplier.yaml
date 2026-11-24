@@ -1,9 +1,9 @@
-# 庄闲倍率与基础结算（HJ-F-BANK、HJ-P-ZIMO、HJ-P-DIANPAO、XS-F-BANK、XS-F-HU）
-# 杭州庄闲倍率固定 8；萧山 = 2^牢数，因此必须覆盖二牢、四牢、五牢等差异边界
 - id: TC-F-BANK-001
   name: 杭州庄家三牢自摸平胡
   ruleset_id: hangzhou-friends-4p
-  rule_refs: [HJ-F-BANK, HJ-P-ZIMO]
+  rule_refs:
+    - HJ-F-BANK
+    - HJ-P-ZIMO
   input:
     ruleset_id: hangzhou-friends-4p
     winner_is_banker: true
@@ -13,19 +13,23 @@
     base_score: 1
   expected:
     winner_score: 24
-    other_scores: [-8, -8, -8]
+    other_scores:
+      - -8
+      - -8
+      - -8
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.3「自摸」庄家自摸三个闲家各乘 8
+    source: HJ-F-BANK、HJ-P-ZIMO；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
-
 - id: TC-F-BANK-002
   name: 杭州闲家三牢自摸平胡
   ruleset_id: hangzhou-friends-4p
-  rule_refs: [HJ-F-BANK, HJ-P-ZIMO]
+  rule_refs:
+    - HJ-F-BANK
+    - HJ-P-ZIMO
   input:
     ruleset_id: hangzhou-friends-4p
     winner_is_banker: false
@@ -35,19 +39,23 @@
     base_score: 1
   expected:
     winner_score: 10
-    other_scores: [-8, -1, -1]
+    other_scores:
+      - -8
+      - -1
+      - -1
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.3「自摸」闲家自摸庄家一笔乘 8，另两闲家各乘 1
+    source: HJ-F-BANK、HJ-P-ZIMO；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
-
 - id: TC-F-BANK-003
   name: 杭州庄闲平胡点炮
   ruleset_id: hangzhou-friends-4p
-  rule_refs: [HJ-F-BANK, HJ-P-DIANPAO]
+  rule_refs:
+    - HJ-F-BANK
+    - HJ-P-DIANPAO
   input:
     ruleset_id: hangzhou-friends-4p
     winner_is_banker: true
@@ -57,19 +65,23 @@
     base_score: 1
   expected:
     winner_score: 8
-    other_scores: [-8, 0, 0]
+    other_scores:
+      - -8
+      - 0
+      - 0
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.3「点炮胡」1 倍平胡点炮赢家 +8 放铳者 −8 另两家 0
+    source: HJ-F-BANK、HJ-P-DIANPAO；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
-
 - id: TC-F-BANK-004
   name: 萧山二牢庄家自摸平胡（验证 2^牢数生效）
   ruleset_id: xiaoshan-friends-4p
-  rule_refs: [XS-F-BANK, XS-F-HU]
+  rule_refs:
+    - XS-F-BANK
+    - XS-F-HU
   input:
     ruleset_id: xiaoshan-friends-4p
     winner_is_banker: true
@@ -79,19 +91,23 @@
     base_score: 1
   expected:
     winner_score: 12
-    other_scores: [-4, -4, -4]
+    other_scores:
+      - -4
+      - -4
+      - -4
   verification:
     status: verified
     by: 人工
-    source: 萧山文档 F-BANK 二牢 = 4 倍
+    source: XS-F-BANK、XS-F-HU；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
-
 - id: TC-F-BANK-005
   name: 萧山四牢庄家自摸平胡（验证 2^牢数生效）
   ruleset_id: xiaoshan-friends-4p
-  rule_refs: [XS-F-BANK, XS-F-HU]
+  rule_refs:
+    - XS-F-BANK
+    - XS-F-HU
   input:
     ruleset_id: xiaoshan-friends-4p
     winner_is_banker: true
@@ -101,19 +117,23 @@
     base_score: 1
   expected:
     winner_score: 48
-    other_scores: [-16, -16, -16]
+    other_scores:
+      - -16
+      - -16
+      - -16
   verification:
     status: verified
     by: 人工
-    source: 萧山文档 F-BANK 例子「连庄上局实际三牢 → 掷骰前四牢 = 16 倍」
+    source: XS-F-BANK、XS-F-HU；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
-
 - id: TC-F-BANK-006
   name: 萧山五牢闲家自摸平胡
   ruleset_id: xiaoshan-friends-4p
-  rule_refs: [XS-F-BANK, XS-F-HU]
+  rule_refs:
+    - XS-F-BANK
+    - XS-F-HU
   input:
     ruleset_id: xiaoshan-friends-4p
     winner_is_banker: false
@@ -123,11 +143,14 @@
     base_score: 1
   expected:
     winner_score: 34
-    other_scores: [-32, -1, -1]
+    other_scores:
+      - -32
+      - -1
+      - -1
   verification:
     status: verified
     by: 人工
-    source: 萧山文档 F-BANK 五牢 = 32 倍，闲家自摸庄那笔 ×32
+    source: XS-F-BANK、XS-F-HU；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
