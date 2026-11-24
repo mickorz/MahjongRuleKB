@@ -1,0 +1,108 @@
+- id: TC-K-GANGPIAO-001
+  name: 1 连杠配飘 1 次
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-K-GANGPIAO
+    - HJ-K-PIAOGANG
+  input:
+    gangs: 1
+    piao: 1
+  expected:
+    multiplier: 8
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档 2.3.4.2 第 22-33 项杠飘倍数表
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts
+- id: TC-K-GANGPIAO-002
+  name: 1 连杠配飘 2 次
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-K-GANGPIAO
+    - HJ-K-PIAOGANG
+  input:
+    gangs: 1
+    piao: 2
+  expected:
+    multiplier: 16
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档 2.3.4.2 第 22-33 项杠飘倍数表
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts
+- id: TC-K-GANGPIAO-003
+  name: 2 连杠配飘 1 次
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-K-GANGPIAO
+    - HJ-K-PIAOGANG
+  input:
+    gangs: 2
+    piao: 1
+  expected:
+    multiplier: 16
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档 2.3.4.2 第 22-33 项杠飘倍数表
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts
+- id: TC-K-GANGPIAO-004
+  name: 2 连杠配飘 2 次
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-K-GANGPIAO
+    - HJ-K-PIAOGANG
+  input:
+    gangs: 2
+    piao: 2
+  expected:
+    multiplier: 32
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档 2.3.4.2 第 22-33 项杠飘倍数表
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts
+- id: TC-K-GANGPIAO-005
+  name: 3 连杠配飘 3 次
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-K-GANGPIAO
+    - HJ-K-PIAOGANG
+  input:
+    gangs: 3
+    piao: 3
+  expected:
+    multiplier: 128
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档 2.3.4.2 第 22-33 项杠飘倍数表
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts
+- id: TC-K-GANGPIAO-006
+  name: 4 连杠配飘 3 次
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-K-GANGPIAO
+    - HJ-K-PIAOGANG
+  input:
+    gangs: 4
+    piao: 3
+  expected:
+    multiplier: 256
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档 2.3.4.2 第 22-33 项杠飘倍数表
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts

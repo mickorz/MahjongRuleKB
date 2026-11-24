@@ -5,6 +5,7 @@
 //   重写依赖引用并检查闭合 → 统一发布门槛 → 输出 compiled/
 // 编译器只做确定性的数据处理，不解释规则。
 import { readFileSync, writeFileSync, mkdirSync, rmSync, readdirSync, statSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { join, relative, dirname } from "node:path";
 import { stringify as toYaml } from "yaml";
 import { loadRuleset, splitFrontMatter, type LoadedRuleset, type LoadedRule } from "./validator.ts";
@@ -15,6 +16,15 @@ import { validateRuleset } from "./validator.ts";
 interface CompiledRule extends LoadedRule {
   /** base = 直接取自杭州；variant = 来自萧山 */
   origin: "base" | "variant";
+}
+
+export function rulesetContentHash(rs: LoadedRuleset): string {
+  const payload = {
+    rules: rs.rules.map((r) => ({ id: r.meta.id, meta: r.meta, body: r.body })).sort((a, b) => a.id.localeCompare(b.id)),
+    config: rs.config,
+    configUi: rs.configUi,
+  };
+  return createHash("sha256").update(JSON.stringify(payload)).digest("hex");
 }
 
 interface CompileResult {
@@ -56,9 +66,13 @@ function compileVariant(base: LoadedRuleset, variant: LoadedRuleset): CompileRes
   const vm = variant.manifest as { base: { ruleset_id: string; version: string }; ruleset_id: string; version: string; scope: Record<string, unknown> };
   const bm = base.manifest as { ruleset_id: string; version: string; scope: Record<string, unknown> };
 
-  // P2-C.1 校验版本锁定
+  // P2-C.1 校验版本锁定与基础内容指纹
   if (vm.base.ruleset_id !== bm.ruleset_id) throw new Error(`manifest.base.ruleset_id 不匹配：${vm.base.ruleset_id} vs ${bm.ruleset_id}`);
   if (vm.base.version !== bm.version) throw new Error(`manifest.base.version 锁定 ${vm.base.version}，但杭州当前是 ${bm.version}。萧山需要重新验收后升 base.version`);
+  const currentBaseHash = rulesetContentHash(base);
+  if (bm.content_hash && bm.content_hash !== currentBaseHash) {
+    throw new Error(`杭州基础规则内容已变化但 manifest.version 未更新：content_hash ${bm.content_hash} != ${currentBaseHash}`);
+  }
 
   const baseById = new Map(base.rules.map((r) => [r.meta.id, r]));
   const baseConfigById = new Map([...base.config, ...base.configUi].map((c) => [c.id, c]));
@@ -108,7 +122,13 @@ function compileVariant(base: LoadedRuleset, variant: LoadedRuleset): CompileRes
   }
   for (const r of base.rules) {
     if (modifiedTarget.has(r.meta.id)) continue;
-    out.push({ ...r, origin: "base" });
+    const inherited = inheritedTarget.has(r.meta.id);
+    const variantMeta = inherited ? variant.rules.find((x) => x.meta.origin === "variant" && x.meta.change_type === "inherited" && x.meta.base_rule_ref === r.meta.id)?.meta as VariantRuleMeta | undefined : undefined;
+    out.push({
+      ...r,
+      meta: variantMeta ? { ...r.meta, status: variantMeta.status, release_blocker: variantMeta.release_blocker } as RuleMeta : r.meta,
+      origin: "base",
+    });
   }
 
   // P2-C.3 合并配置
@@ -124,7 +144,7 @@ function compileVariant(base: LoadedRuleset, variant: LoadedRuleset): CompileRes
       configMerged++;
     } else if (c.change_type === "modified") {
       const bc = baseConfigById.get(c.base_rule_ref!) as Extract<ConfigItem, { origin: "base" }>;
-      config.push({ ...bc, id: c.id, value: c.value, description: c.description ?? bc.description, origin: "base" } as ConfigItem);
+      config.push({ ...bc, id: c.id, value: c.value, status: c.status, release_blocker: c.release_blocker, description: c.description ?? bc.description, origin: "base" } as ConfigItem);
       handledBase.add(bc.id);
       configAliases[bc.id] = c.id;
       configMerged++;
@@ -181,7 +201,8 @@ function compileVariant(base: LoadedRuleset, variant: LoadedRuleset): CompileRes
   const scannedBlockerTargets = new Set(blockers.map((b) => b.split(" (")[0]));
   for (const u of variant.unresolved) {
     const resolvedTarget = configAliases[u.card_ref] ?? aliases[u.card_ref] ?? u.card_ref;
-    if (u.release_blocker && u.status !== "confirmed" && !scannedBlockerTargets.has(resolvedTarget)) {
+    const resolved = u.status === "confirmed" && typeof u.resolution === "string" && u.resolution.trim().length > 0;
+    if (u.release_blocker && !resolved && !scannedBlockerTargets.has(resolvedTarget)) {
       blockers.push(`${u.id} (${u.status})`);
     }
   }

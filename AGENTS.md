@@ -1,0 +1,85 @@
+# AGENTS.md
+
+麻将规则知识库的使用规范。Agent 读本仓库时按以下顺序。
+
+## 目录职责
+
+| 目录 | 用途 | 可改 |
+| --- | --- | --- |
+| `sources/` | 规则方原始材料 | 否，只读 |
+| `rulesets/hangzhou/` | 杭州基础规则卡与配置 | 是 |
+| `variants/xiaoshan/` | 萧山差异规则卡与配置 | 是 |
+| `compiled/` | 编译器产物 | **否**，只能由 `node compiler/compile.ts` 生成 |
+| `schemas/` | Zod 数据结构定义 | 是 |
+| `compiler/` | 校验与编译 | 是 |
+| `calculators/` | 确定性计算纯函数 | 是 |
+| `tests/gold-set/` | Gold Set 用例（YAML） | 是 |
+| `dev-docs/` | 开发过程文档 | 是 |
+
+## 查询规则
+
+**按玩法拉完整规则集**：读 `compiled/<玩法>/`。这是唯一可用的事实源，不需要再读 `rulesets/` 或 `sources/`。
+
+```
+compiled/xiaoshan/
+├── manifest.yaml        # ruleset_id、版本、base 锁定、releasable、blockers
+├── config.yaml          # 合并后的玩法参数
+├── config.ui.yaml       # 界面参数（纯继承杭州）
+├── rule-index.json      # HJ↔XS 规则 ID 映射
+├── compile-report.md    # 继承/替换/新增数量、阻塞项、映射表
+├── unresolved.yaml      # 未裁决项
+└── rules/ timing/ state/ formulas/ tables/ settlement/ ui/   # 规则卡
+```
+
+**按 ID 查规则**：`grep -r "HJ-R-BANK-02" compiled/`
+
+**查两玩法差异**：读 `compiled/xiaoshan/compile-report.md` 的「规则 ID 映射」。
+
+**查规则依赖**：解析规则卡 front matter 的 `depends_on` 与正文里的反引号 ID。
+
+## 规则卡格式
+
+每张卡一个 Markdown 文件，文件名 = ID 小写。front matter 是机器可读元数据，正文按 11 类槽位书写。
+
+```markdown
+---
+id: HJ-R-BANK-02
+origin: base            # base | variant
+type: judgment          # 11 类之一
+name: 连庄与换庄
+status: confirmed       # confirmed | inferred | unresolved | disputed
+release_blocker: false
+depends_on: [HJ-N-BANK]
+sources:
+  - source: sources/hangzhou/hangzhou-core-flow.md
+    section: "2.3.2.4"
+---
+```
+
+差异卡额外字段：`change_type`（inherited / modified / added）、`base_rule_ref`、`compares_to`。
+
+## 关键约束
+
+1. **不要手改 `compiled/`**。改规则改 `rulesets/` 或 `variants/`，再跑编译。
+2. **`modified` 卡必须是完整有效规则**，不能只写差异。「杭麻」槽是对照信息，不是有效规则的一部分。
+3. **`base_rule_ref` 和 `compares_to` 永远指向原始杭州卡**，不随编译重写；只有 `depends_on` 和正文依赖引用会被重写。
+4. **杭州规则内容变更必须升 `rulesets/hangzhou/manifest.yaml` 的 `version` 和 `content_hash`**，否则编译报错。
+5. **未决项不准 AI 自行补全**。`variants/xiaoshan/unresolved.yaml` 里的 `release_blocker: true` 项必须由规则方裁决，改 `status: confirmed` 同时填非空 `resolution`。
+6. **`releasable: false` 的规则集不能对外声称已发布**。
+
+## 常用命令
+
+```bash
+node compiler/validator.ts                    # 校验杭州
+node compiler/validator.ts variants/xiaoshan  # 校验萧山
+node compiler/compile.ts                      # 编译并生成 compiled/
+npm test                                      # 全部测试
+```
+
+## 当前状态
+
+```bash
+cat compiled/xiaoshan/manifest.yaml   # 看 releasable 和 blockers
+```
+
+当前萧山有 3 个发布阻塞项：翻财神归属、K-GANG 飘财第 3 次档、K-FAN 十风倍数。这些是规则空缺，不是编译错误。

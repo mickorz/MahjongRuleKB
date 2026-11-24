@@ -1,0 +1,106 @@
+# 跟庄成立判定与赔付（XS-R-GZ、XS-F-GZ）
+- id: TC-R-GZ-001
+  name: 四张同牌面跟庄成立
+  ruleset_id: xiaoshan-friends-4p
+  rule_refs: [XS-R-GZ]
+  input:
+    tiles: [二筒, 二筒, 二筒, 二筒]
+    joker: 白板
+  expected:
+    established: true
+    payment: { A: -24, B: 8, C: 8, D: 8 }
+    dice: [5, 3]
+  verification:
+    status: verified
+    by: 人工
+    source: 萧山文档 R-GZ 验收表「都是二筒，第 4 张二筒 → 成立」
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts
+
+- id: TC-R-GZ-002
+  name: 第 4 张是本局实际财神也成立
+  ruleset_id: xiaoshan-friends-4p
+  rule_refs: [XS-R-GZ]
+  input:
+    tiles: [二筒, 二筒, 二筒, 白板]
+    joker: 白板
+  expected:
+    established: true
+  verification:
+    status: verified
+    by: 人工
+    source: 萧山文档 R-GZ 条件「第 4 张牌面相同，或第 4 张是本局实际财神」
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts
+
+- id: TC-R-GZ-003
+  name: 第 2 张不同，跟庄不成立
+  ruleset_id: xiaoshan-friends-4p
+  rule_refs: [XS-R-GZ]
+  input:
+    tiles: [二筒, 三筒, 二筒, 二筒]
+    joker: 白板
+  expected:
+    established: false
+  verification:
+    status: verified
+    by: 人工
+    source: 萧山文档 R-GZ 验收表「第 2 或第 3 张不同 → 不成立」
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts
+
+- id: TC-R-GZ-004
+  name: 前三张不动用财神做替身
+  ruleset_id: xiaoshan-friends-4p
+  rule_refs: [XS-R-GZ]
+  input:
+    tiles: [二筒, 白板, 二筒, 二筒]
+    joker: 白板
+  expected:
+    established: false
+  verification:
+    status: verified
+    by: 人工
+    source: 萧山文档 R-GZ「前三张只比实际牌面，不用财神做替身」
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts
+
+- id: TC-F-GZ-001
+  name: 骰子 5 和 3，S=8，首出 −24 其余各 +8
+  ruleset_id: xiaoshan-friends-4p
+  rule_refs: [XS-F-GZ]
+  input:
+    dice: [5, 3]
+    first_player: A
+    other_players: [B, C, D]
+  expected:
+    payment: { A: -24, B: 8, C: 8, D: 8 }
+  verification:
+    status: verified
+    by: 人工
+    source: 萧山文档 F-GZ 例子「5 和 3，S = 8。首出 −24，其余每家 +8」
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts
+
+- id: TC-F-GZ-002
+  name: 骰子 6 和 6，S=12，首出 −36
+  ruleset_id: xiaoshan-friends-4p
+  rule_refs: [XS-F-GZ]
+  input:
+    dice: [6, 6]
+    first_player: C
+    other_players: [A, B, D]
+  expected:
+    payment: { C: -36, A: 12, B: 12, D: 12 }
+  verification:
+    status: verified
+    by: 人工
+    source: 萧山文档 F-GZ「S = d1 + d2。该圈首出者 −3S，其余三家各 +S」
+  automation:
+    status: automated
+    test_ref: tests/regression/gold-set.test.ts

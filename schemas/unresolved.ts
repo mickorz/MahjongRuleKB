@@ -9,6 +9,10 @@ export const unresolvedEntrySchema = z.object({
   status: z.enum(ruleStatuses),
   release_blocker: z.boolean(),
   resolution: z.string().nullable().optional(),
+}).superRefine((entry, ctx) => {
+  if (entry.status === "confirmed" && (!entry.resolution || entry.resolution.trim().length === 0)) {
+    ctx.addIssue({ code: "custom", path: ["resolution"], message: "confirmed 未决项必须有非空 resolution" });
+  }
 });
 
 export const unresolvedListSchema = z.array(unresolvedEntrySchema);

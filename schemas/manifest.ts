@@ -8,6 +8,7 @@ export const semverPattern = /^\d+\.\d+\.\d+$/;
 export const baseManifestSchema = z.object({
   ruleset_id: z.string().regex(manifestIdPattern),
   version: z.string().regex(semverPattern),
+  content_hash: z.string().regex(/^[a-f0-9]{64}$/).optional(),
   scope: z.object({
     player_count: z.number().int().positive(),
     room_type: z.string().min(1),

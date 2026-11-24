@@ -1,0 +1,80 @@
+- id: TC-R-CHI-001
+  name: 杭州第 1 次吃 2 条无禁手
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-R-CHI
+  input:
+    ruleset: hangzhou-friends-4p
+    chi_count: 1
+    hand:
+      - 1条
+      - 3条
+    eaten: 2条
+  expected:
+    blocked: false
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档吃禁手规则
+  automation:
+    status: none
+- id: TC-R-CHI-002
+  name: 杭州每次吃都按本次顺子禁打
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-R-CHI
+  input:
+    ruleset: hangzhou-friends-4p
+    chi_count: 1
+    hand:
+      - 1条
+      - 3条
+    eaten: 2条
+  expected:
+    blocked: true
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档吃禁手规则
+  automation:
+    status: none
+- id: TC-R-CHI-003
+  name: 萧山第 1、2 次吃不产生吃禁手
+  ruleset_id: xiaoshan-friends-4p
+  rule_refs:
+    - XS-R-CHI
+  input:
+    ruleset: xiaoshan-friends-4p
+    chi_count: 2
+    hand:
+      - 1条
+      - 3条
+    eaten: 2条
+  expected:
+    blocked: false
+  verification:
+    status: verified
+    by: 人工
+    source: 萧山文档吃禁手规则
+  automation:
+    status: none
+- id: TC-R-CHI-004
+  name: 萧山第 3 次吃 2 条禁打 2 条
+  ruleset_id: xiaoshan-friends-4p
+  rule_refs:
+    - XS-R-CHI
+  input:
+    ruleset: xiaoshan-friends-4p
+    chi_count: 3
+    hand:
+      - 1条
+      - 3条
+    eaten: 2条
+  expected:
+    blocked: true
+  verification:
+    status: verified
+    by: 人工
+    source: 萧山文档吃禁手规则
+  automation:
+    status: none

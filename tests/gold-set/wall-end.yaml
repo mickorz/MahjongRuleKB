@@ -1,0 +1,70 @@
+- id: TC-T-WALL-001
+  name: 杭州剩 21 张允许摸最后 1 张到 20
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-T-WALL
+  input:
+    ruleset: hangzhou-friends-4p
+    remaining: 21
+    action: draw
+  expected:
+    draw_allowed: true
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档流局时机规则
+  automation:
+    status: none
+- id: TC-T-WALL-002
+  name: 杭州剩 20 张且响应处理完后下一次应摸牌时流局
+  ruleset_id: hangzhou-friends-4p
+  rule_refs:
+    - HJ-T-WALL
+  input:
+    ruleset: hangzhou-friends-4p
+    remaining: 20
+    action: next_draw
+  expected:
+    draw_allowed: false
+    wall_end: true
+  verification:
+    status: verified
+    by: 人工
+    source: 杭州文档流局时机规则
+  automation:
+    status: none
+- id: TC-T-WALL-003
+  name: 萧山余 1 张仍可摸
+  ruleset_id: xiaoshan-friends-4p
+  rule_refs:
+    - XS-T-WALL
+  input:
+    ruleset: xiaoshan-friends-4p
+    remaining: 1
+    action: draw
+  expected:
+    draw_allowed: true
+  verification:
+    status: verified
+    by: 人工
+    source: 萧山文档流局时机规则
+  automation:
+    status: none
+- id: TC-T-WALL-004
+  name: 萧山余 0 张时流局
+  ruleset_id: xiaoshan-friends-4p
+  rule_refs:
+    - XS-T-WALL
+  input:
+    ruleset: xiaoshan-friends-4p
+    remaining: 0
+    action: next_draw
+  expected:
+    draw_allowed: false
+    wall_end: true
+  verification:
+    status: verified
+    by: 人工
+    source: 萧山文档流局时机规则
+  automation:
+    status: none
