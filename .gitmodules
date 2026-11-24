@@ -2,3 +2,7 @@
 	path = thirdparties/PiBot
 	url = https://github.com/mickorz/PiBot.git
 	branch = main
+[submodule "thirdparties/PrdGameSkill"]
+	path = thirdparties/PrdGameSkill
+	url = https://github.com/mickorz/PrdGameSkill.git
+	branch = main

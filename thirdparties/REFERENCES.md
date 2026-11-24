@@ -7,6 +7,7 @@
 | ID | 项目 | 仓库 | 本地路径 | 固定 commit | License | 复用策略 | 研究目的 |
 |---|---|---|---|---|---|---|---|
 | REF-001 | PiBot | 上游 `https://github.com/w01fb0ss/PiBot`；fork `https://github.com/mickorz/PiBot`（submodule 指向 fork，`.gitmodules` 跟踪分支 `main`） | `thirdparties/PiBot` | `152425febf89487f6494e002122646fdd3bb041a`（2026-11-24 引入，与上游 `main` 一致） | Apache-2.0（仓库内 `LICENSE`；`NOTICE` 注明 Pi Bot 名称与 Logo 不在许可范围内） | 开发基座（fork，允许在 fork 内修改；与「只读参考」的规则修订见 `dev-docs/planning/2026-11-24-RuleStudio执行计划.md` 任务 0.7） | Mahjong Rule Studio 的桌面工作台与 Agent 运行时底座；在 PiBot 分层内新增 Mahjong Capability（见 `dev-docs/design/2026-11-24-RuleStudio需求文档.md`） |
+| REF-002 | PrdGameSkill | `https://github.com/mickorz/PrdGameSkill`（submodule 跟踪分支 `main`） | `thirdparties/PrdGameSkill` | `d28ed0a16cad8d9c23dde925e591ef326b81874d`（2026-11-24 引入，与远端 `main` 一致） | 未发现 LICENSE 文件 | 只读参考，禁止复制任何代码 | 游戏 PRD 技能库与 Interactive Game PRD 方法论；Game Requirement IR、交互式 HTML 需求文档与规则模拟器思路，供 MahjongRuleKB 后续 PRD / 规则代码生成对接参考。**其自身子模块（thirdparties/*）不拉取** |
 
 ## Submodule 引入与登记流程
 
