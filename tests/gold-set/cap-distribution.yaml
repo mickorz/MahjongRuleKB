@@ -1,16 +1,18 @@
-# 拖底后的可赔分分配（XS-P-CAP）
-# 可赔分上限 = max(0, 局前累计净分 + 200)
-# 一笔由三家收时，先除 3 向下取整，余数从扣分座位起逆时针依次 +1
 - id: TC-P-CAP-001
   name: 局前 −214 可赔 0，不分配
   ruleset_id: xiaoshan-friends-4p
-  rule_refs: [XS-P-CAP, XS-R-CAP]
+  rule_refs:
+    - XS-P-CAP
+    - XS-R-CAP
   input:
     starting_net: -214
     floor: -200
     payments:
       - payer: A
-        recipients: [B, C, D]
+        recipients:
+          - B
+          - C
+          - D
         amount: 24
   expected:
     allocations: []
@@ -18,133 +20,173 @@
   verification:
     status: verified
     by: 人工
-    source: 萧山文档 P-CAP「可赔分数 max(0, 局前累计净分 + 200)」
+    source: XS-P-CAP、XS-R-CAP；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
-
 - id: TC-P-CAP-002
   name: 局前 −190 跟庄应付 24，可赔 10 按 4/3/3 分配
   ruleset_id: xiaoshan-friends-4p
-  rule_refs: [XS-P-CAP]
+  rule_refs:
+    - XS-P-CAP
   input:
     starting_net: -190
     floor: -200
     payments:
       - payer: A
-        recipients: [B, C, D]
+        recipients:
+          - B
+          - C
+          - D
         amount: 24
   expected:
     allocations:
-      - { payer: A, recipient: B, amount: 4 }
-      - { payer: A, recipient: C, amount: 3 }
-      - { payer: A, recipient: D, amount: 3 }
+      - payer: A
+        recipient: B
+        amount: 4
+      - payer: A
+        recipient: C
+        amount: 3
+      - payer: A
+        recipient: D
+        amount: 3
     final_net: -200
   verification:
     status: verified
     by: 人工
-    source: 萧山文档 P-CAP 例子表「−190 只跟庄，向 B、C、D 各应付 8，可赔 10，逆时针先遇 B：B 4，C 3，D 3」
+    source: XS-P-CAP；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
-
 - id: TC-P-CAP-003
   name: 局前 −190，先跟庄 24 再点炮 30，10 分先给跟庄
   ruleset_id: xiaoshan-friends-4p
-  rule_refs: [XS-P-CAP]
+  rule_refs:
+    - XS-P-CAP
   input:
     starting_net: -190
     floor: -200
     payments:
       - payer: A
-        recipients: [B, C, D]
+        recipients:
+          - B
+          - C
+          - D
         amount: 24
       - payer: A
-        recipients: [E]
+        recipients:
+          - E
         amount: 30
   expected:
     allocations:
-      - { payer: A, recipient: B, amount: 4 }
-      - { payer: A, recipient: C, amount: 3 }
-      - { payer: A, recipient: D, amount: 3 }
+      - payer: A
+        recipient: B
+        amount: 4
+      - payer: A
+        recipient: C
+        amount: 3
+      - payer: A
+        recipient: D
+        amount: 3
     final_net: -200
   verification:
     status: verified
     by: 人工
-    source: 萧山文档 P-CAP 例子表第 2 行「10 分先给跟庄，点炮赢家收 0」
+    source: XS-P-CAP；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
-
 - id: TC-P-CAP-004
   name: 局前 −194 可赔 6，一笔由三家收按 2/2/2
   ruleset_id: xiaoshan-friends-4p
-  rule_refs: [XS-P-CAP]
+  rule_refs:
+    - XS-P-CAP
   input:
     starting_net: -194
     floor: -200
     payments:
       - payer: A
-        recipients: [B, C, D]
+        recipients:
+          - B
+          - C
+          - D
         amount: 9
   expected:
     allocations:
-      - { payer: A, recipient: B, amount: 2 }
-      - { payer: A, recipient: C, amount: 2 }
-      - { payer: A, recipient: D, amount: 2 }
+      - payer: A
+        recipient: B
+        amount: 2
+      - payer: A
+        recipient: C
+        amount: 2
+      - payer: A
+        recipient: D
+        amount: 2
     final_net: -200
   verification:
     status: verified
     by: 人工
-    source: 萧山文档 P-CAP 分配规则推导
+    source: XS-P-CAP；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
-
 - id: TC-P-CAP-005
   name: 局前 −195 可赔 5，按 2/2/1 分配余数从扣分座位起
   ruleset_id: xiaoshan-friends-4p
-  rule_refs: [XS-P-CAP]
+  rule_refs:
+    - XS-P-CAP
   input:
     starting_net: -195
     floor: -200
     payments:
       - payer: A
-        recipients: [B, C, D]
+        recipients:
+          - B
+          - C
+          - D
         amount: 12
   expected:
     allocations:
-      - { payer: A, recipient: B, amount: 2 }
-      - { payer: A, recipient: C, amount: 2 }
-      - { payer: A, recipient: D, amount: 1 }
+      - payer: A
+        recipient: B
+        amount: 2
+      - payer: A
+        recipient: C
+        amount: 2
+      - payer: A
+        recipient: D
+        amount: 1
     final_net: -200
   verification:
     status: verified
     by: 人工
-    source: 萧山文档 P-CAP「余下 1 或 2 分，从扣分座位起按逆时针，遇到的收分玩家依次 +1」
+    source: XS-P-CAP；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
-
 - id: TC-P-CAP-006
   name: 局前 −180 可赔 20，单笔 15 全额分配
   ruleset_id: xiaoshan-friends-4p
-  rule_refs: [XS-P-CAP]
+  rule_refs:
+    - XS-P-CAP
   input:
     starting_net: -180
     floor: -200
     payments:
       - payer: A
-        recipients: [B]
+        recipients:
+          - B
         amount: 15
   expected:
     allocations:
-      - { payer: A, recipient: B, amount: 15 }
+      - payer: A
+        recipient: B
+        amount: 15
     final_net: -195
   verification:
     status: verified
     by: 人工
-    source: 萧山文档 P-CAP「只有一名赢家时，这笔分配额全给该赢家」
+    source: XS-P-CAP；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts

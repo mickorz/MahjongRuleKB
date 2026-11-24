@@ -1,189 +1,279 @@
-# 三摊承包入账（HJ-P-CONTRACT）
-# S = 三名对手按常规自摸的原应赔分合计
-# 承包：供牌方付 S；反承包：取牌方付 2S；链式叠加
 - id: TC-P-CONTRACT-001
   name: 庄家平胡自摸无承包
   ruleset_id: hangzhou-friends-4p
-  rule_refs: [HJ-P-CONTRACT]
+  rule_refs:
+    - HJ-P-CONTRACT
   input:
-    original_payments: { B: 8, C: 8, D: 8 }
+    original_payments:
+      B: 8
+      C: 8
+      D: 8
     winner: A
     win_type: self_draw
     contracts: []
   expected:
-    scores: { A: 24, B: -8, C: -8, D: -8 }
+    scores:
+      A: 24
+      B: -8
+      C: -8
+      D: -8
     applied: []
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.3「自摸」
+    source: HJ-P-CONTRACT；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
-
 - id: TC-P-CONTRACT-002
   name: 庄家平胡自摸，庄家对闲家 B 承包成立
   ruleset_id: hangzhou-friends-4p
-  rule_refs: [HJ-P-CONTRACT]
+  rule_refs:
+    - HJ-P-CONTRACT
   input:
-    original_payments: { B: 8, C: 8, D: 8 }
+    original_payments:
+      B: 8
+      C: 8
+      D: 8
     winner: A
     win_type: self_draw
-    contracts: [{ holder: A, provider: B }]
+    contracts:
+      - holder: A
+        provider: B
   expected:
-    scores: { A: 24, B: -24, C: 0, D: 0 }
-    applied: ["承包 A→B 付 24"]
+    scores:
+      A: 24
+      B: -24
+      C: 0
+      D: 0
+    applied:
+      - 承包 A→B 付 24
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.2.8 例子「庄家 A 平胡自摸，三个闲家各应赔 8 分，承包方 B 赔 24 分，另两家本局为 0 分」
+    source: HJ-P-CONTRACT；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
-
 - id: TC-P-CONTRACT-003
   name: 闲家平胡自摸，庄家 A 对闲家 B 承包成立（反承包）
   ruleset_id: hangzhou-friends-4p
-  rule_refs: [HJ-P-CONTRACT]
+  rule_refs:
+    - HJ-P-CONTRACT
   input:
-    original_payments: { A: 8, C: 1, D: 1 }
+    original_payments:
+      A: 8
+      C: 1
+      D: 1
     winner: B
     win_type: self_draw
-    contracts: [{ holder: A, provider: B }]
+    contracts:
+      - holder: A
+        provider: B
   expected:
-    scores: { A: -20, B: 20, C: 0, D: 0 }
-    applied: ["反承包 A→B 付 20"]
+    scores:
+      A: -20
+      B: 20
+      C: 0
+      D: 0
+    applied:
+      - 反承包 A→B 付 20
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.2.8 例子「闲家 B 平胡自摸，常规三家应赔 8、1、1 分，A 按合计的 2 倍赔 20 分」
+    source: HJ-P-CONTRACT；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
-
 - id: TC-P-CONTRACT-004
   name: 链式承包，A 自摸时 B 付 S、C 付 2S
   ruleset_id: hangzhou-friends-4p
-  rule_refs: [HJ-P-CONTRACT]
+  rule_refs:
+    - HJ-P-CONTRACT
   input:
-    original_payments: { B: 8, C: 8, D: 8 }
+    original_payments:
+      B: 8
+      C: 8
+      D: 8
     winner: A
     win_type: self_draw
-    contracts: [{ holder: A, provider: B }, { holder: C, provider: A }]
+    contracts:
+      - holder: A
+        provider: B
+      - holder: C
+        provider: A
   expected:
-    scores: { A: 72, B: -24, C: -48, D: 0 }
-    applied: ["承包 A→B 付 24", "反承包 C→A 付 48"]
+    scores:
+      A: 72
+      B: -24
+      C: -48
+      D: 0
+    applied:
+      - 承包 A→B 付 24
+      - 反承包 C→A 付 48
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.2.8 链式承包例子「B 赔 24 分，C 赔 48 分，A 得 72 分，另一家为 0 分」
+    source: HJ-P-CONTRACT；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
-
 - id: TC-P-CONTRACT-005
   name: 点炮无承包，只有放铳者付
   ruleset_id: hangzhou-friends-4p
-  rule_refs: [HJ-P-CONTRACT, HJ-P-DIANPAO]
+  rule_refs:
+    - HJ-P-CONTRACT
+    - HJ-P-DIANPAO
   input:
-    original_payments: { A: 8, C: 0, D: 0 }
+    original_payments:
+      A: 8
+      C: 0
+      D: 0
     winner: B
     win_type: discard
     discarder: A
     contracts: []
   expected:
-    scores: { A: -8, B: 8, C: 0, D: 0 }
-    applied: ["原赔付 A 付 8"]
+    scores:
+      A: -8
+      B: 8
+      C: 0
+      D: 0
+    applied:
+      - 原点炮 A 付 8
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.3「点炮胡」仅由放铳者支付
+    source: HJ-P-CONTRACT、HJ-P-DIANPAO；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
-
 - id: TC-P-CONTRACT-006
   name: 点炮且放铳者是赢家的承包对方（1 倍改写）
   ruleset_id: hangzhou-friends-4p
-  rule_refs: [HJ-P-CONTRACT, HJ-P-DIANPAO]
+  rule_refs:
+    - HJ-P-CONTRACT
+    - HJ-P-DIANPAO
   input:
-    original_payments: { A: 8, C: 0, D: 0 }
+    original_payments:
+      A: 8
+      C: 0
+      D: 0
     winner: B
     win_type: discard
     discarder: A
-    contracts: [{ holder: B, provider: A }]
+    contracts:
+      - holder: B
+        provider: A
   expected:
-    scores: { A: -16, B: 16, C: 0, D: 0 }
-    applied: ["原赔付 A 付 8", "承包叠加 A 付 8"]
+    scores:
+      A: -8
+      B: 8
+      C: 0
+      D: 0
+    applied:
+      - 承包点炮改写 A 付 8
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.2.8「以放铳者这笔原点炮分为基数，承包按 1 倍…整体改写付款额」
+    source: HJ-P-CONTRACT、HJ-P-DIANPAO；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
-
 - id: TC-P-CONTRACT-007
   name: 点炮且放铳者是赢家的倒承包对方（2 倍）
   ruleset_id: hangzhou-friends-4p
-  rule_refs: [HJ-P-CONTRACT, HJ-P-DIANPAO]
+  rule_refs:
+    - HJ-P-CONTRACT
+    - HJ-P-DIANPAO
   input:
-    original_payments: { A: 8, C: 0, D: 0 }
+    original_payments:
+      A: 8
+      C: 0
+      D: 0
     winner: B
     win_type: discard
     discarder: A
-    contracts: [{ holder: A, provider: B }]
+    contracts:
+      - holder: A
+        provider: B
   expected:
-    scores: { A: -24, B: 24, C: 0, D: 0 }
-    applied: ["原赔付 A 付 8", "反承包叠加 A 付 16"]
+    scores:
+      A: -16
+      B: 16
+      C: 0
+      D: 0
+    applied:
+      - 倒承包点炮改写 A 付 16
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.2.8「倒承包按 2 倍整体改写」
+    source: HJ-P-CONTRACT、HJ-P-DIANPAO；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
-
 - id: TC-P-CONTRACT-008
   name: 庄家平胡抢杠无承包
   ruleset_id: hangzhou-friends-4p
-  rule_refs: [HJ-P-CONTRACT, HJ-P-QIANG]
+  rule_refs:
+    - HJ-P-CONTRACT
+    - HJ-P-QIANG
   input:
-    original_payments: { B: 8, C: 8, D: 8 }
+    original_payments:
+      B: 8
+      C: 8
+      D: 8
     winner: A
     win_type: qiang_gang
     discarder: B
     qiang_gang_r: 24
     contracts: []
   expected:
-    scores: { A: 24, B: -24, C: 0, D: 0 }
-    applied: ["原赔付 B 付 24"]
+    scores:
+      A: 24
+      B: -24
+      C: 0
+      D: 0
+    applied:
+      - 原抢杠赔付 B 付 24
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.1.4「无承包时，庄家平胡抢杠收 24 分」
+    source: HJ-P-CONTRACT、HJ-P-QIANG；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts
-
 - id: TC-P-CONTRACT-009
   name: 庄家平胡抢杠，加杠闲家同时承担倒承包
   ruleset_id: hangzhou-friends-4p
-  rule_refs: [HJ-P-CONTRACT, HJ-P-QIANG]
+  rule_refs:
+    - HJ-P-CONTRACT
+    - HJ-P-QIANG
   input:
-    original_payments: { B: 8, C: 8, D: 8 }
+    original_payments:
+      B: 8
+      C: 8
+      D: 8
     winner: A
     win_type: qiang_gang
     discarder: B
     qiang_gang_r: 24
-    contracts: [{ holder: B, provider: A }]
+    contracts:
+      - holder: B
+        provider: A
   expected:
-    scores: { A: 72, B: -72, C: 0, D: 0 }
-    applied: ["原赔付 B 付 24", "反承包叠加 B 付 48"]
+    scores:
+      A: 72
+      B: -72
+      C: 0
+      D: 0
+    applied:
+      - 原抢杠赔付 B 付 24
+      - 反承包叠加 B 付 48
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.2.8 例子「庄家平胡抢杠，加杠闲家同时承担倒承包，付 24＋24×2＝72 分」
+    source: HJ-P-CONTRACT、HJ-P-QIANG；来源见对应原始规则章节
   automation:
     status: automated
     test_ref: tests/regression/gold-set.test.ts

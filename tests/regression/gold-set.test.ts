@@ -79,7 +79,7 @@ describe("庄闲倍率计算", () => {
 describe("承包结算计算", () => {
   for (const c of byFile("contract.yaml")) {
     it(`${c.id} ${c.name}`, () => {
-      const input = c.input as Parameters<typeof calculateContractSettlement>[0];
+      const input = c.input as unknown as Parameters<typeof calculateContractSettlement>[0];
       const result = calculateContractSettlement(input);
       const expected = c.expected as { scores: Record<string, number>; applied: string[] };
       for (const [player, score] of Object.entries(expected.scores)) expect(result.scores[player], `${c.id} ${player}`).toBe(score);
@@ -91,7 +91,7 @@ describe("承包结算计算", () => {
 describe("拖底分配计算", () => {
   for (const c of byFile("cap-distribution.yaml")) {
     it(`${c.id} ${c.name}`, () => {
-      const input = c.input as Parameters<typeof calculateCapDistribution>[0];
+      const input = c.input as unknown as Parameters<typeof calculateCapDistribution>[0];
       const result = calculateCapDistribution(input);
       const expected = c.expected as { allocations: Array<{ payer: string; recipient: string; amount: number }>; final_net: number };
       expect(result.allocations).toEqual(expected.allocations);

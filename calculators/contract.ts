@@ -66,11 +66,29 @@ export function calculateContractSettlement(input: ContractSettlementInput): Con
   const payer = input.discarder ?? "";
   if (!payer) throw new Error("点炮或抢杠必须提供 discarder");
   const r = winType === "qiang_gang" ? (input.qiang_gang_r ?? s) : (input.original_payments[payer] ?? s);
+
+  if (winType === "discard") {
+    // 点炮承包是“整体改写付款额”，不是在原点炮分上再叠加。
+    // 只有放铳者与赢家直接相关的承包关系有效；其他玩家不付款。
+    let finalAmount = r;
+    const relation = (input.contracts ?? []).find((c) => c.provider === payer && c.holder === input.winner)
+      ?? (input.contracts ?? []).find((c) => c.holder === payer && c.provider === input.winner);
+    if (relation) {
+      const reverse = relation.holder === payer;
+      finalAmount = reverse ? 2 * r : r;
+      applied.push(`${reverse ? "倒承包" : "承包"}点炮改写 ${payer} 付 ${finalAmount}`);
+    } else {
+      applied.push(`原点炮 ${payer} 付 ${finalAmount}`);
+    }
+    scores[payer] -= finalAmount;
+    scores[input.winner] += finalAmount;
+    return { scores, applied };
+  }
+
+  // 抢杠胡：保留加杠者原赔付 R，赢家参与的每项承包按 R / 2R 独立叠加。
   scores[payer] -= r;
   scores[input.winner] += r;
-  applied.push(`原赔付 ${payer} 付 ${r}`);
-
-  // 赢家参与的承包（赢家是取牌方）1 倍，倒承包（赢家是供牌方）2 倍，均以 R 为基数叠加
+  applied.push(`原抢杠赔付 ${payer} 付 ${r}`);
   for (const c of input.contracts ?? []) {
     if (c.holder === input.winner) {
       scores[c.provider] -= r;

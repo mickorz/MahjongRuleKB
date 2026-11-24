@@ -29,8 +29,9 @@ export function rulesetContentHash(rs: LoadedRuleset): string {
 
 interface CompileResult {
   rules: CompiledRule[];
-  config: ConfigItem[];
-  configUi: ConfigItem[];
+  // 编译产物中的 inherited / modified 配置已归一为 base 形态；运行时已由 Zod 校验。
+  config: any[];
+  configUi: any[];
   manifest: Record<string, unknown>;
   ruleAliases: Record<string, string>;
   blockers: string[];
@@ -64,7 +65,7 @@ function compileBase(base: LoadedRuleset): CompileResult {
 /** 萧山：合并 */
 function compileVariant(base: LoadedRuleset, variant: LoadedRuleset): CompileResult {
   const vm = variant.manifest as { base: { ruleset_id: string; version: string }; ruleset_id: string; version: string; scope: Record<string, unknown> };
-  const bm = base.manifest as { ruleset_id: string; version: string; scope: Record<string, unknown> };
+  const bm = base.manifest as { ruleset_id: string; version: string; content_hash?: string; scope: Record<string, unknown> };
 
   // P2-C.1 校验版本锁定与基础内容指纹
   if (vm.base.ruleset_id !== bm.ruleset_id) throw new Error(`manifest.base.ruleset_id 不匹配：${vm.base.ruleset_id} vs ${bm.ruleset_id}`);
@@ -132,7 +133,7 @@ function compileVariant(base: LoadedRuleset, variant: LoadedRuleset): CompileRes
   }
 
   // P2-C.3 合并配置
-  const config: ConfigItem[] = [];
+  const config: any[] = [];
   let configMerged = 0;
   const configAliases: Record<string, string> = {};
   const vConfigById = new Map(variant.config.map((c) => [c.id, c]));
@@ -226,7 +227,7 @@ function compileVariant(base: LoadedRuleset, variant: LoadedRuleset): CompileRes
 }
 
 /** 写产物 */
-function writeOutput(dir: string, result: CompileResult, unresolved: unknown[]) {
+function writeOutput(dir: string, result: CompileResult, unresolved: import("../schemas/unresolved.ts").UnresolvedEntry[]) {
   rmSync(dir, { recursive: true, force: true });
   mkdirSync(dir, { recursive: true });
   const dirs = new Set<string>(["rules", "timing", "state", "formulas", "tables", "settlement", "ui"]);

@@ -7,6 +7,7 @@ import { loadRuleset, extractSlots, validateRuleset } from "../../compiler/valid
 import { requiredSlotsFor } from "../../schemas/slot-definitions.ts";
 import { configListSchema } from "../../schemas/config.ts";
 import type { RuleType } from "../../schemas/rule.ts";
+import { unresolvedEntrySchema } from "../../schemas/unresolved.ts";
 
 const base = loadRuleset("rulesets/hangzhou");
 const variant = loadRuleset("variants/xiaoshan");
@@ -92,6 +93,18 @@ describe("发布门槛", () => {
       if (u.status !== "confirmed") continue;
       expect(typeof u.resolution === "string" && u.resolution.trim().length > 0, u.id).toBe(true);
     }
+  });
+
+  it("Schema 拒绝 status confirmed 但 resolution 为空的未决项", () => {
+    const result = unresolvedEntrySchema.safeParse({
+      id: "XS-U-999",
+      card_ref: "XS-K-FAN",
+      description: "测试",
+      status: "confirmed",
+      release_blocker: true,
+      resolution: null,
+    });
+    expect(result.success).toBe(false);
   });
 });
 

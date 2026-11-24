@@ -14,7 +14,7 @@
   verification:
     status: verified
     by: 人工
-    source: 萧山文档 M-LOU-PENG / M-LOU-HU 验收
+    source: XS-M-LOU-PENG、XS-M-LOU-HU；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-M-LOU-002
@@ -33,7 +33,7 @@
   verification:
     status: verified
     by: 人工
-    source: 萧山文档 M-LOU-PENG / M-LOU-HU 验收
+    source: XS-M-LOU-PENG、XS-M-LOU-HU；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-M-LOU-003
@@ -52,7 +52,7 @@
   verification:
     status: verified
     by: 人工
-    source: 萧山文档 M-LOU-PENG / M-LOU-HU 验收
+    source: XS-M-LOU-PENG、XS-M-LOU-HU；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-M-LOU-004
@@ -71,6 +71,6 @@
   verification:
     status: verified
     by: 人工
-    source: 萧山文档 M-LOU-PENG / M-LOU-HU 验收
+    source: XS-M-LOU-PENG、XS-M-LOU-HU；来源见对应原始规则章节
   automation:
     status: none

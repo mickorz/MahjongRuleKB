@@ -9,7 +9,7 @@ import { ruleMetaSchema, ruleIdPattern, type RuleMeta } from "../schemas/rule.ts
 import { configListSchema, type ConfigItem } from "../schemas/config.ts";
 import { baseManifestSchema, variantManifestSchema } from "../schemas/manifest.ts";
 import { requiredSlotsFor } from "../schemas/slot-definitions.ts";
-import { unresolvedListSchema } from "../schemas/unresolved.ts";
+import { unresolvedListSchema, type UnresolvedEntry } from "../schemas/unresolved.ts";
 
 export interface LoadedRule {
   meta: RuleMeta;
@@ -23,7 +23,7 @@ export interface LoadedRuleset {
   config: ConfigItem[];
   configUi: ConfigItem[];
   rules: LoadedRule[];
-  unresolved: unknown[];
+  unresolved: UnresolvedEntry[];
 }
 
 export interface ValidationError {
@@ -86,7 +86,7 @@ export function loadRuleset(dir: string): LoadedRuleset {
     const { meta, body } = splitFrontMatter(readFileSync(file, "utf8"));
     rules.push({ meta: ruleMetaSchema.parse(meta), body, file });
   }
-  let unresolved: unknown[] = [];
+  let unresolved: UnresolvedEntry[] = [];
   const unresolvedFile = join(dir, "unresolved.yaml");
   try {
     unresolved = unresolvedListSchema.parse(parseYaml(readFileSync(unresolvedFile, "utf8")));

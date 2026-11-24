@@ -11,7 +11,7 @@
   verification:
     status: verified
     by: 人工
-    source: 杭州文档飘财限制规则
+    source: HJ-R-PIAO；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-R-PIAO-002
@@ -27,7 +27,7 @@
   verification:
     status: verified
     by: 人工
-    source: 杭州文档飘财限制规则
+    source: HJ-R-PIAO；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-R-PIAO-003
@@ -43,7 +43,7 @@
   verification:
     status: verified
     by: 人工
-    source: 萧山文档飘财限制规则
+    source: XS-R-PIAO；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-R-PIAO-004
@@ -59,6 +59,6 @@
   verification:
     status: verified
     by: 人工
-    source: 萧山文档飘财限制规则
+    source: XS-R-PIAO；来源见对应原始规则章节
   automation:
     status: none

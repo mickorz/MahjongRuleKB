@@ -15,7 +15,7 @@
   verification:
     status: verified
     by: 人工
-    source: 杭州文档吃禁手规则
+    source: HJ-R-CHI；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-R-CHI-002
@@ -35,7 +35,7 @@
   verification:
     status: verified
     by: 人工
-    source: 杭州文档吃禁手规则
+    source: HJ-R-CHI；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-R-CHI-003
@@ -55,7 +55,7 @@
   verification:
     status: verified
     by: 人工
-    source: 萧山文档吃禁手规则
+    source: XS-R-CHI；来源见对应原始规则章节
   automation:
     status: none
 - id: TC-R-CHI-004
@@ -75,6 +75,6 @@
   verification:
     status: verified
     by: 人工
-    source: 萧山文档吃禁手规则
+    source: XS-R-CHI；来源见对应原始规则章节
   automation:
     status: none

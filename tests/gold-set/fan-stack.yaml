@@ -10,10 +10,9 @@
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.4.2 番型互斥与优先级
+    source: HJ-K-STACK；来源见对应原始规则章节
   automation:
-    status: automated
-    test_ref: tests/regression/gold-set.test.ts
+    status: none
 - id: TC-K-STACK-002
   name: 普通爆头与七客同时成立取七客
   ruleset_id: hangzhou-friends-4p
@@ -26,10 +25,9 @@
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.4.2 番型互斥与优先级
+    source: HJ-K-STACK；来源见对应原始规则章节
   automation:
-    status: automated
-    test_ref: tests/regression/gold-set.test.ts
+    status: none
 - id: TC-K-STACK-003
   name: 单杠配飘 1 次
   ruleset_id: hangzhou-friends-4p
@@ -42,10 +40,9 @@
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.4.2 番型互斥与优先级
+    source: HJ-K-STACK；来源见对应原始规则章节
   automation:
-    status: automated
-    test_ref: tests/regression/gold-set.test.ts
+    status: none
 - id: TC-K-STACK-004
   name: 二连杠配双财飘
   ruleset_id: hangzhou-friends-4p
@@ -58,10 +55,9 @@
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.4.2 番型互斥与优先级
+    source: HJ-K-STACK；来源见对应原始规则章节
   automation:
-    status: automated
-    test_ref: tests/regression/gold-set.test.ts
+    status: none
 - id: TC-K-STACK-005
   name: 三连杠补牌爆头
   ruleset_id: hangzhou-friends-4p
@@ -74,10 +70,9 @@
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.4.2 番型互斥与优先级
+    source: HJ-K-STACK；来源见对应原始规则章节
   automation:
-    status: automated
-    test_ref: tests/regression/gold-set.test.ts
+    status: none
 - id: TC-K-STACK-006
   name: 豪华七对配双财飘
   ruleset_id: hangzhou-friends-4p
@@ -90,10 +85,9 @@
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.4.2 番型互斥与优先级
+    source: HJ-K-STACK；来源见对应原始规则章节
   automation:
-    status: automated
-    test_ref: tests/regression/gold-set.test.ts
+    status: none
 - id: TC-K-STACK-007
   name: 先飘 1 次连杠 2 次后补牌爆头
   ruleset_id: hangzhou-friends-4p
@@ -106,10 +100,9 @@
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.4.2 番型互斥与优先级
+    source: HJ-K-STACK；来源见对应原始规则章节
   automation:
-    status: automated
-    test_ref: tests/regression/gold-set.test.ts
+    status: none
 - id: TC-K-STACK-008
   name: 先飘 2 次连杠 3 次后补牌爆头
   ruleset_id: hangzhou-friends-4p
@@ -122,7 +115,6 @@
   verification:
     status: verified
     by: 人工
-    source: 杭州文档 2.3.4.2 番型互斥与优先级
+    source: HJ-K-STACK；来源见对应原始规则章节
   automation:
-    status: automated
-    test_ref: tests/regression/gold-set.test.ts
+    status: none
