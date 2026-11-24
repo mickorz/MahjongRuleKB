@@ -87,10 +87,12 @@ export function loadRuleset(dir: string): LoadedRuleset {
     rules.push({ meta: ruleMetaSchema.parse(meta), body, file });
   }
   let unresolved: unknown[] = [];
+  const unresolvedFile = join(dir, "unresolved.yaml");
   try {
-    unresolved = unresolvedListSchema.parse(parseYaml(readFileSync(join(dir, "unresolved.yaml"), "utf8")));
-  } catch {
-    // 可选
+    unresolved = unresolvedListSchema.parse(parseYaml(readFileSync(unresolvedFile, "utf8")));
+  } catch (error) {
+    // 文件不存在时才按可选处理；文件存在但格式错误必须暴露。
+    if (statSync(unresolvedFile, { throwIfNoEntry: false })) throw error;
   }
   return { dir, manifest, config, configUi, rules, unresolved };
 }
