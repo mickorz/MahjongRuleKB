@@ -14,7 +14,8 @@
 | `rulebook/compiled/` | 编译器产物 | **否**，只能由 `node compiler/compile.ts` 生成 |
 | `rulebook/changes/archive/` | 已归档变更（审计留痕） | 否，只由归档流程写入 |
 | `schemas/` | Zod 数据结构定义 | 是 |
-| `studio/` | Rule Studio 领域契约（Document / Block / Segment / Outline / Proposal / Change 的 Zod Schema，K0 阶段只含类型；与 `schemas/` 的规则卡 Schema 分开） | 是 |
+| `studio/contracts/` | Rule Studio 领域契约（Document / Block / Segment / Outline / Proposal / Change 的 Zod Schema） | 是 |
+| `studio/paths/` | 路径注册表与主体权限（唯一路径推导、规范化、逃逸防护） | 是 |（Document / Block / Segment / Outline / Proposal / Change 的 Zod Schema，K0 阶段只含类型；与 `schemas/` 的规则卡 Schema 分开） | 是 |
 | `compiler/` | 校验与编译 | 是 |
 | `calculators/` | 确定性计算纯函数 | 是 |
 | `tests/gold-set/` | Gold Set 用例（YAML） | 是 |
