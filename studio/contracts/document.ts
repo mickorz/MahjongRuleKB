@@ -25,6 +25,7 @@ import {
   ruleRefPattern,
   configRefPattern,
 } from "./references.ts";
+import { machineCheckStatusValues } from "./machine-check.ts";
 
 /** 需要基座对照卡的来源关系：主动继承、默认继承、替换 */
 export const lineagesRequiringBaseRef: ReadonlyArray<(typeof lineageValues)[number]> = [
@@ -107,6 +108,16 @@ export const segmentSchema = z
     references: referencesSchema,
     /** 变体相对基座的对照卡；是否需要由 lineage 决定（见下方校验） */
     base_rule_ref: z.union([z.string().regex(ruleRefPattern), z.string().regex(configRefPattern)]).nullish(),
+    /**
+     * W0-3：机器检查状态。只表达检查结论，不表达人工确认（那是 diff_status）
+     * 也不表达人工审查（那是 review-records.json）。默认 not_checked，向后兼容。
+     */
+    machine_check_status: z.enum(machineCheckStatusValues).optional(),
+    /**
+     * W2-2：仅 modified 片段使用，指向被改写的基座 segment_id。
+     * 继承片段保留基座原 segment_id，所以不再填这个字段（避免重复表达身份）。
+     */
+    base_segment_ref: segmentIdSchema.optional(),
   })
   .strict()
   .superRefine((seg, ctx) => {
@@ -140,6 +151,14 @@ export const segmentSchema = z
         code: "custom",
         path: ["diff_status"],
         message: "基座片段（lineage=base）的 diff_status 只能是 not_applicable",
+      });
+    }
+    // base_segment_ref 只对 modified 有意义（C4）：继承已共享 segment_id，added 无基座片段
+    if (seg.base_segment_ref && seg.lineage !== "modified") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["base_segment_ref"],
+        message: `base_segment_ref 只用于 modified 片段（当前 ${seg.lineage}）`,
       });
     }
   });
@@ -229,6 +248,25 @@ export const documentSchema = z
     document_version: z.number().int().nonnegative(),
     blocks: z.array(documentBlockSchema).min(1),
     segment_lineage: z.array(segmentLineageEntrySchema).default([]),
+    /** W0-4：变体文档绑定的基座版本（基座文档自身不填） */
+    base_binding: z
+      .object({
+        ruleset_version: semverSchema,
+        content_hash: z.string().regex(/^[a-f0-9]{64}$/),
+        document_version: z.number().int().nonnegative(),
+      })
+      .strict()
+      .optional(),
+    /** W0-4：本次生成的输入溯源（模型与 Prompt 版本、输入 Hash、锁定时间） */
+    generation: z
+      .object({
+        model: z.string().min(1),
+        prompt_version: z.string().min(1),
+        locked_at: z.string().datetime(),
+        input_hash: z.string().regex(/^[a-f0-9]{64}$/),
+      })
+      .strict()
+      .optional(),
   })
   .strict()
   .superRefine((doc, ctx) => {
