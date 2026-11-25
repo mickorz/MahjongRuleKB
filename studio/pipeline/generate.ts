@@ -97,10 +97,11 @@ export function generateDocument(
       if (!config) continue;
       assignedConfigs.add(configId);
       segmentSeq += 1;
+      const configText = `${config.name}：${String(config.value)}${config.description ? `（${config.description}）` : ""}`;
       segments.push({
         segment_id: `SEG-${pad(segmentSeq, 6)}`,
-        text: `${config.name}：${String(config.value)}${config.description ? `（${config.description}）` : ""}`,
-        editable: !numericOnlyPattern.test(String(config.value)),
+        text: configText,
+        editable: !looksLikeFormula(configText) && !numericOnlyPattern.test(configText),
         lineage: "base",
         decision_status: "confirmed",
         diff_status: "not_applicable",

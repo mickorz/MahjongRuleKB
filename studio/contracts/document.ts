@@ -41,8 +41,11 @@ export const numericOnlyPattern = /^\s*-?[\d.,]+\s*(倍|分|%|张|番|毫秒|秒
  * 不用 ^…$ 限定整段，因为日期常嵌在中文句子里。
  */
 const dateFragmentPattern = /\d{4}[-/]\d{1,2}[-/]\d{1,2}/g;
-/** 公式特征：显式乘除号、数字之间的运算符、或关键词紧跟乘号 */
-const formulaLikePattern = /[×÷]|[\d)]\s*[+\-*/=]\s*[\d(]|\s[+\-*/=]\s|(底分|倍率|牢数|番型)\s*[×÷*]/;
+/**
+ * 公式特征：显式乘除号、数字之间的运算符、或关键词紧跟乘号。
+ * 注意：空格包围的运算符不包含 `/`——中文里「响应 / 本人」这类斜杠是并列分隔，不是除法。
+ */
+const formulaLikePattern = /[×÷]|[\d)]\s*[+\-*/=]\s*[\d(]|\s[+\-*=]\s|(底分|倍率|牢数|番型)\s*[×÷*]/;
 export const looksLikeFormula = (text: string) =>
   formulaLikePattern.test(text.replace(dateFragmentPattern, " "));
 
