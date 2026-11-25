@@ -12,7 +12,7 @@ depends_on:
   - XS-F-GENZHUANG-PEIFU
   - XS-T-JIESUAN-HUAMIAN
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: V-RESULT
 base_rule_ref: HJ-V-XIAO-JIESUAN
 change_type: modified

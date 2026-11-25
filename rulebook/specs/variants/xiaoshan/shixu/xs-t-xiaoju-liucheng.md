@@ -11,7 +11,7 @@ status: confirmed
 release_blocker: false
 depends_on: [XS-R-ZHUANGJIA-01, XS-R-ZHUANGJIA-02, XS-T-DINGLAO-ZHISAI, XS-R-MOPAI-GANGBU, XS-R-HUPAI-01, XS-T-ZUIHOU-LIUJU, XS-P-JUZHONG-JUMO, XS-A-JUMO-PIAOFEN, XS-V-XIAO-JIESUAN, XS-R-TUODI, XS-T-JIESUAN-HUAMIAN]
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: "T-ROUND"
 ---
 

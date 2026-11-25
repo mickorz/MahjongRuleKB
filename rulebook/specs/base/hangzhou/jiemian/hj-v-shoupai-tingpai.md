@@ -8,7 +8,7 @@ status: confirmed
 release_blocker: false
 depends_on: [HJ-C-CAISHEN, HJ-K-FANXING-HUCHI, HJ-R-ZIMO, HJ-R-FANGCHONG, HJ-R-ZHUANGXIAN-FANGCHONG, HJ-K-SHIFENG]
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 3.2.5
 ---
 

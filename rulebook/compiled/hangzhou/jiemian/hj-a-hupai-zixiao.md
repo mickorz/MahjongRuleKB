@@ -11,7 +11,7 @@ depends_on:
   - HJ-K-FANXING-HUCHI
   - HJ-A-JUMO-PIAOFEN
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 4.6 自摸 / 5.1
 ---
 

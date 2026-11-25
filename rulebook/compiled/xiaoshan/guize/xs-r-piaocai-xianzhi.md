@@ -10,7 +10,7 @@ depends_on:
   - XS-M-PIAOCAI
   - HJ-N-LIANXU-PIAOCAI
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: R-PIAO
 base_rule_ref: HJ-R-PIAOCAI-XIANZHI
 change_type: modified

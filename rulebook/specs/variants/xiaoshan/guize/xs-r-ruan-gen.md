@@ -10,7 +10,7 @@ status: confirmed
 release_blocker: false
 depends_on: [XS-M-GENZHUANG-QUAN, XS-F-GENZHUANG-PEIFU, XS-T-GENZHUANG-XIAN]
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: "R-GZ"
 ---
 

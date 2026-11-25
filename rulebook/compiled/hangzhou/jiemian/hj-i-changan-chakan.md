@@ -10,7 +10,7 @@ depends_on:
   - HJ-C-UI-CHANGAN-YUZHI
   - HJ-T-XIAOJU-JIESUAN
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 5.2 / 6.1.2 第 11 项
 ---
 

@@ -8,7 +8,7 @@ status: confirmed
 release_blocker: false
 depends_on: [HJ-C-LIUJU-LIUDI-ZHANGSHU, HJ-C-GANG-ZUIDI-YUPAI, HJ-R-GANG-BUPAI]
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 2.2 名词「流局」/ 5.1
 ---
 

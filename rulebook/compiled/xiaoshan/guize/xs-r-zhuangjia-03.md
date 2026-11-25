@@ -11,7 +11,7 @@ depends_on:
   - XS-N-LAOSHU
   - XS-R-ZHUANGJIA-04
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: R-BANK-03
 base_rule_ref: HJ-R-DUSAN
 change_type: modified

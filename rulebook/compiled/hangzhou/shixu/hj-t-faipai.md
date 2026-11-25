@@ -11,7 +11,7 @@ depends_on:
   - HJ-C-PAISHU
   - HJ-R-DINGZHUANG
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: "4.4"
 ---
 

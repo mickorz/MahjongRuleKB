@@ -11,7 +11,7 @@ status: confirmed
 release_blocker: false
 depends_on: [XS-F-HUPAI-GANGFEN, XS-T-JIESUAN-HUAMIAN, XS-A-GENZHUANG]
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: "A-FLOAT"
 ---
 

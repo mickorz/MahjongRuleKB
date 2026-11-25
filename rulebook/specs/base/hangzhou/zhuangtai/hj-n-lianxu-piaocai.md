@@ -8,7 +8,7 @@ status: confirmed
 release_blocker: false
 depends_on: [HJ-R-PIAOCAI-XIANZHI, HJ-K-CAIPIAO, HJ-K-GANGPIAO, HJ-K-PIAOGANG]
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 2.2 名词「飘」
 ---
 

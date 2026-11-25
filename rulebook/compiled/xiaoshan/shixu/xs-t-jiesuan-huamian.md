@@ -10,7 +10,7 @@ depends_on:
   - XS-R-TUODI
   - XS-P-TUODI-KEPEIFEN
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: T-CAP
 base_rule_ref: null
 change_type: added

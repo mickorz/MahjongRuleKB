@@ -14,7 +14,7 @@ depends_on:
   - XS-R-HUPAI-01
   - HJ-K-SHIFENG
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 3.2.5
 ---
 

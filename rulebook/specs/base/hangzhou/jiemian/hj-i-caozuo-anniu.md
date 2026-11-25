@@ -8,7 +8,7 @@ status: confirmed
 release_blocker: false
 depends_on: [HJ-R-QIPAI-YOUXIANJI, HJ-R-CHI, HJ-R-PENG, HJ-R-ZHIGANG, HJ-R-JIAGANG, HJ-R-ANGANG, HJ-R-ZIMO, HJ-R-FANGCHONG, HJ-R-QIANGGANG]
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 4.6
 ---
 

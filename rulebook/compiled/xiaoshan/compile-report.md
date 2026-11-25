@@ -1,6 +1,6 @@
 # 编译报告：xiaoshan-friends-4p
 
-- 基础规则集：hangzhou-friends-4p@1.1.0
+- 基础规则集：hangzhou-friends-4p@1.2.0
 - 规则总数：86（继承自杭州 43，来自萧山 43）
 - 继承（inherited，不生成新卡）：4
 - 替换（modified）：18

@@ -8,7 +8,7 @@ status: confirmed
 release_blocker: false
 depends_on: [HJ-N-LIANXU-PIAOCAI, HJ-K-GANGKAI]
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 2.3.4.2 第 22-33 项 / 2.3.1.4 杠飘
 ---
 

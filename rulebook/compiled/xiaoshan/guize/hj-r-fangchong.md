@@ -12,7 +12,7 @@ depends_on:
   - XS-R-HUPAI-01
   - HJ-K-PINGHU
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 2.3.1.6
 ---
 

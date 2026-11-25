@@ -10,7 +10,7 @@ depends_on:
   - XS-T-GENZHUANG-XIAN
   - XS-F-GENZHUANG-PEIFU
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: A-GZ
 base_rule_ref: null
 change_type: added

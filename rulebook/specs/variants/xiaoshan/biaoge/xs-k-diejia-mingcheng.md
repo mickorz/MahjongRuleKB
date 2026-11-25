@@ -10,7 +10,7 @@ status: confirmed
 release_blocker: false
 depends_on: [XS-K-FANXING, XS-K-LIANGANG]
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: "K-STACK"
 ---
 

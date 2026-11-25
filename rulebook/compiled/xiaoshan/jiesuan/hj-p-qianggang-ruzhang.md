@@ -12,7 +12,7 @@ depends_on:
   - HJ-P-CHENGBAO-RUZHANG
   - HJ-R-QIANGGANG
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 2.3.3 / 2.3.1.4
 ---
 

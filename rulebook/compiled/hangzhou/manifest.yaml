@@ -1,14 +1,14 @@
 ruleset_id: hangzhou-friends-4p
-version: 1.1.0
-content_hash: f733e5b49715359989761c68f95a3c03078eeee2e5158171f9f9c6ec4f209aae
+version: 1.2.0
+content_hash: 93b4d75dcb71ec9a4894f9411bccfd25327d58060c43176070cdab4a8dc45911
 scope:
   player_count: 4
   room_type: friends
 sources:
-  - sources/hangzhou/hangzhou-core-flow.md
+  - rulebook/sources/hangzhou/hangzhou-core-flow.md
 note: 杭州资料本身是四人好友房固定配置的核心流程，不是所有杭州麻将的完整定义
 compiled_from:
   ruleset_id: hangzhou-friends-4p
-  version: 1.1.0
+  version: 1.2.0
 releasable: true
 blockers: []

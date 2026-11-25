@@ -19,7 +19,7 @@ depends_on:
   - XS-R-TUODI
   - XS-T-JIESUAN-HUAMIAN
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: T-ROUND
 base_rule_ref: HJ-T-XIAOJU-LIUCHENG
 change_type: modified

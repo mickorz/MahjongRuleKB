@@ -11,7 +11,7 @@ depends_on:
   - HJ-K-GANGKAI
   - HJ-K-GANGPIAO
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 2.3.4.2 第 34 项 / 2.3.4.2 番型互斥
 ---
 

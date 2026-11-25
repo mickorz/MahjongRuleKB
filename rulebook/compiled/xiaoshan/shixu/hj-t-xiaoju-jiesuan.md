@@ -14,7 +14,7 @@ depends_on:
   - HJ-R-ZIMO
   - HJ-R-FANGCHONG
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 5.1 / 6.1.1
 ---
 

@@ -8,7 +8,7 @@ status: confirmed
 release_blocker: false
 depends_on: [HJ-R-DINGZHUANG, HJ-R-LUNZHUANG, HJ-T-FAIPAI, HJ-T-XINGPAI, HJ-T-XIAOJU-JIESUAN, HJ-C-JUSHU]
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 4.1-5.1 / 2.3.2.1
 ---
 

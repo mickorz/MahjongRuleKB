@@ -13,7 +13,7 @@ depends_on:
   - HJ-R-ZIMO
   - XS-R-MOPAI-GANGBU
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: "4.5"
 ---
 

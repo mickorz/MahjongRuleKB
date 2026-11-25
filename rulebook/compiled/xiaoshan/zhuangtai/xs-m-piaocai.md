@@ -8,7 +8,7 @@ status: confirmed
 release_blocker: false
 depends_on: []
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: M-PIAO
 base_rule_ref: HJ-M-PIAOCAI-JILU
 change_type: modified

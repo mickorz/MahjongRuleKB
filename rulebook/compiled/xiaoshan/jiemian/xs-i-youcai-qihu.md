@@ -9,7 +9,7 @@ release_blocker: false
 depends_on:
   - XS-R-HUPAI-03
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: I-HU
 base_rule_ref: null
 change_type: added

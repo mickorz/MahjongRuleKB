@@ -8,7 +8,7 @@ status: confirmed
 release_blocker: false
 depends_on: [HJ-K-PINGHU, HJ-K-BAOTOU, HJ-K-CAIPIAO, HJ-K-GANGKAI, HJ-K-QIDUI, HJ-K-QINGQIDUI, HJ-K-GANGBAO, HJ-K-GANGPIAO, HJ-K-PIAOGANG, HJ-K-QIKE, HJ-K-SHIFENG]
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 2.3.4.2 番型互斥与优先级
 ---
 

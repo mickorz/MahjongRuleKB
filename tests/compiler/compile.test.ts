@@ -1,10 +1,12 @@
 // 编译结果测试：数量公式、引用闭合、溯源保留、配置合并、重新编译无 diff
 import { describe, it, expect, beforeAll } from "vitest";
 import { execSync } from "node:child_process";
-import { readFileSync, readdirSync, existsSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync, mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
+import { tmpdir } from "node:os";
 import { parse as parseYaml } from "yaml";
 import { splitFrontMatter, loadRuleset } from "../../compiler/validator.ts";
+import { DEFAULT_PATHS, main as compileTo } from "../../compiler/compile.ts";
 
 function walk(dir: string): string[] {
   const out: string[] = [];
@@ -121,11 +123,11 @@ describe("rulebook/compiled/xiaoshan", () => {
   it("manifest releasable=false，3 个阻塞项", () => {
     expect(c.manifest.releasable).toBe(false);
     expect(c.manifest.blockers).toHaveLength(3);
-    expect(c.manifest.compiled_from).toEqual({ ruleset_id: "hangzhou-friends-4p", version: "1.1.0" });
+    expect(c.manifest.compiled_from).toEqual({ ruleset_id: "hangzhou-friends-4p", version: "1.2.0" });
     expect(c.manifest.scope).toEqual({ player_count: 4, room_type: "friends" });
   });
 
-  it("产物不含 sources/hangzhou 的路径引用（可独立读取）", () => {
+  it("产物正文不含「见杭州文档」类相对引用（可独立读取）", () => {
     // 产物卡的 sources 字段保留原始出处用于追溯是允许的；这里检查正文不依赖「见杭州文档 x.x 节」这类相对引用
     for (const r of c.rules) {
       expect(r.body).not.toMatch(/见杭麻文档|见杭州文档/);
@@ -143,14 +145,21 @@ describe("rulebook/compiled/hangzhou", () => {
 });
 
 describe("重新编译无 diff", () => {
+  // 编译到临时目录：不改写仓库产物，避免与其他测试文件读 rulebook/compiled 产生竞争
   it("连续两次 compile 结果一致", () => {
-    execSync("node compiler/compile.ts", { stdio: "ignore" });
+    const out = mkdtempSync(join(tmpdir(), "kb-compile-"));
+    const paths = { ...DEFAULT_PATHS, compiledDir: out };
     const snapshot = () => {
-      const files = walk("rulebook/compiled").filter((f) => !f.includes("node_modules")).sort();
+      const files = walk(out).sort();
       return files.map((f) => `${f}:${readFileSync(f, "utf8").length}:${readFileSync(f, "utf8").slice(0, 200)}`).join("\n");
     };
-    const a = snapshot();
-    execSync("node compiler/compile.ts", { stdio: "ignore" });
-    expect(snapshot()).toBe(a);
-  }, 15000);
+    try {
+      compileTo(paths);
+      const a = snapshot();
+      compileTo(paths);
+      expect(snapshot()).toBe(a);
+    } finally {
+      rmSync(out, { recursive: true, force: true });
+    }
+  }, 30000);
 });

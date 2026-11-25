@@ -11,7 +11,7 @@ depends_on:
   - HJ-R-CHI
   - HJ-C-SANTAN-CHENGBAO
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 2.2 名词「摊」
 ---
 

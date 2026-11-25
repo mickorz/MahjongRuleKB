@@ -10,7 +10,7 @@ depends_on:
   - HJ-N-LIANXU-PIAOCAI
   - HJ-K-BAOTOU
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 2.3.4.2 第 3-5 项
 ---
 

@@ -9,7 +9,7 @@ release_blocker: false
 depends_on:
   - XS-N-LAOSHU
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: F-BANK
 base_rule_ref: HJ-F-ZHUANGXIAN-BEILV
 change_type: modified

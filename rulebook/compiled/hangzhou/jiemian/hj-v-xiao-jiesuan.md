@@ -12,7 +12,7 @@ depends_on:
   - HJ-K-FANXING-HUCHI
   - HJ-I-CHANGAN-CHAKAN
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 6.1.2
 ---
 

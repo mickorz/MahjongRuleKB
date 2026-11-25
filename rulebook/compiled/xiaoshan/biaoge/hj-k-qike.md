@@ -11,7 +11,7 @@ depends_on:
   - HJ-K-QIDUI
   - HJ-K-BAOTOU
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 2.3.4.2 第 35-50 项
 ---
 

@@ -8,7 +8,7 @@ status: confirmed
 release_blocker: false
 depends_on: [HJ-F-YUANYING-PEIFEN, HJ-F-ZHUANGXIAN-BEILV, HJ-P-CHENGBAO-RUZHANG, HJ-R-FANGCHONG]
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: "2.3.3"
 ---
 

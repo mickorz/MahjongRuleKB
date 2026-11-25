@@ -13,22 +13,10 @@ import { loadRuleset, splitFrontMatter, type LoadedRuleset, type LoadedRule, typ
 import type { RuleMeta, VariantRuleMeta } from "../schemas/rule.ts";
 import type { ConfigItem } from "../schemas/config.ts";
 import { validateRuleset } from "./validator.ts";
+import { DEFAULT_PATHS, type CompilePaths } from "./paths.ts";
 
-/**
- * 默认根路径（过渡期默认值）。
- * 目录迁移到 rulebook/ 后由 paths 模块统一接管，此处不得再新增硬编码路径。
- */
-export const DEFAULT_PATHS = {
-  baseDir: "rulebook/specs/base/hangzhou",
-  variantsDir: "rulebook/specs/variants",
-  compiledDir: "rulebook/compiled",
-} as const;
-
-export interface CompilePaths {
-  baseDir: string;
-  variantsDir: string;
-  compiledDir: string;
-}
+export { DEFAULT_PATHS } from "./paths.ts";
+export type { CompilePaths } from "./paths.ts";
 
 interface CompiledRule extends LoadedRule {
   /** base = 直接取自杭州；variant = 来自萧山 */
@@ -317,7 +305,7 @@ function writeOutput(dir: string, result: CompileResult, unresolved: import("../
 }
 
 /** 主流程：校验并编译基础规则集与变种目录下全部变种，写入编译产物目录 */
-function main(paths: CompilePaths = DEFAULT_PATHS) {
+export function main(paths: CompilePaths = DEFAULT_PATHS) {
   const base = loadRuleset(paths.baseDir, "base");
   if (validateRuleset(base).length) throw new Error(`${paths.baseDir} 校验未通过，先跑 node compiler/validator.ts`);
 

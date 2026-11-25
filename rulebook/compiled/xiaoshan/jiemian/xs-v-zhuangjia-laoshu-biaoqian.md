@@ -11,7 +11,7 @@ depends_on:
   - XS-R-ZHUANGJIA-04
   - XS-A-JIAZHUANG
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: V-BANK
 base_rule_ref: HJ-V-TOUXIANG-QU
 change_type: modified

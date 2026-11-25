@@ -10,7 +10,7 @@ depends_on:
   - XS-K-DIEJIA-MINGCHENG
   - HJ-A-JUMO-PIAOFEN
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: A-HU
 base_rule_ref: HJ-A-HUPAI-ZIXIAO
 change_type: modified

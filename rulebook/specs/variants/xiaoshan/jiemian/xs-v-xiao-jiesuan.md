@@ -11,7 +11,7 @@ status: confirmed
 release_blocker: false
 depends_on: [XS-F-BENJU-JINGDE, XS-K-DIEJIA-MINGCHENG, XS-F-GENZHUANG-PEIFU, XS-T-JIESUAN-HUAMIAN]
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: "V-RESULT"
 ---
 

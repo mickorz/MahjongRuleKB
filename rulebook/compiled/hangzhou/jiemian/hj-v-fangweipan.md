@@ -10,7 +10,7 @@ depends_on:
   - HJ-T-XIAOJU-LIUCHENG
   - HJ-T-XINGPAI
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 3.2.1
 ---
 

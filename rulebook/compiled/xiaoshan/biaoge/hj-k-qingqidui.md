@@ -9,7 +9,7 @@ release_blocker: false
 depends_on:
   - HJ-K-QIDUI
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 2.3.4.2 第 14-17 项
 ---
 

@@ -8,7 +8,7 @@ status: confirmed
 release_blocker: false
 depends_on: [HJ-C-FAIPAI-JIEZOU, HJ-C-PAISHU, HJ-R-DINGZHUANG]
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: "4.4"
 ---
 

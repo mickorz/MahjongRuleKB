@@ -10,7 +10,7 @@ depends_on:
   - XS-F-GENZHUANG-PEIFU
   - XS-F-HUPAI-GANGFEN
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: F-NET
 base_rule_ref: null
 change_type: added

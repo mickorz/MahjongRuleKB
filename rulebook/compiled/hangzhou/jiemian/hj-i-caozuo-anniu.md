@@ -17,7 +17,7 @@ depends_on:
   - HJ-R-FANGCHONG
   - HJ-R-QIANGGANG
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: "4.6"
 ---
 

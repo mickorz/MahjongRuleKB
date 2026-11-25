@@ -11,7 +11,7 @@ depends_on:
   - XS-R-CHI-JINSHOU
   - XS-R-PIAOCAI-XIANZHI
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 2.3.1.2
 ---
 

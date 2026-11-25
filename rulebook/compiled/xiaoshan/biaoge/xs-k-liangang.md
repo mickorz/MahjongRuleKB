@@ -9,7 +9,7 @@ release_blocker: true
 depends_on:
   - XS-K-FANXING
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: K-GANG
 base_rule_ref: HJ-K-GANGKAI
 change_type: modified

@@ -45,8 +45,8 @@ describe("rulebook/specs/variants/xiaoshan", () => {
     }
   });
 
-  it("manifest 锁定杭州 1.1.0", () => {
-    expect(rs.manifest.base).toEqual({ ruleset_id: "hangzhou-friends-4p", version: "1.1.0" });
+  it("manifest 锁定杭州 1.2.0", () => {
+    expect(rs.manifest.base).toEqual({ ruleset_id: "hangzhou-friends-4p", version: "1.2.0" });
   });
 
   it("inherited 配置项不填 value", () => {

@@ -10,7 +10,7 @@ depends_on:
   - XS-R-MOPAI-GANGBU
   - XS-R-PIAOCAI-XIANZHI
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: R-HU-02
 base_rule_ref: HJ-R-JIAGANG
 change_type: modified

@@ -10,7 +10,7 @@ depends_on:
   - HJ-I-CAOZUO-ANNIU
   - HJ-R-QIPAI-YOUXIANJI
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: "4.7"
 ---
 

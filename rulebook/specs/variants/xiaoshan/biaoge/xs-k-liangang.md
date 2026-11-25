@@ -11,7 +11,7 @@ status: unresolved
 release_blocker: true
 depends_on: [XS-K-FANXING]
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: "K-GANG"
 ---
 

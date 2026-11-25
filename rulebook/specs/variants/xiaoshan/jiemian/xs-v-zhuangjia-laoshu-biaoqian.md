@@ -11,7 +11,7 @@ status: confirmed
 release_blocker: false
 depends_on: [XS-N-LAOSHU, XS-R-ZHUANGJIA-04, XS-A-JIAZHUANG]
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: "V-BANK"
 ---
 

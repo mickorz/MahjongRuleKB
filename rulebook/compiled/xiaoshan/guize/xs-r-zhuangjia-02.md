@@ -10,7 +10,7 @@ depends_on:
   - XS-R-ZHUANGJIA-03
   - XS-N-LAOSHU
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: R-BANK-02
 base_rule_ref: HJ-R-LUNZHUANG
 change_type: modified

@@ -8,7 +8,7 @@ status: confirmed
 release_blocker: false
 depends_on: [HJ-A-HUPAI-ZIXIAO, HJ-P-ZIMO-RUZHANG, HJ-P-DIANPAO-RUZHANG, HJ-P-QIANGGANG-RUZHANG, HJ-P-CHENGBAO-RUZHANG]
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: 5.1
 ---
 

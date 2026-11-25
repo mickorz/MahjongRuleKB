@@ -9,7 +9,7 @@ release_blocker: false
 depends_on:
   - XS-R-PIAOCAI-XIANZHI
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: V-PIAO
 base_rule_ref: null
 change_type: added

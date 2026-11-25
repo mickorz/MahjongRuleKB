@@ -10,7 +10,7 @@ depends_on:
   - XS-N-CHIPAI-CISHU
   - HJ-I-CHUPAI
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: R-CHI
 base_rule_ref: HJ-R-CHI-JINSHOU
 change_type: modified

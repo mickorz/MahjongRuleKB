@@ -1,6 +1,6 @@
 # 编译报告：hangzhou-friends-4p
 
-- 基础规则集：hangzhou-friends-4p@1.1.0
+- 基础规则集：hangzhou-friends-4p@1.2.0
 - 规则总数：61（继承自杭州 61，来自萧山 0）
 - 继承（inherited，不生成新卡）：0
 - 替换（modified）：0

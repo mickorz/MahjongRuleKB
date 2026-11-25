@@ -11,7 +11,7 @@ status: confirmed
 release_blocker: false
 depends_on: [XS-R-MOPAI-GANGBU]
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: "T-WALL"
 ---
 

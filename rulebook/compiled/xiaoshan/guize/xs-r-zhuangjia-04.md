@@ -10,7 +10,7 @@ depends_on:
   - XS-N-LAOSHU
   - XS-F-ZHUANGXIAN-BEILV
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: R-BANK-04
 base_rule_ref: null
 change_type: added

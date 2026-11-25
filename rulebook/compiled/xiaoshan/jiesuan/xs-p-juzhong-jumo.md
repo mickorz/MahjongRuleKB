@@ -11,7 +11,7 @@ depends_on:
   - XS-F-HUPAI-GANGFEN
   - XS-T-GENZHUANG-XIAN
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: P-FLOW
 base_rule_ref: null
 change_type: added

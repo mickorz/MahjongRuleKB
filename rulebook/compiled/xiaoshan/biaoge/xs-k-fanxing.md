@@ -9,7 +9,7 @@ release_blocker: true
 depends_on:
   - XS-K-LIANGANG
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: K-FAN
 base_rule_ref: HJ-K-FANXING-HUCHI
 change_type: modified

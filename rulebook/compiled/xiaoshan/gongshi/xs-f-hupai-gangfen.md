@@ -9,7 +9,7 @@ release_blocker: false
 depends_on:
   - XS-F-ZHUANGXIAN-BEILV
 sources:
-  - source: sources/xiaoshan/xiaoshan-rules.md
+  - source: rulebook/sources/xiaoshan/xiaoshan-rules.md
     section: F-HU
 base_rule_ref: HJ-F-YUANYING-PEIFEN
 change_type: modified

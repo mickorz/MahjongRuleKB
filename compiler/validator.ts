@@ -15,8 +15,8 @@ import { unresolvedListSchema, type UnresolvedEntry } from "../schemas/unresolve
 /** 规则集类型。校验与编译只认这个显式值，不看目录位置 */
 export type RuleSetKind = "base" | "variant";
 
-/** 默认基础规则集目录（迁移到 rulebook/ 后的正式位置） */
-export const DEFAULT_BASE_DIR = "rulebook/specs/base/hangzhou";
+export { DEFAULT_BASE_DIR } from "./paths.ts";
+import { DEFAULT_BASE_DIR } from "./paths.ts";
 
 export interface LoadedRule {
   meta: RuleMeta;

@@ -8,7 +8,7 @@ status: confirmed
 release_blocker: false
 depends_on: [HJ-T-XIAOJU-LIUCHENG, HJ-C-JUSHU]
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: "2.3.3"
 ---
 

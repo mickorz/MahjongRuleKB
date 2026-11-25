@@ -8,7 +8,7 @@ status: confirmed
 release_blocker: false
 depends_on: [HJ-C-SANTAN-CHENGBAO, HJ-C-PENG-SUAN-TAN, HJ-N-TANSHU, HJ-R-CHI, HJ-R-PIAOCAI-XIANZHI]
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: "2.3.2.8"
 ---
 
