@@ -10,20 +10,9 @@ export const ROOT_RUNTIME = ".rule-studio";
 
 /** 变体名：小写 kebab-case，禁止路径分隔符 */
 const variantPattern = /^[a-z][a-z0-9-]*$/;
-/** 文档产物文件名白名单（documents/<variant>/ 下） */
-export const documentFileNames = [
-  "document.json",
-  "document-outline.yaml",
-  "editorial-overrides.yaml",
-  "identity-map.json",
-  "provenance.json",
-  "changes.json",
-  "需求全文.md",
-] as const;
-export type DocumentFileName = (typeof documentFileNames)[number];
 
 /** 写入主体 */
-export const actors = ["agent", "stage", "transaction", "archive", "compiler"] as const;
+export const actors = ["agent", "stage", "transaction", "archive", "compiler", "server"] as const;
 export type Actor = (typeof actors)[number];
 
 /** 允许的写操作类型（与 Proposal 的 op 解耦，这里只表达能力） */
@@ -32,22 +21,96 @@ export type WriteIntent =
   | "apply-expression" // approved Proposal 写表达层
   | "apply-structure" // approved Proposal 写章节装配
   | "apply-rule" // approved Proposal 写规则事实
+  | "apply-review" // 本地服务端写审查记录
   | "archive" // Verify 后归档
   | "compile"; // 编译器写产物
 
+/** 产物类别（W0-6：所有产物必须登记类别、生命周期与写入主体） */
+export type ArtifactCategory =
+  | "document"
+  | "outline"
+  | "override"
+  | "review-input"
+  | "review-record"
+  | "lock"
+  | "quality"
+  | "diff-report"
+  | "conflict"
+  | "index"
+  | "view"
+  | "history";
+
+type Writer = { actor: Actor; intent: WriteIntent };
+
+export interface ArtifactSpec {
+  /** 文件名；history 用目录前缀 "history/" */
+  name: string;
+  category: ArtifactCategory;
+  lifetime: "persistent" | "version-bound" | "per-generation" | "per-check" | "during-upgrade" | "rebuildable" | "system";
+  /** 允许写入的系统主体；空数组 = 只有外部人工直接改文件，系统内任何主体都不得写 */
+  writers: readonly Writer[];
+}
+
+/**
+ * 产物注册表。
+ * 口径：12 个登记组（按 category 计），不是 12 个文件。
+ * 设置 writers: [] 的产物（diff-review.yaml）由人工在系统外维护，不加 human actor。
+ */
+export const baseDocumentVariant = "hangzhou";
+
+export const artifactCatalog: readonly ArtifactSpec[] = [
+  { name: "document.json", category: "document", lifetime: "persistent", writers: [{ actor: "stage", intent: "generate" }] },
+  {
+    name: "document-outline.yaml",
+    category: "outline",
+    lifetime: "persistent",
+    writers: [
+      { actor: "stage", intent: "generate" },
+      { actor: "transaction", intent: "apply-structure" },
+    ],
+  },
+  { name: "editorial-overrides.yaml", category: "override", lifetime: "persistent", writers: [{ actor: "transaction", intent: "apply-expression" }] },
+  // 人工输入：外部直接编辑文件，系统内任何主体都不允许写
+  { name: "diff-review.yaml", category: "review-input", lifetime: "persistent", writers: [] },
+  { name: "review-records.json", category: "review-record", lifetime: "persistent", writers: [{ actor: "server", intent: "apply-review" }] },
+  { name: "generation.lock.json", category: "lock", lifetime: "version-bound", writers: [{ actor: "stage", intent: "generate" }] },
+  { name: "quality-report.json", category: "quality", lifetime: "per-generation", writers: [{ actor: "stage", intent: "generate" }] },
+  { name: "diff-warnings.json", category: "diff-report", lifetime: "per-check", writers: [{ actor: "stage", intent: "generate" }] },
+  { name: "conflicts.json", category: "conflict", lifetime: "during-upgrade", writers: [{ actor: "stage", intent: "generate" }] },
+  { name: "identity-map.json", category: "index", lifetime: "rebuildable", writers: [{ actor: "stage", intent: "generate" }] },
+  { name: "provenance.json", category: "index", lifetime: "rebuildable", writers: [{ actor: "stage", intent: "generate" }] },
+  { name: "changes.json", category: "index", lifetime: "rebuildable", writers: [{ actor: "stage", intent: "generate" }] },
+  { name: "需求全文.md", category: "view", lifetime: "rebuildable", writers: [{ actor: "stage", intent: "generate" }] },
+  { name: "差异视图.md", category: "view", lifetime: "rebuildable", writers: [{ actor: "stage", intent: "generate" }] },
+  { name: "对照视图.md", category: "view", lifetime: "rebuildable", writers: [{ actor: "stage", intent: "generate" }] },
+  { name: "history/", category: "history", lifetime: "system", writers: [{ actor: "transaction", intent: "apply-expression" }, { actor: "transaction", intent: "apply-structure" }] },
+];
+
+/** 文档产物名白名单（由注册表派生，保留旧导出以兼容既有调用点） */
+export const documentFileNames = artifactCatalog.map((a) => a.name).filter((n) => !n.endsWith("/")) as readonly string[];
+export type DocumentFileName = string;
+
+function findArtifact(rest: string): ArtifactSpec | undefined {
+  return artifactCatalog.find((a) => (a.name.endsWith("/") ? rest.startsWith(a.name) : rest === a.name));
+}
+
+export type PathPolicyCode =
+  | "not_relative"
+  | "traversal"
+  | "unknown_root"
+  | "unknown_file"
+  | "bad_variant"
+  | "actor_denied"
+  | "intent_denied";
+
+// 不用 TS 参数属性：那样会让本文件在 `node --experimental-strip-types` 下无法直接运行，
+// 而 pipeline 入口需要能直跑。
 export class PathPolicyError extends Error {
-  constructor(
-    message: string,
-    readonly code:
-      | "not_relative"
-      | "traversal"
-      | "unknown_root"
-      | "unknown_file"
-      | "bad_variant"
-      | "actor_denied"
-      | "intent_denied",
-  ) {
+  readonly code: PathPolicyCode;
+
+  constructor(message: string, code: PathPolicyCode) {
     super(message);
+    this.code = code;
     this.name = "PathPolicyError";
   }
 }
@@ -139,30 +202,24 @@ export function sourceEvidencePath(rel: string): string {
 interface Rule {
   /** 允许的路径前缀 */
   prefixes: readonly string[];
-  /** 若给出，则（在前缀命中后）还需命中此文件名白名单 */
-  files?: readonly string[];
 }
 
 const MATRIX: Record<Actor, Partial<Record<WriteIntent, Rule>>> = {
   agent: {}, // Agent 无任何直接写入
   stage: {
-    // Stage 生成产物；表达层（editorial-overrides）与规则事实不在其列
+    // Stage 生成产物；表达层与审查记录不在其列
     generate: {
       prefixes: [`${ROOT_DOCUMENTS}/`, `${ROOT_RUNTIME}/workflow/`],
-      files: [
-        "document.json",
-        "document-outline.yaml",
-        "identity-map.json",
-        "provenance.json",
-        "changes.json",
-        "需求全文.md",
-      ],
     },
+  },
+  server: {
+    // 本地 Web 服务只写审查记录，不碰文档内容
+    "apply-review": { prefixes: [`${ROOT_DOCUMENTS}/`] },
   },
   transaction: {
     // 表达层只允许改 override；结构层只允许改章节装配
-    "apply-expression": { prefixes: [`${ROOT_DOCUMENTS}/`], files: ["editorial-overrides.yaml"] },
-    "apply-structure": { prefixes: [`${ROOT_DOCUMENTS}/`], files: ["document-outline.yaml"] },
+    "apply-expression": { prefixes: [`${ROOT_DOCUMENTS}/`] },
+    "apply-structure": { prefixes: [`${ROOT_DOCUMENTS}/`] },
     "apply-rule": { prefixes: [`${ROOT_RULEBOOK}/specs/`] },
   },
   archive: {
@@ -183,25 +240,51 @@ export function assertWritable(actor: Actor, intent: WriteIntent, path: string):
   if (!rule.prefixes.some((prefix) => normalized.startsWith(prefix))) {
     throw new PathPolicyError(`主体 ${actor} 不得以 ${intent} 写 ${normalized}`, "actor_denied");
   }
-  // intent 级文件白名单：例如 Stage 不得写 editorial-overrides.yaml
-  // 仅对 documents/ 生效；.rule-studio/workflow/ 中间产物文件名由 Stage 自定
-  if (rule.files && normalized.startsWith(`${ROOT_DOCUMENTS}/`)) {
-    const name = normalized.split("/").pop() ?? "";
-    if (!rule.files.includes(name)) {
-      throw new PathPolicyError(`主体 ${actor} 不得以 ${intent} 写 ${normalized}（不在该 intent 的文件白名单）`, "actor_denied");
-    }
-  }
-  // 文档产物只允许白名单文件
+  // 文档产物：文件名必须已注册，且写入主体必须在注册表里被允许
   if (normalized.startsWith(`${ROOT_DOCUMENTS}/`)) {
     const parts = normalized.split("/");
-    // documents/<variant>/<file> 或 documents/<variant>/history/vN
+    // documents/<variant>/<file> 或 documents/<variant>/history/...
     if (parts.length < 3) throw new PathPolicyError(`文档路径层级不足：${normalized}`, "unknown_file");
+    const variant = parts[1];
+    assertVariant(variant);
     const rest = parts.slice(2).join("/");
-    const isHistory = rest.startsWith("history/");
-    if (!isHistory && !(documentFileNames as readonly string[]).includes(rest)) {
+    const artifact = findArtifact(rest);
+    if (!artifact) {
       throw new PathPolicyError(`未知文档产物：${normalized}`, "unknown_file");
     }
-    assertVariant(parts[1]);
+    // C1：基座内容不允许人工经事务写入；Stage 生成不受限
+    if (
+      variant === baseDocumentVariant &&
+      (intent === "apply-expression" || intent === "apply-structure")
+    ) {
+      throw new PathPolicyError(
+        `杭州基座内容不得人工编辑：${normalized}（基座变更请重新运行生成流程）`,
+        "actor_denied",
+      );
+    }
+    const allowed = artifact.writers.some((w) => w.actor === actor && w.intent === intent);
+    if (!allowed) {
+      const why = artifact.writers.length === 0 ? "该产物由人工在系统外维护" : "不在该产物的写入主体清单内";
+      throw new PathPolicyError(`主体 ${actor} 不得以 ${intent} 写 ${normalized}（${why}）`, "actor_denied");
+    }
+  }
+  return normalized;
+}
+
+/**
+ * C1 变体隔离：写 `documents/<variant>/` 时，声明的 variant 必须与路径一致。
+ * 基座（杭州）的写入由 assertWritable 的主体规则控制，这里只比较“写的是不是同一个变体”。
+ */
+export function assertVariantScoped(actor: Actor, intent: WriteIntent, path: string, variant: string): string {
+  assertVariant(variant);
+  const normalized = assertWritable(actor, intent, path);
+  if (!normalized.startsWith(`${ROOT_DOCUMENTS}/`)) return normalized;
+  const actual = normalized.split("/")[1];
+  if (actual !== variant) {
+    throw new PathPolicyError(
+      `变体越权：当前上下文为 ${variant}，不得写 ${actual} 的产物（${normalized}）`,
+      "actor_denied",
+    );
   }
   return normalized;
 }

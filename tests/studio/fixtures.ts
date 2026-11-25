@@ -45,11 +45,11 @@ export const block = (segments: Segment[], overrides: Partial<DocumentBlock> = {
   };
 };
 
-/** 一份通过 documentSchema 的合法文档（杭州基座） */
+/** 一份通过 documentSchema 的合法文档（变体文档；基座文档人工不可写，事务类夹具统一用变体） */
 export const documentFixture = (overrides: Partial<Document> = {}): Document =>
   documentSchema.parse({
-    ruleset_id: "hangzhou-friends-4p",
-    target_variant: "hangzhou",
+    ruleset_id: "xiaoshan-friends-4p",
+    target_variant: "xiaoshan",
     template_version: "1.0.0",
     ruleset_version: "1.2.0",
     document_version: 3,
@@ -64,19 +64,19 @@ export const proposalRecordFixture = (overrides: Partial<DocumentProposalRecord>
     id: "DOC-P-001",
     type: "document",
     change_id: "CHG-001",
-    ruleset_id: "hangzhou-friends-4p",
-    target_variant: "hangzhou",
+    ruleset_id: "xiaoshan-friends-4p",
+    target_variant: "xiaoshan",
     op: "replace-text",
     target: {
       block_id: "DOC-HJ-000001",
       segment_id: "SEG-000001",
-      file: "documents/hangzhou/editorial-overrides.yaml",
+      file: "documents/xiaoshan/editorial-overrides.yaml",
     },
     base_revision: {
       document_version: 3,
       files: [
-        { path: "documents/hangzhou/document.json", sha256: HASH },
-        { path: "documents/hangzhou/editorial-overrides.yaml", sha256: HASH },
+        { path: "documents/xiaoshan/document.json", sha256: HASH },
+        { path: "documents/xiaoshan/editorial-overrides.yaml", sha256: HASH },
       ],
     },
     before: { text: "旧", sha256: HASH },

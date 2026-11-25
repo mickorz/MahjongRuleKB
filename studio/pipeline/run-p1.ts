@@ -9,6 +9,7 @@ import { buildChangesFile } from "./changes-json.ts";
 import { compileXiaoshan, generateVariantDocument, sharedOutline } from "./generate-variant.ts";
 import { readBaseRuleSet } from "./read-ruleset.ts";
 import { loadDiffReview } from "./diff-review.ts";
+import { isDocumentOutputDir, writeStageArtifact } from "../paths/stage-writer.ts";
 import { join as joinPath } from "node:path";
 
 export function runP1(outDir = "documents/xiaoshan"): {

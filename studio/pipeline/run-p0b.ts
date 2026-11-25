@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 
 import { PATHS } from "../../compiler/paths.ts";
 import { appendAudit } from "../audit/log.ts";
+import { isDocumentOutputDir, writeStageArtifact } from "../paths/stage-writer.ts";
 import { checkGoldSet } from "./goldset.ts";
 import { checkCoverage, renderDocument } from "./gates.ts";
 import { generateDocument } from "./generate.ts";

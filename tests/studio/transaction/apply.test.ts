@@ -11,21 +11,21 @@ import { assertProposalTransition, assertTxTransition, TxStateError } from "../.
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 
 let root: string;
-const doc = (v: number) => `${JSON.stringify({ ruleset_id: "hangzhou-friends-4p", document_version: v, blocks: [] }, null, 2)}\n`;
+const doc = (v: number) => `${JSON.stringify({ ruleset_id: "xiaoshan-friends-4p", document_version: v, blocks: [] }, null, 2)}\n`;
 
 beforeEach(() => {
   root = join(tmpdir(), `kb-tx-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`);
-  mkdirSync(join(root, "documents/hangzhou"), { recursive: true });
+  mkdirSync(join(root, "documents/xiaoshan"), { recursive: true });
   mkdirSync(join(root, ".rule-studio/transactions"), { recursive: true });
-  writeFileSync(join(root, "documents/hangzhou/document.json"), doc(3));
-  writeFileSync(join(root, "documents/hangzhou/editorial-overrides.yaml"), "[]\n");
+  writeFileSync(join(root, "documents/xiaoshan/document.json"), doc(3));
+  writeFileSync(join(root, "documents/xiaoshan/editorial-overrides.yaml"), "[]\n");
 });
 
 afterEach(() => {
   rmSync(root, { recursive: true, force: true });
 });
 
-const overridePath = "documents/hangzhou/editorial-overrides.yaml";
+const overridePath = "documents/xiaoshan/editorial-overrides.yaml";
 
 describe("状态机", () => {
   it("事务状态迁移只允许合法方向", () => {
@@ -57,7 +57,7 @@ describe("applyDocumentProposal", () => {
     });
     expect(result.state).toBe("committed");
     expect(readFileSync(join(root, overridePath), "utf8")).toContain("新说明");
-    expect(JSON.parse(readFileSync(join(root, "documents/hangzhou/document.json"), "utf8")).document_version).toBe(4);
+    expect(JSON.parse(readFileSync(join(root, "documents/xiaoshan/document.json"), "utf8")).document_version).toBe(4);
   });
 
   it("文档版本基线不符 → 拒绝，且不写任何文件", () => {
@@ -90,12 +90,12 @@ describe("applyDocumentProposal", () => {
       }),
     ).toThrow(ApplyError);
     // 回滚后 document.json 版本仍为 3，override 内容未变
-    expect(JSON.parse(readFileSync(join(root, "documents/hangzhou/document.json"), "utf8")).document_version).toBe(3);
+    expect(JSON.parse(readFileSync(join(root, "documents/xiaoshan/document.json"), "utf8")).document_version).toBe(3);
     expect(readFileSync(join(root, overridePath), "utf8")).toBe("[]\n");
   });
 
   it("新建文件在回滚时被删除", () => {
-    const outline = "documents/hangzhou/document-outline.yaml";
+    const outline = "documents/xiaoshan/document-outline.yaml";
     expect(() =>
       applyDocumentProposal({
         kbRoot: root,
@@ -119,7 +119,7 @@ describe("applyDocumentProposal", () => {
         proposalId: "DOC-P-005",
         baseDocumentVersion: 3,
         intent: "apply-expression",
-      targetPath: "documents/hangzhou/document-outline.yaml",
+      targetPath: "documents/xiaoshan/document-outline.yaml",
         targetContent: "x",
       }),
     ).toThrow();
@@ -140,9 +140,9 @@ describe("崩溃恢复", () => {
           base_document_version: 3,
           entries: [
             {
-              path: "documents/hangzhou/document.json",
+              path: "documents/xiaoshan/document.json",
               existed_before: true,
-              original_sha256: sha(readFileSync(join(root, "documents/hangzhou/document.json"), "utf8")),
+              original_sha256: sha(readFileSync(join(root, "documents/xiaoshan/document.json"), "utf8")),
               new_sha256: "b".repeat(64),
             },
           ],
