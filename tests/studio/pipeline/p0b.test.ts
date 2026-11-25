@@ -95,6 +95,15 @@ describe("P0-B 覆盖门禁与渲染", () => {
     expect(md).toContain("是产出物而非事实源");
   });
 
+  it("基座文档不显示变体来源标记（继承 / 修改 / 新增）", () => {
+    const md = renderDocument(document, outline);
+    for (const mark of ["「继承」", "「显式继承」", "「修改」", "「新增」", "「差异待确认」"]) {
+      expect(md.includes(mark)).toBe(false);
+    }
+    // 数值标签仍然要出现：基座也需提示数值不可改写
+    expect(md).toContain("「数值·不可改写」");
+  });
+
   it("端到端写出合法文档与 Markdown", () => {
     const out = mkdtempSync(join(tmpdir(), "p0b-"));
     try {

@@ -85,10 +85,11 @@ function segmentLine(seg: Segment, showLineage: boolean): string[] {
     if (seg.diff_status === "candidate") marks.push("「差异待确认」");
   }
   if (seg.release_blocker_refs.length > 0) marks.push(`「待裁决 ${seg.release_blocker_refs.join("、")}」`);
-  // 只有纯数值/公式片段才值得提示「不可改写」；长句子里的等号不刷屏
-  if (!seg.editable && (looksLikeFormula(seg.text) || numericOnlyPattern.test(seg.text))) {
-    marks.push("「数值·不可改写」");
-  }
+  // 只有纯数值或短公式片段才提示「不可改写」：长句里出现一个等号不刷屏
+  const numericLike =
+    numericOnlyPattern.test(seg.text) ||
+    (seg.text.length <= 60 && looksLikeFormula(seg.text));
+  if (!seg.editable && numericLike) marks.push("「数值·不可改写」");
   const prefix = marks.length ? `${marks.join("")} ` : "";
   const lines = [`- ${prefix}${seg.text}`];
   const base = seg.lineage === "modified" && seg.base_rule_ref ? `（对照杭麻：\`${seg.base_rule_ref}\`）` : "";
