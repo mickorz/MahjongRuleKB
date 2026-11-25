@@ -20,7 +20,7 @@
 
 **步骤**：
 
-1. 修改 `sources/hangzhou/hangzhou-core-flow.md` 中对应条目（原始资料，修改前先确认是否需要同步到结构化规则卡）。
+1. 修改 `rulebook/sources/hangzhou/hangzhou-core-flow.md` 中对应条目（原始资料，修改前先确认是否需要同步到结构化规则卡）。
 2. 全文检索其他地方玩法文档中引用该条目的差异描述，同步核对是否仍成立。
 3. 在提交说明中注明影响范围。
 

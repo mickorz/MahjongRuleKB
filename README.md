@@ -8,7 +8,7 @@
 - **基础规则**：杭州麻将好友房核心流程，作为所有地方玩法的派生基准。
 - **派生方式**：地方玩法只描述「相对杭州麻将的差异」，由知识库组合出完整可验证的新玩法规则。
 - **服务对象**：AI Agent 规则查询、PrdGameSkill 生成游戏 PRD、规则判定代码、结算逻辑与测试用例。
-- **现有内容**：`sources/` 下的杭州/萧山原始规则文档（只读）、`dev-docs/design/` 下的需求与执行方案。
+- **现有内容**：`rulebook/sources/` 下的杭州/萧山原始规则文档（只读）、`dev-docs/design/` 下的需求与执行方案。
 
 ## 快速开始
 
@@ -16,13 +16,25 @@
 
 - `dev-docs/design/2025-11-24-项目需求.md` —— 知识库建设方案（原始建议书）
 - `dev-docs/design/需求分析.md` —— 对建议书的实测分析与修正路线
-- `sources/hangzhou/hangzhou-core-flow.md` —— 基础规则（杭州麻将原始 PRD，只读）
-- `sources/xiaoshan/xiaoshan-rules.md` —— 差异化派生示例（萧山麻将结构化规则，47 张规则卡，只读）
+- `rulebook/sources/hangzhou/hangzhou-core-flow.md` —— 基础规则（杭州麻将原始 PRD，只读）
+- `rulebook/sources/xiaoshan/xiaoshan-rules.md` —— 差异化派生示例（萧山麻将结构化规则，47 张规则卡，只读）
 
 ## 目录结构
 
 ```text
+rulebook/      规则知识资产（按生命周期分层）
+  sources/       01 原始证据，只读
+  specs/         02 正式规范，唯一事实源
+    base/hangzhou/
+    variants/xiaoshan/
+  changes/       03 已归档变更（审计留痕）
+  compiled/      04 编译产物，禁手改
+compiler/      校验与编译
+calculators/   确定性计算纯函数
+schemas/       Zod 数据结构定义
+tests/         compiler / regression / gold-set
 docs/          读者向文档
 dev-docs/      开发过程文档（随仓库入库）
 dev-examples/  开发期沙盒（随仓库入库，运行产物除外）
+thirdparties/  第三方参考项目
 ```

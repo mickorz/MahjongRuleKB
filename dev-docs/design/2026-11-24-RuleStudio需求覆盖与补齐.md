@@ -62,7 +62,7 @@
 
 ### 必须坚持的原则（否则功能失效）
 
-**B 线必须独立从 `sources/` 提取需求，不能从 A 线已生成的规则卡反向拆需求。**
+**B 线必须独立从 `rulebook/sources/` 提取需求，不能从 A 线已生成的规则卡反向拆需求。**
 
 理由很直接：如果某一要求被 A 线漏掉了，从规则卡反推出来的需求清单也会跟着漏掉，于是「覆盖分析」永远报不出这个遗漏 —— 功能等于自证清白。
 
@@ -77,7 +77,7 @@
 | 优先级 | 功能 | 决策 |
 | --- | --- | --- |
 | P0 | 现有规则结构化体系（11 类槽位、Schema、Validator、Compiler、杭州 61 卡、萧山 47 卡） | **保持，不重做** |
-| P1 | 原子需求拆解（直接读 `sources/`） | 新增 |
+| P1 | 原子需求拆解（直接读 `rulebook/sources/`） | 新增 |
 | P2 | 需求与规则卡 / 配置项映射（多对多） | 新增 |
 | P3 | 覆盖状态分析（六态） | 新增 |
 | P4 | 补齐建议生成（明确目标文件与内容要点） | 新增 |
@@ -91,9 +91,9 @@
 
 | 现有文件或能力 | 已解决 | 尚未解决 |
 | --- | --- | --- |
-| `sources/` | 保存原始规则资料 | 没有原子需求清单 |
-| `rulesets/hangzhou/coverage.md` | 记录原始章节对应哪些规则卡 | 不知道每个具体要求是否被完整提取 |
-| `variants/xiaoshan/unresolved.yaml` | 记录原文的冲突与缺失 | 不能反映「提取遗漏」这一类问题 |
+| `rulebook/sources/` | 保存原始规则资料 | 没有原子需求清单 |
+| `rulebook/specs/base/hangzhou/coverage.md` | 记录原始章节对应哪些规则卡 | 不知道每个具体要求是否被完整提取 |
+| `rulebook/specs/variants/xiaoshan/unresolved.yaml` | 记录原文的冲突与缺失 | 不能反映「提取遗漏」这一类问题 |
 | `compiler/validator.ts`、`compiler/compile.ts` | 结构、引用、依赖、编译 | 不检查语义覆盖率 |
 
 ### 关键缺口：`coverage.md` 粒度不够
@@ -181,7 +181,7 @@ flowchart TB
 
 **这个区分是整个功能的地基**：
 
-- `variants/xiaoshan/unresolved.yaml` 的 `XS-U-002`（飘财第 3 次及以上的豪杠飘倍数原文未给，表里只有飘 1 次、飘 2 次两列）属于**原文缺失**。它不能被判成「AI 提取遗漏」，更不能让 AI 自己编一个倍数。
+- `rulebook/specs/variants/xiaoshan/unresolved.yaml` 的 `XS-U-002`（飘财第 3 次及以上的豪杠飘倍数原文未给，表里只有飘 1 次、飘 2 次两列）属于**原文缺失**。它不能被判成「AI 提取遗漏」，更不能让 AI 自己编一个倍数。
 - 杭州原文明确写了、却没进规则卡的，才是**提取缺失**。
 
 两类问题必须分开处理，且「原文缺失 / 原文冲突」不产出补齐内容，只产出未决项。
@@ -242,8 +242,8 @@ flowchart TB
 
 | 现有模块 | 本功能如何使用 |
 | --- | --- |
-| 原始资料读取（`sources/`） | 读取原文与段落定位 |
-| 规则仓库（`rulesets/`、`variants/`、`compiled/`） | 读取拆分后的规则卡与配置项 |
+| 原始资料读取（`rulebook/sources/`） | 读取原文与段落定位 |
+| 规则仓库（`rulesets/`、`rulebook/specs/variants/`、`rulebook/compiled/`） | 读取拆分后的规则卡与配置项 |
 | Parser（`parser/`） | 解析规则结构与槽位 |
 | 提案引擎 | 把补齐任务转成提案 |
 | 质量门禁 | 检查修改后的规则 |
@@ -278,7 +278,7 @@ UI 在右侧「规则」面板加一个「需求补齐」入口，三个部分�
 | I-18 | 本功能不修改 Schema、不修改编译器语义、不引入新数据库；需求登记表与覆盖状态存为 Rule Studio 的运行时数据（与提案同层） |
 | I-19 | 补齐提案必须过既有门禁并通过人工确认才可写入；本功能自身不具备写盘能力 |
 | I-20 | 「章节已映射」不等于「需求已覆盖」：覆盖判定必须到原子需求粒度，不得用 `coverage.md` 的章节映射结果直接顶替 |
-| I-21 | **B 线必须独立从 `sources/` 提取需求**：不得从规则卡、配置项或 `coverage.md` 反推需求；否则 A 线漏掉的项会在需求清单里一并漏掉，覆盖分析永远无法发现遗漏 |
+| I-21 | **B 线必须独立从 `rulebook/sources/` 提取需求**：不得从规则卡、配置项或 `coverage.md` 反推需求；否则 A 线漏掉的项会在需求清单里一并漏掉，覆盖分析永远无法发现遗漏 |
 
 ## 九、功能需求
 
@@ -322,7 +322,7 @@ UI 在右侧「规则」面板加一个「需求补齐」入口，三个部分�
 
 **不把杭州全部 550 行原文一次性交给 Agent 拆。**先选一个复杂度足够高的章节做完整实验，跑通机制再扩。
 
-### 实验对象：原文 `2.3.3 算分规则`（`sources/hangzhou/hangzhou-core-flow.md`，表格 6 行）
+### 实验对象：原文 `2.3.3 算分规则`（`rulebook/sources/hangzhou/hangzhou-core-flow.md`，表格 6 行）
 
 选它的理由：同时涉及公式、庄闲倍率、自摸、点炮、抢杠、承包与链式承包，能把多对多映射与分支遗漏都压出来。
 
@@ -380,9 +380,9 @@ UI 在右侧「规则」面板加一个「需求补齐」入口，三个部分�
 - 主需求文档：`dev-docs/design/2026-11-24-RuleStudio需求文档.md`（FR-01 至 FR-20、I-1 至 I-14、AD-1 至 AD-9、AC-1 至 AC-15）
 - 技术路线对比：`dev-docs/design/2026-11-24-RuleStudio技术路线对比.md`
 - 规则命名规范与术语拼音表：`dev-docs/design/2026-11-24-规则命名规范与术语拼音表.md`
-- 杭州原始资料：`sources/hangzhou/hangzhou-core-flow.md`
-- 覆盖清单：`rulesets/hangzhou/coverage.md`
-- 未决清单：`variants/xiaoshan/unresolved.yaml`
+- 杭州原始资料：`rulebook/sources/hangzhou/hangzhou-core-flow.md`
+- 覆盖清单：`rulebook/specs/base/hangzhou/coverage.md`
+- 未决清单：`rulebook/specs/variants/xiaoshan/unresolved.yaml`
 - 知识库使用规范：`AGENTS.md`
 - PrdGameSkill（只读参考，无 LICENSE）：<https://github.com/mickorz/PrdGameSkill>
 - Mermaid 流程图语法：<https://mermaid.js.org/syntax/flowchart.html>

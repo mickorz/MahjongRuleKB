@@ -2,9 +2,9 @@
 import { describe, it, expect } from "vitest";
 import { loadRuleset, validateRuleset } from "../../compiler/validator.ts";
 
-describe("variants/xiaoshan", () => {
-  const base = loadRuleset("rulesets/hangzhou");
-  const rs = loadRuleset("variants/xiaoshan");
+describe("rulebook/specs/variants/xiaoshan", () => {
+  const base = loadRuleset("rulebook/specs/base/hangzhou");
+  const rs = loadRuleset("rulebook/specs/variants/xiaoshan");
   const errs = validateRuleset(rs, base);
 
   it("通过全部结构校验", () => {

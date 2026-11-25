@@ -37,10 +37,10 @@ function loadCompiled(dir: string) {
   return { rules, config, configUi, manifest, index };
 }
 
-describe("compiled/xiaoshan", () => {
-  const c = loadCompiled("compiled/xiaoshan");
-  const base = loadRuleset("rulesets/hangzhou");
-  const variant = loadRuleset("variants/xiaoshan");
+describe("rulebook/compiled/xiaoshan", () => {
+  const c = loadCompiled("rulebook/compiled/xiaoshan");
+  const base = loadRuleset("rulebook/specs/base/hangzhou");
+  const variant = loadRuleset("rulebook/specs/variants/xiaoshan");
 
   it("规则总数 = 杭州 N + 萧山 added b（inherited 不生成新卡，modified 替换不加数）", () => {
     const added = variant.rules.filter((r) => r.meta.origin === "variant" && r.meta.change_type === "added").length;
@@ -133,9 +133,9 @@ describe("compiled/xiaoshan", () => {
   });
 });
 
-describe("compiled/hangzhou", () => {
+describe("rulebook/compiled/hangzhou", () => {
   it("pass-through：61 张卡，releasable=true", () => {
-    const c = loadCompiled("compiled/hangzhou");
+    const c = loadCompiled("rulebook/compiled/hangzhou");
     expect(c.rules.length).toBe(61);
     expect(c.manifest.releasable).toBe(true);
     expect(Object.keys(c.index.rule_aliases)).toHaveLength(0);
@@ -146,7 +146,7 @@ describe("重新编译无 diff", () => {
   it("连续两次 compile 结果一致", () => {
     execSync("node compiler/compile.ts", { stdio: "ignore" });
     const snapshot = () => {
-      const files = walk("compiled").filter((f) => !f.includes("node_modules")).sort();
+      const files = walk("rulebook/compiled").filter((f) => !f.includes("node_modules")).sort();
       return files.map((f) => `${f}:${readFileSync(f, "utf8").length}:${readFileSync(f, "utf8").slice(0, 200)}`).join("\n");
     };
     const a = snapshot();

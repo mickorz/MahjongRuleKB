@@ -36,18 +36,18 @@ describe("Gold Set 结构", () => {
   });
 
   it("ruleset_id 是已知 manifest", () => {
-    const known = new Set([loadRuleset("rulesets/hangzhou").manifest.ruleset_id, loadRuleset("variants/xiaoshan").manifest.ruleset_id]);
+    const known = new Set([loadRuleset("rulebook/specs/base/hangzhou").manifest.ruleset_id, loadRuleset("rulebook/specs/variants/xiaoshan").manifest.ruleset_id]);
     for (const c of all) expect(known.has(c.ruleset_id), c.id).toBe(true);
   });
 
   it("rule_refs 指向存在的规则", () => {
-    const ids = new Set([...loadRuleset("rulesets/hangzhou").rules.map((r) => r.meta.id), ...loadRuleset("variants/xiaoshan").rules.map((r) => r.meta.id)]);
+    const ids = new Set([...loadRuleset("rulebook/specs/base/hangzhou").rules.map((r) => r.meta.id), ...loadRuleset("rulebook/specs/variants/xiaoshan").rules.map((r) => r.meta.id)]);
     for (const c of all) for (const ref of c.rule_refs) expect(ids.has(ref), `${c.id} -> ${ref}`).toBe(true);
   });
 
   it("已 verified 的用例不引用未决规则", () => {
     const unresolved = new Set(
-      [...loadRuleset("rulesets/hangzhou").rules, ...loadRuleset("variants/xiaoshan").rules]
+      [...loadRuleset("rulebook/specs/base/hangzhou").rules, ...loadRuleset("rulebook/specs/variants/xiaoshan").rules]
         .filter((r) => r.meta.release_blocker && r.meta.status !== "confirmed")
         .map((r) => r.meta.id),
     );

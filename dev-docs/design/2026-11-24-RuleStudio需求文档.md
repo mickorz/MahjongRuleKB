@@ -28,7 +28,7 @@
 
 | # | 设计稿表述 | 实测结果 | 对本需求的影响 |
 | --- | --- | --- | --- |
-| 1 | 「目前还没有正式的 `variants/` 目录和规则编译器，萧山规则派生尚未完成」 | **过时**。Phase 2（`2c6c094`）与 Phase 2.6（`fc3d555`）已完成：`variants/xiaoshan/` 47 张卡、`compiler/compile.ts` 可用、`compiled/xiaoshan/` 86 条规则、31 个测试通过；`main` 另有一个修复提交 `23e9dff` | 不必等「Phase 2 → 2.6 → 3」再启动 Rule Studio；变种维护（Phase D）可与 KB Phase 3 并行 |
+| 1 | 「目前还没有正式的 `rulebook/specs/variants/` 目录和规则编译器，萧山规则派生尚未完成」 | **过时**。Phase 2（`2c6c094`）与 Phase 2.6（`fc3d555`）已完成：`rulebook/specs/variants/xiaoshan/` 47 张卡、`compiler/compile.ts` 可用、`rulebook/compiled/xiaoshan/` 86 条规则、31 个测试通过；`main` 另有一个修复提交 `23e9dff` | 不必等「Phase 2 → 2.6 → 3」再启动 Rule Studio；变种维护（Phase D）可与 KB Phase 3 并行 |
 | 2 | 「规则 ID 前缀硬编码 HJ / XS，要在开发前改成 manifest 驱动」 | **属实**。`schemas/rule.ts` `ruleIdPattern`、`schemas/config.ts`、`schemas/unresolved.ts`、`compiler/validator.ts` `extractBodyRefs`、`compiler/compile.ts` `rewriteBody` 与闭合检查正则均写死 `HJ\|XS`；`validator.ts` 用 `rs.dir.startsWith("variants")` 判规则集类型 | 列为 Phase A 必做，否则 Studio 无法在内存中叠加校验，也无法新增地方麻将 |
 | 3 | 「PiBot 的 Capability 架构可插拔，新增 Capability 只需新包 + 组合根一行」 | **属实但不完整**。`BrainCapability` 接口与 `brain-app` 组合根确认存在；但 RPC 方法、事件、工具规格必须在 `packages/protocol/src/aggregate/api.ts` 与 `tools.ts` 中 spread 才能进入协议表。PiBot 的 Plugin SDK 只支持 MCP stdio 连接，不能注册 RPC 与 UI | **必须 fork，不能只做只读参考**。只读 submodule 方案无法承载任何 Studio 功能 |
 | 4 | 「PiBot 自带知识库只支持 Obsidian / Notion 只读检索」 | **属实**。`knowledge/tools.ts` 只有 `knowledge_search` 与 `knowledge_read` | 规则提案、写入、校验必须自建 Mahjong Capability |
@@ -37,7 +37,7 @@
 | 7 | 未提及 | PiBot `.nvmrc` 指定 Node `26.11.1`，`engines.node` 为 `^22.12.0 \|\| ^24.0.0 \|\| >=26.0.0`，`packageManager` 固定 `pnpm@12.14.0`；本机 Node `24.18.0`（满足 engines，与 `.nvmrc` 不同），未安装 pnpm。Node.js 从 25 起不再捆绑 Corepack，26.11.1 上没有 `corepack` 命令 | 环境前置任务：正式开发用 26.11.1，pnpm 用 `npm i -g pnpm@12.14.0` 安装；KB 的 Node 24 代码可在 Node 26 下运行 |
 | 8 | 未提及 | KB 用 Zod 3（`^3.24.0`），PiBot 锁定 Zod `4.6.5` | 默认不迁移：进 fork 的 `@pibot/mahjong-kb` 作为独立包继续用 Zod 3，RPC 契约用 Zod 4，二者只交换普通对象（AD-5） |
 | 9 | 「新建独立仓库 MahjongRuleStudio」 | 用户已决定：在本仓库分支 `mickorz/Mahjong-Rule-Studio` 开发，PiBot 作为 submodule 放 `thirdparties/`。编写时该分支落后 `main` 一个提交（`23e9dff`），已于 2026-11-24 合并（`ab76048`）；fork `mickorz/PiBot` 已创建，submodule 已添加（`3f9136d`，跟踪 fork 的 `main`） | 与 `CLAUDE.md`「thirdparties 只读」冲突，需修订规范（见 AD-10） |
-| 10 | 「`compiled/xiaoshan/` 86 条规则」与「完整萧山 = (N − a) + b」 | 进度文档已修正公式为 **N + b**（modified 卡替换后自身进产物） | 需求文档沿用修正后公式 |
+| 10 | 「`rulebook/compiled/xiaoshan/` 86 条规则」与「完整萧山 = (N − a) + b」 | 进度文档已修正公式为 **N + b**（modified 卡替换后自身进产物） | 需求文档沿用修正后公式 |
 | 11 | 文档编写后 `main` 的新变化 | `b6e06d4`：manifest 增加 `content_hash`（基础规则内容指纹），编译时比对，内容变化而版本未变则报错。`b78230f`：KB Phase 3（60 条 Gold Set、4 个计算纯函数）与 Phase 4（`AGENTS.md`）完成，测试 85 个 | I-4、FR-12、G3 扩展为「升版本并更新 `content_hash`」；Phase E 不再等待 KB Phase 3；Studio Skill 的内容来源 `AGENTS.md` 已就绪 |
 | 12 | 第二轮评审依据的是远程分支旧版（v1.1） | `main` 又新增 `167b111`（修 Phase 3 审查问题：新增 `npm run typecheck`、清零类型错误、测试 80）；本分支并入后 86 个测试、typecheck 通过 | 基线同步为 86；第二轮评审新增的 5 项（写锁顺序、`proposalId`、恢复用例、前缀长度、自动运行开关）写入本文档与执行计划 v2.2 |
 | 13 | 文档未反映 `main` 的第一阶段冻结 | `decdf12`：Gold Set 27 verified / 33 draft（33 条判定类用例待人工核验）；`AGENTS.md` 第 4 条纠正为「编译器不检测忘升 `version`，版本递增是发布流程约束」；冻结声明：不新增版本基线机制、不扩展编译器、不新增基础设施 | I-4、G3 写明版本递增由 Studio 门禁检查；Gold Set 门禁报告区分测试通过与人工核验；Phase A 不改变编译语义（见执行计划） |
@@ -67,9 +67,9 @@
 | # | 场景 | 用户动作 | 期望结果 | 覆盖需求 |
 | --- | --- | --- | --- | --- |
 | S1 | 规则问答 | 「萧山和杭州的财神规则有什么区别？」 | AI 读取 `HJ-C-CAISHEN`、`XS-C-CAISHEN`、`HJ-R-CAISHEN`、`XS-M-PIAOCAI` 与对应原始资料，指出 `XS-C-CAISHEN` 为 `disputed` + `release_blocker`，不擅自裁决 | FR-07、FR-03 |
-| S2 | 引用修改底座 | 左栏点开 `HJ-R-LUNZHUANG`（轮庄），「引用到对话」，输入「轮庄条件补充流局时原庄连庄的例外」 | 产生一个提案：修改 `rulesets/hangzhou/rules/hj-r-lunzhuang.md` + 升 `manifest.version` 并更新 `content_hash`；展示 Diff、证据、门禁结果；点击应用后写入，`sources/` 不变 | FR-05、FR-08、FR-09、FR-10、FR-11、FR-12 |
+| S2 | 引用修改底座 | 左栏点开 `HJ-R-LUNZHUANG`（轮庄），「引用到对话」，输入「轮庄条件补充流局时原庄连庄的例外」 | 产生一个提案：修改 `rulebook/specs/base/hangzhou/rules/hj-r-lunzhuang.md` + 升 `manifest.version` 并更新 `content_hash`；展示 Diff、证据、门禁结果；点击应用后写入，`rulebook/sources/` 不变 | FR-05、FR-08、FR-09、FR-10、FR-11、FR-12 |
 | S3 | 底座升版后的变种 | S2 应用后 | 提示「萧山仍锁定杭州 1.0.0，N 张卡受影响（其中 M 张 modified 需复核）」（数字由影响分析实时得出）；策划可发起「升级萧山锁定到新版本」提案，门禁对萧山重新编译通过后应用 | FR-17 |
-| S4 | 新建地方变种 | 「新增桐庐麻将，基础规则参考杭州」 | 创建 `variants/tonglu/`（manifest、`id_prefix: TL`、空 config、空 unresolved），按对话逐条生成 added / modified 卡；只写差异；编译产物 `releasable` 状态正确 | FR-15、FR-16 |
+| S4 | 新建地方变种 | 「新增桐庐麻将，基础规则参考杭州」 | 创建 `rulebook/specs/variants/tonglu/`（manifest、`id_prefix: TL`、空 config、空 unresolved），按对话逐条生成 added / modified 卡；只写差异；编译产物 `releasable` 状态正确 | FR-15、FR-16 |
 | S5 | 修改继承规则 | 「萧山沿用杭州杠上开花（`HJ-K-GANGKAI`），但增加一项限制」 | AI 生成 `origin: variant` + `change_type: modified` + `base_rule_ref: HJ-K-GANGKAI` 的**完整有效卡**，含「杭麻」对照槽，而非一句差异说明 | FR-16、I-6 |
 | S6 | 裁决未决项 | 策划口头裁决「翻财神由翻财神决定」 | 提案：`XS-U-001` 填 `resolution`、`status: confirmed`；同步更新 `XS-C-CAISHEN`；门禁通过后萧山 blocker 减一 | FR-18 |
 | S7 | 资料矛盾 | 萧山配置表与术语表矛盾 | AI 不得默认任一方；产生 `disputed` + `candidates`，要求策划确认 | I-7 |
@@ -142,7 +142,7 @@
 | 引用类型 | 形态 | MVP |
 | --- | --- | --- |
 | 规则卡 | 「引用到对话」把规则 ID 以反引号形式插入输入框；Agent 调用 `mahjong_read_rule` 读取全文、版本、来源 | 必须 |
-| 原始资料 | 第一阶段：复制 `sources/` 文件路径与段落文本粘贴到对话，Agent 用 `mahjong_read_source` 读取；第二阶段：选区引用（文件、章节、行范围） | 降级为手动 |
+| 原始资料 | 第一阶段：复制 `rulebook/sources/` 文件路径与段落文本粘贴到对话，Agent 用 `mahjong_read_source` 读取；第二阶段：选区引用（文件、章节、行范围） | 降级为手动 |
 | 其他规则集 | 对话中直接点名规则集或规则 ID，Agent 用比较工具同时读取两边 | 必须 |
 
 三种 Schema 引用的语义在 UI 与 Agent 工具返回中都必须区分展示，不可合并：
@@ -169,7 +169,7 @@
 | --- | --- | --- |
 | I-1 | 麻将 Bot 下发给模型的工具集合等于显式白名单，不含任何通用写文件、补丁、Shell、通用工作区修改工具 | Agent 只能产生 Proposal。白名单按阶段启用；运行中的工具发现也只能加载白名单所在分组。**移除 PiBot Capability 不等于收回工具**：命令执行、文件写入等由 PiBot 内核提供，必须单独限制（AD-13） |
 | I-2 | 正式写入只由 UI「应用」按钮触发的 RPC 执行 | Agent 在对话中说「已修改」不产生任何写入 |
-| I-3 | `sources/` 只读；`compiled/` 只由编译器生成 | Capability 的路径白名单不包含对二者的写权限 |
+| I-3 | `rulebook/sources/` 只读；`rulebook/compiled/` 只由编译器生成 | Capability 的路径白名单不包含对二者的写权限 |
 | I-4 | 杭州底座任何卡或配置变更，必须在同一提案内升 `manifest.version` 并更新 `content_hash` | `content_hash`（基础内容指纹）由服务端按提案应用后的内容计算，Agent 不提供。KB 编译器只校验指纹一致与 `base.version` 匹配，检测不了「更新了指纹但忘升版本」（`AGENTS.md` 第 4 条）；这项发布流程约束由 Studio 的门禁 G3 检查，缺任一项门禁失败，错误信息明确指向缺失项 |
 | I-5 | 变种 `base.version` 不自动跟随底座 | 底座升版后下游锁定失配是「待升级」提示：不阻塞底座提案应用，但阻塞该变种可发布 |
 | I-6 | `modified` 卡必须是完整有效规则 | 门禁按 KB 的槽位策略（base / inherited / modified / added）校验 |
@@ -189,9 +189,9 @@
 | ID | 需求 | 描述 | 优先级 | 阶段 |
 | --- | --- | --- | --- | --- |
 | FR-01 | 知识库工作区 | 选择、切换 KB 根目录；校验目录含 `rulesets/`、`schemas/`、`package.json`；持久化；未设置时在「规则」页签提示并引导选择 | MUST | B |
-| FR-02 | 规则集发现 | 扫描 `rulesets/*` 与 `variants/*` 的 manifest；展示 kind、version、base 锁定、`id_prefix`、是否可发布（读 `compiled/*/manifest.yaml` 的 `releasable`，无产物时实时编译） | MUST | B |
+| FR-02 | 规则集发现 | 扫描 `rulesets/*` 与 `rulebook/specs/variants/*` 的 manifest；展示 kind、version、base 锁定、`id_prefix`、是否可发布（读 `rulebook/compiled/*/manifest.yaml` 的 `releasable`，无产物时实时编译） | MUST | B |
 | FR-03 | 规则浏览 | 按规则集、类型、状态筛选；按 ID、名称、正文关键词搜索；查看卡全文；查看来源定位；查看 `base_rule_ref` / `compares_to` / `depends_on` 三类关系与反向依赖 | MUST | B |
-| FR-04 | 原始资料阅读 | 只读打开 `sources/` 下文件；从规则卡的 `sources[].section` 跳转到对应章节 | MUST | B |
+| FR-04 | 原始资料阅读 | 只读打开 `rulebook/sources/` 下文件；从规则卡的 `sources[].section` 跳转到对应章节 | MUST | B |
 | FR-05 | 引用规则卡 | 「引用到对话」把规则 ID 插入输入框 | MUST | B |
 | FR-06 | 引用原始资料片段 | 选区引用：文件路径 + 章节 + 行范围 + 文本 | SHOULD | D |
 | FR-07 | 只读问答与比较 | Agent 通过只读工具回答；比较两个规则集或两张规则卡；工具调用过程可见 | MUST | B |
@@ -202,7 +202,7 @@
 | FR-12 | 版本升级与内容指纹 | 底座变更提案必须含 `update_manifest`（新 `version` 与服务端计算的新 `content_hash`），否则门禁失败并指出缺失；Agent 可补该变更 | MUST | C |
 | FR-13 | 会话与历史 | 复用 PiBot 多会话；提案独立于会话持久化，重启后可继续处理 | MUST | C |
 | FR-14 | 模型配置 | 复用 PiBot 模型 Provider；要求 Tool Calling | MUST | B |
-| FR-15 | 新建变种 | 通过对话创建 `variants/<dir>/`：manifest（含 `id_prefix`、base 锁定）、空 config、空 unresolved；后续只写差异 | SHOULD | D |
+| FR-15 | 新建变种 | 通过对话创建 `rulebook/specs/variants/<dir>/`：manifest（含 `id_prefix`、base 锁定）、空 config、空 unresolved；后续只写差异 | SHOULD | D |
 | FR-16 | 修改继承规则 | 「沿用但加限制」转为 `modified` + `base_rule_ref` 的完整卡 | SHOULD | D |
 | FR-17 | 底座影响分析 | 底座变更提案展示下游每个变种的 inherited / modified / 依赖卡清单与锁定状态；「升级变种锁定」作为独立提案 | SHOULD | D |
 | FR-18 | 未决项管理 | 新增、裁决 `unresolved.yaml` 条目；裁决必须填 `resolution`；blocker 影响 `releasable` | SHOULD | D |
@@ -414,7 +414,7 @@ flowchart TD
 | 项 | 决策 |
 | --- | --- |
 | 运行模式 | 本地单人，复用 PiBot 桌面应用（无遥测、密钥不出 brain、审计） |
-| 文件访问白名单 | Capability 只在 KB 根目录下读写；写：`rulesets/`、`variants/`、`.rule-studio/`；读：另加 `sources/`、`compiled/`、`schemas/`、`compiler/`、manifest；拒绝 `..` 与符号链接逃逸 |
+| 文件访问白名单 | Capability 只在 KB 根目录下读写；写：`rulesets/`、`rulebook/specs/variants/`、`.rule-studio/`；读：另加 `rulebook/sources/`、`rulebook/compiled/`、`schemas/`、`compiler/`、manifest；拒绝 `..` 与符号链接逃逸 |
 | 原始资料 | 只读 |
 | Agent 工具权限 | 显式白名单（AD-13）：只读工具加提案工具；不含通用写文件、补丁、Shell、通用工作区修改工具；运行时测试断言 |
 | 正式写入 | 仅 UI 显式操作 |
@@ -429,12 +429,12 @@ flowchart TD
 | # | 验收项 | 对应 |
 | --- | --- | --- |
 | AC-1 | `git submodule status` 显示 `thirdparties/PiBot` 指向 fork 的固定 commit；`pnpm dev` 在 Windows 上启动桌面应用并完成一次对话 | Phase 0 |
-| AC-2 | KB 新增一个 `variants/<x>/`（2～4 位大写字母前缀，夹具覆盖 2 位与 4 位）时，不改任何 Schema 代码即可通过校验与编译 | Phase A |
+| AC-2 | KB 新增一个 `rulebook/specs/variants/<x>/`（2～4 位大写字母前缀，夹具覆盖 2 位与 4 位）时，不改任何 Schema 代码即可通过校验与编译 | Phase A |
 | AC-3 | `npm run sync:check` 通过；KB 纯度测试通过（同步目录不引用 `node:` 模块）；`@pibot/mahjong-kb` 在 fork 内 `pnpm typecheck`、`pnpm lint` 通过 | Phase A |
 | AC-4 | 策划通过聊天问「萧山和杭州财神规则的区别」，AI 回答引用正确的规则 ID，并指出 `XS-C-CAISHEN` 为 `disputed`，不擅自裁决 | Phase B |
 | AC-5 | 「引用到对话」后 AI 能读取该卡全文、版本与来源 | Phase B |
 | AC-6 | 麻将 Bot 实际运行时下发给模型的工具集合等于白名单，工具发现加载不到其他分组；对话中要求 AI 直接改文件会被拒绝并转为提案 | Phase B、C |
-| AC-7 | 通过聊天修改一张杭州规则卡：提案含卡文件与 manifest 升版；Diff 与门禁在 UI 可见；应用后 `sources/` 无变化，`npm run compile` 在 KB 目录通过 | Phase C |
+| AC-7 | 通过聊天修改一张杭州规则卡：提案含卡文件与 manifest 升版；Diff 与门禁在 UI 可见；应用后 `rulebook/sources/` 无变化，`npm run compile` 在 KB 目录通过 | Phase C |
 | AC-8 | 提案生成后用外部编辑器修改同一文件再点应用：提案标记过期，文件未被覆盖 | Phase C |
 | AC-9 | 人为制造门禁失败（例如删除必填槽位）：应用后文件恢复原样，提案 `failed` 并附报告 | Phase C |
 | AC-10 | 杭州升版后，萧山提案详情显示「锁定 1.0.0 待升级」及受影响卡清单；升级锁定提案应用后萧山编译通过 | Phase D |
@@ -477,8 +477,8 @@ flowchart TD
 | 术语 | 含义 |
 | --- | --- |
 | KB | MahjongRuleKB，本仓库，规则知识库 |
-| 底座 / base | `rulesets/hangzhou/`，基础规则集 |
-| 变种 / variant | `variants/<name>/`，只描述相对底座的差异 |
+| 底座 / base | `rulebook/specs/base/hangzhou/`，基础规则集 |
+| 变种 / variant | `rulebook/specs/variants/<name>/`，只描述相对底座的差异 |
 | 规则卡 | 一个 Markdown 文件，YAML front matter 元数据 + 槽位正文 |
 | Proposal | 结构化变更提案，Agent 产出，策划审批 |
 | 门禁 / Gate | 对提案运行的结构校验、编译、版本规则与下游状态检查 |

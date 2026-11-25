@@ -17,8 +17,8 @@ cd MahjongRuleKB
 
 After cloning, the repository root should contain:
 
-- `sources/hangzhou/hangzhou-core-flow.md` (base rules, Hangzhou PRD, read-only)
-- `sources/xiaoshan/xiaoshan-rules.md` (differential derivative example, 47 rule cards, read-only)
+- `rulebook/sources/hangzhou/hangzhou-core-flow.md` (base rules, Hangzhou PRD, read-only)
+- `rulebook/sources/xiaoshan/xiaoshan-rules.md` (differential derivative example, 47 rule cards, read-only)
 - `dev-docs/design/需求分析.md` (analysis and corrected roadmap)
 
 ## First Run

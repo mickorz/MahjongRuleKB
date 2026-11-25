@@ -27,7 +27,7 @@ function collectObjects(value: unknown, out = new Set<object>()): Set<object> {
 function emptyVariant(base: LoadedRuleset, rulesetId: string): LoadedRuleset {
   const bm = base.manifest as { ruleset_id: string; version: string };
   return {
-    dir: `variants/${rulesetId}`,
+    dir: `rulebook/specs/variants/${rulesetId}`,
     kind: "variant",
     manifest: { ruleset_id: rulesetId, version: "0.1.0", base: { ruleset_id: bm.ruleset_id, version: bm.version }, scope: {} },
     config: [],
@@ -39,7 +39,7 @@ function emptyVariant(base: LoadedRuleset, rulesetId: string): LoadedRuleset {
 
 describe("编译器不修改输入", () => {
   it("输入深冻结后仍可编译，且编译前后输入深比较一致", () => {
-    const inputs = { base: loadRuleset("rulesets/hangzhou"), variant: loadRuleset("variants/xiaoshan") };
+    const inputs = { base: loadRuleset("rulebook/specs/base/hangzhou"), variant: loadRuleset("rulebook/specs/variants/xiaoshan") };
     const before = structuredClone(inputs);
     deepFreeze(inputs.base);
     deepFreeze(inputs.variant);
@@ -49,32 +49,32 @@ describe("编译器不修改输入", () => {
   });
 
   it("同一输入连续编译两次，结果一致", () => {
-    const base = loadRuleset("rulesets/hangzhou");
-    const variant = loadRuleset("variants/xiaoshan");
+    const base = loadRuleset("rulebook/specs/base/hangzhou");
+    const variant = loadRuleset("rulebook/specs/variants/xiaoshan");
     const first = compileVariant(base, variant);
     const second = compileVariant(base, variant);
     expect(second).toEqual(first);
   });
 
   it("编译萧山之后，杭州 pass-through 结果与基础内容指纹不被污染", () => {
-    const base = loadRuleset("rulesets/hangzhou");
+    const base = loadRuleset("rulebook/specs/base/hangzhou");
     const hangzhouBefore = compileBase(base);
     const hashBefore = rulesetContentHash(base);
-    compileVariant(base, loadRuleset("variants/xiaoshan"));
+    compileVariant(base, loadRuleset("rulebook/specs/variants/xiaoshan"));
     expect(rulesetContentHash(base)).toBe(hashBefore);
     expect(compileBase(base)).toEqual(hangzhouBefore);
   });
 
   it("编译萧山之后，另一个变种的编译结果与直接编译相同", () => {
-    const base = loadRuleset("rulesets/hangzhou");
+    const base = loadRuleset("rulebook/specs/base/hangzhou");
     const direct = compileVariant(base, emptyVariant(base, "tonglu-fake"));
-    compileVariant(base, loadRuleset("variants/xiaoshan"));
+    compileVariant(base, loadRuleset("rulebook/specs/variants/xiaoshan"));
     expect(compileVariant(base, emptyVariant(base, "tonglu-fake"))).toEqual(direct);
   });
 
   it("输出不与输入共享任何引用", () => {
-    const base = loadRuleset("rulesets/hangzhou");
-    const variant = loadRuleset("variants/xiaoshan");
+    const base = loadRuleset("rulebook/specs/base/hangzhou");
+    const variant = loadRuleset("rulebook/specs/variants/xiaoshan");
     const inputs = collectObjects([base, variant]);
     const shared = [...collectObjects([compileBase(base), compileVariant(base, variant)])].filter((o) => inputs.has(o));
     expect(shared).toEqual([]);
@@ -83,7 +83,7 @@ describe("编译器不修改输入", () => {
 
 describe("基础内容指纹与换行符无关", () => {
   it("正文为 CRLF 与为 LF 的同一规则集，指纹相同，且等于 manifest 记录的值", () => {
-    const base = loadRuleset("rulesets/hangzhou");
+    const base = loadRuleset("rulebook/specs/base/hangzhou");
     const withBodies = (body: (text: string) => string): LoadedRuleset => ({
       ...base,
       rules: base.rules.map((r) => ({ ...r, body: body(r.body) })),

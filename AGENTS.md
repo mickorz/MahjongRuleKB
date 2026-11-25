@@ -4,24 +4,29 @@
 
 ## 目录职责
 
+规则资产统一收在 `rulebook/`，按生命周期分层：
+
 | 目录 | 用途 | 可改 |
 | --- | --- | --- |
-| `sources/` | 规则方原始材料 | 否，只读 |
-| `rulesets/hangzhou/` | 杭州基础规则卡与配置 | 是 |
-| `variants/xiaoshan/` | 萧山差异规则卡与配置 | 是 |
-| `compiled/` | 编译器产物 | **否**，只能由 `node compiler/compile.ts` 生成 |
+| `rulebook/sources/` | 规则方原始材料 | 否，只读 |
+| `rulebook/specs/base/hangzhou/` | 杭州基础规则卡与配置 | 是 |
+| `rulebook/specs/variants/xiaoshan/` | 萧山差异规则卡与配置 | 是 |
+| `rulebook/compiled/` | 编译器产物 | **否**，只能由 `node compiler/compile.ts` 生成 |
+| `rulebook/changes/archive/` | 已归档变更（审计留痕） | 否，只由归档流程写入 |
 | `schemas/` | Zod 数据结构定义 | 是 |
 | `compiler/` | 校验与编译 | 是 |
 | `calculators/` | 确定性计算纯函数 | 是 |
 | `tests/gold-set/` | Gold Set 用例（YAML） | 是 |
 | `dev-docs/` | 开发过程文档 | 是 |
 
+> 活动变更（Change / Proposal / Transaction / 生成中间产物）在 `<kb>/.rule-studio/`，属运行时数据，不入库（`.gitignore` 已忽略）。
+
 ## 查询规则
 
-**按玩法拉完整规则集**：读 `compiled/<玩法>/`。这是唯一可用的事实源，不需要再读 `rulesets/` 或 `sources/`。
+**按玩法拉完整规则集**：读 `rulebook/compiled/<玩法>/`。这是唯一可用的事实源，不需要再读 `rulebook/specs/` 或 `rulebook/sources/`。
 
 ```
-compiled/xiaoshan/
+rulebook/compiled/xiaoshan/
 ├── manifest.yaml        # ruleset_id、版本、base 锁定、releasable、blockers
 ├── config.yaml          # 合并后的玩法参数
 ├── config.ui.yaml       # 界面参数（纯继承杭州）
@@ -41,9 +46,9 @@ compiled/xiaoshan/
 | `jiesuan/` | P | settlement |
 | `jiemian/` | V / I / A | static-ui / interaction / animation |
 
-**按 ID 查规则**：`grep -r "HJ-R-ZHUANGJIA-02" compiled/`
+**按 ID 查规则**：`grep -r "HJ-R-ZHUANGJIA-02" rulebook/compiled/`
 
-**查两玩法差异**：读 `compiled/xiaoshan/compile-report.md` 的「规则 ID 映射」。
+**查两玩法差异**：读 `rulebook/compiled/xiaoshan/compile-report.md` 的「规则 ID 映射」。
 
 **查规则依赖**：解析规则卡 front matter 的 `depends_on` 与正文里的反引号 ID。
 
@@ -61,7 +66,7 @@ status: confirmed       # confirmed | inferred | unresolved | disputed
 release_blocker: false
 depends_on: [HJ-N-ZHUANGJIA-LAOSHU]
 sources:
-  - source: sources/hangzhou/hangzhou-core-flow.md
+  - source: rulebook/sources/hangzhou/hangzhou-core-flow.md
     section: "2.3.2.4"
 ---
 ```
@@ -70,28 +75,29 @@ sources:
 
 ## 关键约束
 
-1. **不要手改 `compiled/`**。改规则改 `rulesets/` 或 `variants/`，再跑编译。
+1. **不要手改 `rulebook/compiled/`**。改规则改 `rulebook/specs/`，再跑编译。
 2. **`modified` 卡必须是完整有效规则**，不能只写差异。「杭麻」槽是对照信息，不是有效规则的一部分。
 3. **`base_rule_ref` 和 `compares_to` 永远指向原始杭州卡**，不随编译重写；只有 `depends_on` 和正文依赖引用会被重写。
-4. **杭州规则内容发生任何变更，必须同时**：提升 `rulesets/hangzhou/manifest.yaml` 的 `version`、更新 `content_hash`、检查 `variants/*/manifest.yaml` 的 `base.version`、完成派生规则集回归验收。
+4. **杭州规则内容发生任何变更，必须同时**：提升 `rulebook/specs/base/hangzhou/manifest.yaml` 的 `version`、更新 `content_hash`、检查 `rulebook/specs/variants/*/manifest.yaml` 的 `base.version`、完成派生规则集回归验收。
 
    编译器只检查 `content_hash` 与当前内容是否一致，以及派生规则集的 `base.version` 是否匹配。**编译器不保存上一发布版本基线，无法自动检测「更新了 `content_hash` 但忘记提升 `version`」的情况。** `version` 递增属于发布流程约束，必须通过 PR 或发布评审人工确认。
-5. **未决项不准 AI 自行补全**。`variants/xiaoshan/unresolved.yaml` 里的 `release_blocker: true` 项必须由规则方裁决，改 `status: confirmed` 同时填非空 `resolution`。
+5. **未决项不准 AI 自行补全**。`rulebook/specs/variants/xiaoshan/unresolved.yaml` 里的 `release_blocker: true` 项必须由规则方裁决，改 `status: confirmed` 同时填非空 `resolution`。
 6. **`releasable: false` 的规则集不能对外声称已发布**。
 
 ## 常用命令
 
 ```bash
-node compiler/validator.ts                    # 校验杭州
-node compiler/validator.ts variants/xiaoshan  # 校验萧山
-node compiler/compile.ts                      # 编译并生成 compiled/
-npm test                                      # 全部测试
+node compiler/validator.ts                                          # 校验杭州（默认基础规则集）
+node compiler/validator.ts rulebook/specs/variants/xiaoshan           # 校验萧山（按目录推断 kind）
+node compiler/validator.ts <目录> --kind base|variant                 # 显式指定规则集类型
+node compiler/compile.ts                                            # 编译并生成 rulebook/compiled/
+npm test                                                            # 全部测试
 ```
 
 ## 当前状态
 
 ```bash
-cat compiled/xiaoshan/manifest.yaml   # 看 releasable 和 blockers
+cat rulebook/compiled/xiaoshan/manifest.yaml   # 看 releasable 和 blockers
 ```
 
 当前萧山有 3 个发布阻塞项：翻财神归属、K-GANG 飘财第 3 次档、K-FAN 十风倍数。这些是规则空缺，不是编译错误。

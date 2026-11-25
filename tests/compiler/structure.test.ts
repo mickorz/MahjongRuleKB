@@ -9,12 +9,12 @@ import { configListSchema } from "../../schemas/config.ts";
 import type { RuleType } from "../../schemas/rule.ts";
 import { unresolvedEntrySchema } from "../../schemas/unresolved.ts";
 
-const base = loadRuleset("rulesets/hangzhou");
-const variant = loadRuleset("variants/xiaoshan");
+const base = loadRuleset("rulebook/specs/base/hangzhou");
+const variant = loadRuleset("rulebook/specs/variants/xiaoshan");
 
 describe("config.yaml", () => {
   it("杭州配置可解析、ID 唯一且每项有 value", () => {
-    const list = configListSchema.parse(parse(readFileSync("rulesets/hangzhou/config.yaml", "utf8")));
+    const list = configListSchema.parse(parse(readFileSync("rulebook/specs/base/hangzhou/config.yaml", "utf8")));
     expect(new Set(list.map((c) => c.id)).size).toBe(list.length);
     for (const c of list) expect(c.value, c.id).toBeDefined();
   });
@@ -57,7 +57,7 @@ describe("正文槽位", () => {
 });
 
 describe("发布门槛", () => {
-  const manifest = parse(readFileSync("compiled/xiaoshan/manifest.yaml", "utf8")) as { releasable: boolean; blockers: string[] };
+  const manifest = parse(readFileSync("rulebook/compiled/xiaoshan/manifest.yaml", "utf8")) as { releasable: boolean; blockers: string[] };
 
   it("存在未决 blocker 时 releasable 为 false", () => {
     const hasBlocker = [...variant.rules, ...variant.config].some((x) => "release_blocker" in x && (x as { release_blocker: boolean }).release_blocker && (x as { status: string }).status !== "confirmed");
@@ -66,12 +66,12 @@ describe("发布门槛", () => {
   });
 
   it("blockers 与编译产物中的未决实体一致", () => {
-    const compiledConfig = parse(readFileSync("compiled/xiaoshan/config.yaml", "utf8")) as Array<{ id: string; status?: string; release_blocker?: boolean }>;
-    const compiledRuleIds = readdirSync("compiled/xiaoshan", { recursive: true })
+    const compiledConfig = parse(readFileSync("rulebook/compiled/xiaoshan/config.yaml", "utf8")) as Array<{ id: string; status?: string; release_blocker?: boolean }>;
+    const compiledRuleIds = readdirSync("rulebook/compiled/xiaoshan", { recursive: true })
       .map(String)
       .filter((f) => f.endsWith(".md") && !f.includes("compile-report"))
       .map((f) => {
-        const text = readFileSync(join("compiled/xiaoshan", f), "utf8");
+        const text = readFileSync(join("rulebook/compiled/xiaoshan", f), "utf8");
         const m = text.match(/^---\r?\n([\s\S]*?)\r?\n---/);
         return parse(m![1]) as { id: string; status?: string; release_blocker?: boolean };
       });
@@ -109,7 +109,7 @@ describe("发布门槛", () => {
 });
 
 describe("编译后引用闭合", () => {
-  const dirs = ["compiled/hangzhou", "compiled/xiaoshan"];
+  const dirs = ["rulebook/compiled/hangzhou", "rulebook/compiled/xiaoshan"];
 
   function loadCompiled(dir: string) {
     const files = readdirSync(dir, { recursive: true }).map(String).filter((f) => f.endsWith(".md") && !f.includes("compile-report"));

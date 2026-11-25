@@ -17,8 +17,8 @@ cd MahjongRuleKB
 
 克隆完成后，仓库根目录应能看到：
 
-- `sources/hangzhou/hangzhou-core-flow.md`（基础规则，杭州原始 PRD，只读）
-- `sources/xiaoshan/xiaoshan-rules.md`（差异化派生示例，47 张规则卡，只读）
+- `rulebook/sources/hangzhou/hangzhou-core-flow.md`（基础规则，杭州原始 PRD，只读）
+- `rulebook/sources/xiaoshan/xiaoshan-rules.md`（差异化派生示例，47 张规则卡，只读）
 - `dev-docs/design/需求分析.md`（需求分析与修正路线）
 
 ## 第一次运行

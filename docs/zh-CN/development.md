@@ -11,7 +11,8 @@ git add . && git commit   # 提交文档变更
 
 ## 架构总览
 
-- **根目录**：规则文档本体（【地名麻将】开头命名），如杭州麻将（基础规则）与萧山麻将（差异派生）。
+- **rulebook/**：规则知识资产，按生命周期分层 —— `sources/`（原始证据，只读）、`specs/base/hangzhou/`（基础规范）、`specs/variants/xiaoshan/`（差异规范）、`changes/archive/`（已归档变更）、`compiled/`（编译产物，禁手改）。
+- **compiler/、schemas/、calculators/、tests/**：校验编译、数据结构、计算纯函数与测试。
 - **docs/**：读者向文档（快速开始、配置、指南等）。
 - **dev-docs/**：开发过程文档（设计、调研、进度等），规范见仓库根 `CLAUDE.md`。
 - **规则组织方式**：萧山文档的九类分类法（规则/判定/时序/状态/算分/界面），新增玩法沿用此结构。

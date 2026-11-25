@@ -19,9 +19,9 @@ import { validateRuleset } from "./validator.ts";
  * 目录迁移到 rulebook/ 后由 paths 模块统一接管，此处不得再新增硬编码路径。
  */
 export const DEFAULT_PATHS = {
-  baseDir: "rulesets/hangzhou",
-  variantsDir: "variants",
-  compiledDir: "compiled",
+  baseDir: "rulebook/specs/base/hangzhou",
+  variantsDir: "rulebook/specs/variants",
+  compiledDir: "rulebook/compiled",
 } as const;
 
 export interface CompilePaths {
