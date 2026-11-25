@@ -200,3 +200,24 @@ export function lineageIsValid(result: MatchResult): boolean {
     return from.size >= 2 && to.size === 1;
   });
 }
+
+/**
+ * 把 matchIdentity 的占位 to 片段（形如 "#3"，表示草稿下标）替换为真实分配的 segment_id。
+ * 未提供映射的占位会让 lineage 无法通过 Schema 校验，调用方必须补全。
+ */
+export function materializeLineage(
+  lineage: MatchResult["lineage"],
+  idByDraftIndex: ReadonlyMap<number, string>,
+): MatchResult["lineage"] {
+  const resolve = (token: string): string => {
+    if (!token.startsWith("#")) return token;
+    const idx = Number(token.slice(1));
+    const id = idByDraftIndex.get(idx);
+    if (!id) throw new Error(`缺失草稿 ${idx} 的新 segment_id 映射`);
+    return id;
+  };
+  return lineage.map((entry) => ({
+    ...entry,
+    to_segment_ids: entry.to_segment_ids.map(resolve),
+  }));
+}
