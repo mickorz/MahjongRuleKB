@@ -23,6 +23,7 @@
 | v2.0 | 2026-11-24 | 按 `2026-11-24-需求全文生成与变体差异标注评审意见.md` 修订该能力（细节见增补文档 v1.2）：所有变体共用同一套章节模板；差异标记拆成来源关系 / 规则状态 / 差异审核三维（第一版不支持删除，`changeTypes` 无 `removed`）；Document Block 引用拆四类并接入原子需求，`block_id` 与章节解耦；三个修改通道（规则 / 表达 / 结构）统一走提案与 `based_on_document_version` 校验；实施拆 P0-A / P0-B / P1 / P2 与上游覆盖节奏对齐，AC-24 增设原子需求表达检查。编号扩至 FR-50、I-41、AD-33、AC-45 |
 | v2.1 | 2026-11-24 | **撤销 v2.0 的「AC-24 增设原子需求表达检查」与「需求覆盖作为全文生成上游质量门」两项决策**（依据 `dev-docs/design/2026-11-24-需求全文生成边界收敛评审意见.md`）：需求全文生成只对「已结构化规则与配置是否完整成文」负责，原子需求提取与六态覆盖保留为独立工作流，两者仅通过可选 `requirement_refs` 关联。对应增补文档升至 v1.4，新增 I-42、改写 I-28/FR-46/AC-24/AC-40；`documents/` 路径白名单与文档提案契约（AD-38/AD-39）**尚未写入本文档正文**，列为 D0 任务（见 `dev-docs/planning/2026-11-24-需求全文生成执行计划.md` 的 D0 交付目标） |
 | v2.2 | 2026-11-24 | D0 首批：I-3 扩展为三路径边界并新增 **I-51**（`documents/` 写入三级：Stage 生成 / 提案事务写人工修改 / Agent 不得直写）；AD-6 明确文档提案同库；新增 **AD-38** 文档提案契约（`baseRevision` 版本 + 逐文件 Hash 双校验）与 **AD-39** Proposal / Transaction 状态分层；10.2 增补 10.2.1 文档提案小节。修正 v2.1 中「已补 documents 白名单与 AD-38/39」的不实陈述 |
+| v2.4 | 2026-11-24 | 契约补丁：10.2.1 示例 `baseRevision.files[]` 补齐 `document.json`（系统维护文件，版本递增与校验所需）；`op` 结构层落点与 11.1 矩阵明确为 `documents/<variant>/document-outline.yaml`；补两文件职责区分（装配输入 vs 结构唯一事实源） |
 | v2.3 | 2026-11-24 | D0-Final2：I-51 改为唯一权威并新增 **11.1 写入权限矩阵**（逐路径授权，Transaction 对 `document.json` 仅限授权字段与版本）；I-2 明确 Stage 复用 Transaction Executor 但不经 Proposal 状态机；AD-38 明确 `baseRevision.documentVersion` 读取自 `document.json` 顶层且 `files[]` 必须含 `document.json`；增补设计改为引用本条 |
 
 ## 一、对设计讨论稿前提的核对与纠正
@@ -387,7 +388,10 @@ fork 内的工程规范以 PiBot `AGENTS.md` 为准：TypeScript strict、ESM、
   "targetVariant": "xiaoshan",
   "baseRevision": {
     "documentVersion": 3,
-    "files": [{ "path": "documents/xiaoshan/editorial-overrides.yaml", "sha256": "…" }]
+    "files": [
+      { "path": "documents/xiaoshan/document.json", "sha256": "…" },
+      { "path": "documents/xiaoshan/editorial-overrides.yaml", "sha256": "…" }
+    ]
   },
   "target": { "blockId": "DOC-XS-000123", "segmentId": "SEG-000456" },
   "op": "replace-text",
@@ -399,7 +403,7 @@ fork 内的工程规范以 PiBot `AGENTS.md` 为准：TypeScript strict、ESM、
 
 | 约束 | 说明 |
 | --- | --- |
-| 落点由服务端推导 | `op` 决定目标文件（表达层 → `editorial-overrides.yaml`；结构层 → 章节映射文件），Agent 不得传路径 |
+| 落点由服务端推导 | `op` 决定目标文件（表达层 → `documents/<variant>/editorial-overrides.yaml`；结构层 → `documents/<variant>/document-outline.yaml`），Agent 不得传路径 |
 | 双校验 | 应用前比对 `baseRevision.documentVersion` 与当前文档版本，并逐文件重算 Hash；任一失配 → `stale` |
 | 状态机 | 沿用 10.2 的 Proposal 状态；`approved` 后进入 10.3 的 Transaction，结果回写 `applied` / `failed` |
 | 禁止直写 | Agent 无 `documents/` 写权限（I-51）；只能产生提案 |
@@ -465,7 +469,7 @@ flowchart TD
 | --- | --- | --- |
 | `documents/<variant>/document.json` | Stage Executor；批准后的 Transaction **仅可更新授权字段与 `document_version`** | 结构与身份事实源；不得成为通用可写文件 |
 | `documents/<variant>/editorial-overrides.yaml` | Transaction | 人工表达权威输入 |
-| 章节映射文件 | Stage Executor（生成）/ Transaction（人工结构修改） | 两种来源分别留痕 |
+| `documents/<variant>/document-outline.yaml` | Stage Executor（Stage 2 生成）/ Transaction（人工结构修改） | 章节装配输入，人工可维护；与 `document.json` 职责不同 |
 | `documents/<variant>/identity-map.json` | Stage Executor | 由 `document.json` 重建 |
 | `documents/<variant>/provenance.json` | Stage Executor | 由 `document.json` 重建 |
 | `documents/<variant>/需求全文.md` | Stage Executor | 渲染产物 |
@@ -480,6 +484,15 @@ flowchart TD
 | `rulebook/specs/` | 批准后的规则 Transaction | 规则事实 |
 
 所有主体均受服务端路径白名单与路径穿越 / 符号链接逃逸校验约束；未列出的路径即视为越权。
+
+**两个结构文件的职责区分（不可混淆）**：
+
+| 文件 | 职责 | 事实角色 |
+| --- | --- | --- |
+| `documents/<variant>/document-outline.yaml` | 人工维护 / Stage 2 生成的**章节装配输入**：决定规则如何组织到章节 | 装配输入（可编辑） |
+| `documents/<variant>/document.json` | 生成后的 Document Block、Segment、身份关系与版本 | **文档结构唯一事实源** |
+
+`document-outline.yaml` 变化后由 Stage 2 重算并重新生成 `document.json`；两者不得互相声称是唯一事实源。
 
 ## 十二、验收标准
 
