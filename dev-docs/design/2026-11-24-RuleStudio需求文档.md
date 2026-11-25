@@ -22,7 +22,7 @@
 | v1.9 | 2026-11-24 | 需求全文生成并入「Document Block + 对话式段落编辑 + 增量重生成」（细节见增补文档）：Stage 3 改为生成文档块、Stage 6 改为渲染、新增 Stage 7 对话式段落编辑与按依赖最小重跑；新增片段级来源追踪、四种编辑行为分流（表达 / 规则 / 补充 / 结构）、重生成不覆盖人工修改（段落四态）；产品定位明确为三层（规则知识库 / 文档生成引擎 / AI 需求编辑器）与闭环原则。编号扩至 FR-43、I-34、AD-26、AC-37 |
 | v2.0 | 2026-11-24 | 按 `2026-11-24-需求全文生成与变体差异标注评审意见.md` 修订该能力（细节见增补文档 v1.2）：所有变体共用同一套章节模板；差异标记拆成来源关系 / 规则状态 / 差异审核三维（第一版不支持删除，`changeTypes` 无 `removed`）；Document Block 引用拆四类并接入原子需求，`block_id` 与章节解耦；三个修改通道（规则 / 表达 / 结构）统一走提案与 `based_on_document_version` 校验；实施拆 P0-A / P0-B / P1 / P2 与上游覆盖节奏对齐，AC-24 增设原子需求表达检查。编号扩至 FR-50、I-41、AD-33、AC-45 |
 | v2.1 | 2026-11-24 | **撤销 v2.0 的「AC-24 增设原子需求表达检查」与「需求覆盖作为全文生成上游质量门」两项决策**（依据 `dev-docs/design/2026-11-24-需求全文生成边界收敛评审意见.md`）：需求全文生成只对「已结构化规则与配置是否完整成文」负责，原子需求提取与六态覆盖保留为独立工作流，两者仅通过可选 `requirement_refs` 关联。对应增补文档升至 v1.4，新增 I-42、改写 I-28/FR-46/AC-24/AC-40；`documents/` 路径白名单与文档提案契约（AD-38/AD-39）**尚未写入本文档正文**，列为 D0 任务（见 `dev-docs/planning/2026-11-24-需求全文生成执行计划.md` 的 D0 交付目标） |
-| v2.2 | 2026-11-24 | D0 落实：I-3 扩展为三路径边界并新增 **I-15**（`documents/` 写入三级：Stage 生成 / 提案事务写人工修改 / Agent 不得直写）；AD-6 明确文档提案同库；新增 **AD-38** 文档提案契约（`baseRevision` 版本 + 逐文件 Hash 双校验）与 **AD-39** Proposal / Transaction 状态分层；10.2 增补 10.2.1 文档提案小节。修正 v2.1 中「已补 documents 白名单与 AD-38/39」的不实陈述 |
+| v2.2 | 2026-11-24 | D0 首批：I-3 扩展为三路径边界并新增 **I-51**（`documents/` 写入三级：Stage 生成 / 提案事务写人工修改 / Agent 不得直写）；AD-6 明确文档提案同库；新增 **AD-38** 文档提案契约（`baseRevision` 版本 + 逐文件 Hash 双校验）与 **AD-39** Proposal / Transaction 状态分层；10.2 增补 10.2.1 文档提案小节。修正 v2.1 中「已补 documents 白名单与 AD-38/39」的不实陈述 |
 
 ## 一、对设计讨论稿前提的核对与纠正
 
@@ -170,7 +170,7 @@
 | # | 不变量 | 说明 |
 | --- | --- | --- |
 | I-1 | 麻将 Bot 下发给模型的工具集合等于显式白名单，不含任何通用写文件、补丁、Shell、通用工作区修改工具 | Agent 只能产生 Proposal。白名单按阶段启用；运行中的工具发现也只能加载白名单所在分组。**移除 PiBot Capability 不等于收回工具**：命令执行、文件写入等由 PiBot 内核提供，必须单独限制（AD-13） |
-| I-2 | 正式写入只由 UI「应用」按钮触发的 RPC 执行 | Agent 在对话中说「已修改」不产生任何写入 |
+| I-2 | **正式事实修改**只由 UI「应用」按钮触发的 RPC 执行；文档生成/重新生成由受控 Stage Run / Regenerate RPC 执行 | Agent 在对话中说「已修改」不产生任何写入；Stage 只能写生成产物，人工修改必须进入 Proposal + Transaction |
 | I-3 | `rulebook/sources/` 只读；`rulebook/compiled/` 只由编译器生成；`documents/` 按写入主体分级（见 I-15） | Capability 的路径白名单不包含对前二者的写权限 |
 | I-4 | 杭州底座任何卡或配置变更，必须在同一提案内升 `manifest.version` 并更新 `content_hash` | `content_hash`（基础内容指纹）由服务端按提案应用后的内容计算，Agent 不提供。KB 编译器只校验指纹一致与 `base.version` 匹配，检测不了「更新了指纹但忘升版本」（`AGENTS.md` 第 4 条）；这项发布流程约束由 Studio 的门禁 G3 检查，缺任一项门禁失败，错误信息明确指向缺失项 |
 | I-5 | 变种 `base.version` 不自动跟随底座 | 底座升版后下游锁定失配是「待升级」提示：不阻塞底座提案应用，但阻塞该变种可发布 |
@@ -183,7 +183,7 @@
 | I-12 | Agent 不提供文件路径 | 提案只含规则集 ID 与规则 ID；路径由服务端按注册表推导 |
 | I-13 | 领域层是纯函数 | 解析、校验、编译不触碰文件系统、不修改输入；结果与编译次数、变种顺序无关（AD-3） |
 | I-14 | Gold Set 门禁只能由用户显式触发 | 运行知识库目录里的 `npm test` 等于执行该目录的代码：默认关闭、首次确认、固定命令；Agent 没有任何可触发它的工具（FR-19） |
-| I-15 | `documents/` 的写入分三级：① Stage 执行器写生成产物（`document.json` / `需求全文.md` / 派生索引）；② 经批准的文档 Proposal 由 Transaction 写人工修改（`editorial-overrides.yaml`、章节映射）；③ **Agent 不得直接写 `documents/` 下任何文件** | 「需要写 `documents/`」不等于「把整个目录开放给通用写文件工具」；Agent 只能产生提案 |
+| I-51 | `documents/` 的写入分三级：① Stage Executor 只写生成产物白名单（`document.json` / `需求全文.md` / `provenance.json` / `identity-map.json`）；② 经批准的文档 Proposal 由 Transaction 写人工修改（`editorial-overrides.yaml`、章节映射）；③ **Agent / Capability / 普通文件工具不得直接写 `documents/`** | Stage Run / Regenerate RPC 负责生成，UI Apply RPC 负责触发人工修改 Transaction，Agent 只能产生 Proposal |
 
 ## 七、功能需求
 
@@ -264,7 +264,7 @@ flowchart TD
 | AD-11 | **ID 前缀由 manifest 声明**：manifest 增加 `id_prefix`；Zod 只校验通用格式；校验器按注册表核对前缀 | 新增地方麻将不改 Schema | Phase A 完成，KB 测试覆盖 |
 | AD-12 | **validator 与 compile 显式接收 `kind`**，不依赖目录名 | Studio 在内存中叠加时没有真实目录 | Phase A 完成 |
 | AD-13 | **麻将 Bot 使用显式工具白名单**（`MAHJONG_BOT_TOOL_ALLOWLIST`，按阶段启用），并有运行时测试断言实际下发给模型的工具集合 | PiBot 的命令执行、文件写入等工具由内核提供，移除 Capability 不会收回它们；工具发现还能在运行中继续加载分组 | 注入点由 Spike S-9 确定；找不到时在 fork 内加 Bot 级白名单字段 |
-| AD-38 | **文档提案契约**：`type: document`、`targetVariant`、`baseRevision{documentVersion, files[{path, sha256}]}`、`target{blockId, segmentId}`、`op`（append / replace-text / hide / move-block / edit-outline）、`before` / `after`（各带 sha256）。应用前**同时**校验文档版本与每个目标文件 Hash，任一不匹配即 `stale` 拒绝 | 文档修改与规则修改共用一套审核与事务纪律，但校验对象不同：规则看文件 Hash，文档还要看 `document_version` |
+| AD-38 | **文档提案契约**：Agent 只提供 `op`、`target{blockId, segmentId}`、`after`、意图与证据；服务端确定/校验 `targetVariant`、生成 `baseRevision{documentVersion, files[{path, sha256}]}`、计算 `before` / `after` Hash、按 `op` 推导目标文件。应用前**同时**校验文档版本与每个目标文件 Hash，任一不匹配即 `stale` 拒绝 | Agent 不可信地传路径或基线；文档修改与规则修改共用审核与事务纪律，但文档还要校验 `document_version` |
 | AD-39 | **Proposal 状态与 Transaction 状态分层**：Proposal `draft/ready/approved/applied/rejected/stale/failed`；Transaction `preparing/prepared/writing/committed/rolled_back/recovery_failed`。文档提案与规则提案共用 Proposal 状态机，应用时进入 Transaction，事务结果回写提案状态 | 两套生命周期职责不同；混用会让「提案是否已批准」与「文件是否已写入」无法区分 |
 
 ### 9.1 架构
@@ -448,7 +448,7 @@ flowchart TD
 | 项 | 决策 |
 | --- | --- |
 | 运行模式 | 本地单人，复用 PiBot 桌面应用（无遥测、密钥不出 brain、审计） |
-| 文件访问白名单 | Capability 只在 KB 根目录下读写；写：`rulesets/`、`rulebook/specs/variants/`、`.rule-studio/`；读：另加 `rulebook/sources/`、`rulebook/compiled/`、`schemas/`、`compiler/`、manifest；拒绝 `..` 与符号链接逃逸 |
+| 文件访问白名单 | Capability 只在 KB 根目录下读写；规则写入只允许经批准 Proposal + Transaction 触及 `rulebook/specs/`；Stage Executor 通过受控 Stage Run / Regenerate RPC 写 `documents/` 生成产物白名单；文档人工修改只允许 Transaction 写服务端推导目标；Agent / Capability / 普通文件工具均无直接 `documents/` 写权限；读：`rulebook/sources/`、`rulebook/compiled/`、`schemas/`、`compiler/`、manifest；拒绝 `..` 与符号链接逃逸 |
 | 原始资料 | 只读 |
 | Agent 工具权限 | 显式白名单（AD-13）：只读工具加提案工具；不含通用写文件、补丁、Shell、通用工作区修改工具；运行时测试断言 |
 | 正式写入 | 仅 UI 显式操作 |
