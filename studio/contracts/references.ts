@@ -14,7 +14,11 @@ export const unresolvedRefPattern = /^[A-Z]{2}-U-\d{3}$/;
 /** 原子需求 ID（另一条工作流的产物，当前仅作可选预留） */
 export const requirementRefPattern = /^[A-Z]{2}-[A-Z]-\d{3}$/;
 /** 原文证据引用：必须位于 rulebook/sources/ 下，可选 #章节 */
-export const sourceEvidencePattern = /^rulebook\/sources\/[^\s#]+(#[^\s]+)?$/;
+/**
+ * 原文证据引用：必须位于 rulebook/sources/ 下，可选 `#章节`。
+ * 章节号可能含中文、空格与花括号（真实卡：`#2.3.4.2 第 18-21 项`），故不限制 `#` 之后的内容。
+ */
+export const sourceEvidencePattern = /^rulebook\/sources\/\S+(#.+)?$/;
 
 export const requirementRefsSchema = z.array(
   z.string().regex(requirementRefPattern, "原子需求 ID 形如 HZ-F-001"),

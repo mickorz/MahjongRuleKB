@@ -34,7 +34,7 @@ export const lineagesRequiringBaseRef: ReadonlyArray<(typeof lineageValues)[numb
 ];
 
 /** 纯数值文本：只允许数字、千分位、小数与常见单位 */
-const numericOnlyPattern = /^\s*-?[\d.,]+\s*(倍|分|%|张|番|毫秒|秒)?\s*$/;
+export const numericOnlyPattern = /^\s*-?[\d.,]+\s*(倍|分|%|张|番|毫秒|秒)?\s*$/;
 /** 公式特征：显式算术符号或「底分 × 倍率」这类乘算式 */
 /**
  * 日期片段：在公式判定前先剔除，避免「本规则自 2026-11-24 起生效」被误判为公式。
@@ -43,7 +43,7 @@ const numericOnlyPattern = /^\s*-?[\d.,]+\s*(倍|分|%|张|番|毫秒|秒)?\s*$/
 const dateFragmentPattern = /\d{4}[-/]\d{1,2}[-/]\d{1,2}/g;
 /** 公式特征：显式乘除号、数字之间的运算符、或关键词紧跟乘号 */
 const formulaLikePattern = /[×÷]|[\d)]\s*[+\-*/=]\s*[\d(]|\s[+\-*/=]\s|(底分|倍率|牢数|番型)\s*[×÷*]/;
-const looksLikeFormula = (text: string) =>
+export const looksLikeFormula = (text: string) =>
   formulaLikePattern.test(text.replace(dateFragmentPattern, " "));
 
 /**

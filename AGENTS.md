@@ -19,6 +19,7 @@
 | `studio/transaction/` | 事务状态机、双校验、原子提交与崩溃恢复 | 是 |
 | `studio/graph/` | Artifact Graph 与失效传播（静态依赖图，不调度） | 是 |
 | `studio/identity/` | 片段身份匹配（结构锚点、split/merge、失效待处理） | 是 |
+| `studio/pipeline/` | P0-A 单章节链路：读规则集 → 章节装配 → Document Block → 覆盖门禁 → 渲染（`node studio/pipeline/run-p0a.ts`） | 是 |
 | `compiler/` | 校验与编译 | 是 |
 | `calculators/` | 确定性计算纯函数 | 是 |
 | `tests/gold-set/` | Gold Set 用例（YAML） | 是 |
