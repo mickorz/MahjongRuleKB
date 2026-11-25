@@ -8,6 +8,8 @@ import { checkCoverage, renderDocument } from "./gates.ts";
 import { buildChangesFile } from "./changes-json.ts";
 import { compileXiaoshan, generateVariantDocument, sharedOutline } from "./generate-variant.ts";
 import { readBaseRuleSet } from "./read-ruleset.ts";
+import { loadDiffReview } from "./diff-review.ts";
+import { join as joinPath } from "node:path";
 
 export function runP1(outDir = "documents/xiaoshan"): {
   documentPath: string;
@@ -16,11 +18,16 @@ export function runP1(outDir = "documents/xiaoshan"): {
   report: ReturnType<typeof checkCoverage>;
   blockers: number;
   changes: number;
+  /** 已人工确认差异的规则数 */
+  confirmedDiff: number;
 } {
   const baseRuleset = readBaseRuleSet();
   const outline = sharedOutline(baseRuleset);
   const { compiled, variant } = compileXiaoshan();
   const vm = compiled.manifest as { ruleset_id: string; version: string; base: { ruleset_id: string; version: string } };
+
+  // 人工差异审核结果（文件不存在时等于一条都没确认）
+  const diffReview = loadDiffReview(joinPath(outDir, "diff-review.yaml"));
 
   const { document, blockers } = generateVariantDocument(compiled as never, outline, {
     variant: "xiaoshan",
@@ -28,6 +35,7 @@ export function runP1(outDir = "documents/xiaoshan"): {
     rulesetId: vm.ruleset_id,
     rulesetVersion: vm.version,
     unresolved: (variant.unresolved as never[]) ?? [],
+    diffReview,
   });
   const report = checkCoverage(baseRuleset, outline, {
     ...document,
@@ -46,6 +54,8 @@ export function runP1(outDir = "documents/xiaoshan"): {
       baseVersion: vm.base.version,
       variantVersion: vm.version,
     },
+    new Date().toISOString(),
+    diffReview.rules,
   );
 
   mkdirSync(outDir, { recursive: true });
@@ -62,6 +72,7 @@ export function runP1(outDir = "documents/xiaoshan"): {
     report,
     blockers: blockers.length,
     changes: changes.entries.length,
+    confirmedDiff: changes.entries.filter((e) => e.diff_status === "confirmed").length,
   };
 }
 
@@ -69,7 +80,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const outFlag = process.argv.indexOf("--out");
   const r = runP1(outFlag >= 0 ? process.argv[outFlag + 1] : undefined);
   console.log(`[P1] 章节：${r.report.sections.length}，块数：${r.report.sections.length}`);
-  console.log(`[P1] 差异条目：${r.changes}（modified + added）`);
+  console.log(`[P1] 差异条目：${r.changes}（modified + added），已人工确认 ${r.confirmedDiff} 条`);
   console.log(`[P1] 待裁决规则卡：${r.blockers}`);
   console.log(`[P1] 产出：${r.documentPath}`);
   console.log(`[P1] 渲染：${r.markdownPath}`);

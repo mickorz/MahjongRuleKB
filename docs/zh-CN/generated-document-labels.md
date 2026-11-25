@@ -60,14 +60,44 @@ flowchart TD
 
 ## 确认状态：「差异待确认」
 
-表示这段差异是**机器比对出来的候选**（`diff_status = candidate`），还没有人工确认。
+表示这段差异尚未经人工确认（`diff_status = candidate`）。
 
 出现条件：`lineage` 是「修改」或「新增」。
 
-两件事要说清楚：
+### 为什么开头全是这个标记
 
-1. 它的含义是"待确认差异是否属实"，不是"待确认文字写得好不好"。文字建议走表达层（`editorial-overrides.yaml`），与差异状态无关。
-2. 变体文档里「修改」「新增」段落**全部**是 candidate，这是 P1 的初始状态。人工逐条确认后改 `confirmed`，标记才会消失。
+因为差异确认是**一个动作，不是一次比对**。生成器没有能力判断「这条改写对不对」「这条新增是不是杭州规则的重复表达」—— 它只能把状态初始化为 `candidate`，等人来签。没签过的就都亮着。
+
+这不是说差异「可疑」，而是说差异「没人看过」。区别很重要：前者在指控规则内容有问题，后者只是工单未关闭。
+
+### 怎么把它清掉
+
+在变体目录下写 `diff-review.yaml`（人工输入，不是生成物）：
+
+```yaml
+# documents/xiaoshan/diff-review.yaml
+confirmed_rules:
+  - XS-R-ZHUANGJIA-02        # 这张卡的差异已确认成立
+  - XS-F-GENZHUANG-PEIFU
+confirmed_segments:
+  - SEG-000123               # 也可以只确认单个片段
+note: 人工抽检，确认改写与新增均成立
+```
+
+重新运行 `node studio/pipeline/run-p1.ts` 后：
+
+| 情况 | 结果 |
+| --- | --- |
+| 规则 ID 在 `confirmed_rules` 里 | 该卡全部片段的 `diff_status` 变 `confirmed`，标记消失 |
+| 片段 ID 在 `confirmed_segments` 里 | 只有那个片段变 `confirmed` |
+| 两者都没有 | 继续显示「差异待确认」 |
+| 文件不存在 | 等同于一条都没确认 |
+
+`changes.json` 的条目级 `diff_status` 同时跟着变，两边不会打架。确认进度会在运行输出里打印：`差异条目：43，已人工确认 2 条`。
+
+### 「新增」也要确认，确认的是什么
+
+新增确认的不是「这条和杭州哪里不同」—— 它没有杭州对照物。确认的是**「这条真的是新的」**：不是把杭州已有规则换个 ID 重写一遍。这种错真实存在：`XS-K-FANXING` 与 `HJ-K-FANXING-HUCHI` 就是容易混的一对。
 
 ## 待裁决：「待裁决 XS-U-002」
 
@@ -104,9 +134,10 @@ flowchart TD
 | --- | --- |
 | 「继承」 | 萧山照杭州执行，无需关注 |
 | 「继承」「待裁决 XS-U-001」 | 沿用的杭州内容也被未决项牵连，一起等裁决 |
-| 「修改」「差异待确认」 | 萧山改写了，但改法本身待人工确认 |
+| 「修改」 | 萧山改写了，且差异已人工确认 |
+| 「修改」「差异待确认」 | 萧山改写了，但差异本身待人工确认 |
 | 「修改」「差异待确认」「待裁决 XS-U-003」 | 改写了、差异未确认、且规则本身还没定 —— 三件事都要人处理 |
-| 「新增」「差异待确认」 | 萧山独有规则，差异待确认 |
+| 「新增」「差异待确认」 | 萧山独有规则，待确认它不是杭州规则的重复表达 |
 | 任意 + 「数值·不可改写」 | 这段数值由计算器给出，只能改源头 |
 
 ## 不建议出现的组合
@@ -127,6 +158,7 @@ flowchart TD
 | 规则卡 `front matter` | 声明 `origin`、`change_type`、`base_rule_ref`、`release_blocker` |
 | `compiler/compile.ts` | 合并杭州与变体，得到每条规则的 `origin` 与 `change_type` |
 | `studio/pipeline/generate-variant.ts` | 把卡片级字段落到片段级 `lineage` / `diff_status` |
+| `documents/<变体>/diff-review.yaml` | 人工差异确认清单，把 `candidate` 升为 `confirmed` |
 | `unresolved.yaml` | 提供 `XS-U-###` 与 `card_ref` 的映射，卡级阻塞据此变成片段级 `release_blocker_refs` |
 | `studio/pipeline/render.ts` | 只负责把字段渲染成中文标记，不产生任何判断 |
 

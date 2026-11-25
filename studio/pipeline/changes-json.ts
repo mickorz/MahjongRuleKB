@@ -60,6 +60,8 @@ export function buildChangesFile(
   baseRules: ReadonlyArray<{ id: string; body: string }>,
   meta: { rulesetId: string; baseRulesetId: string; baseVersion: string; variantVersion: string },
   now = new Date().toISOString(),
+  /** 已人工确认差异的规则 ID；不传则全部 candidate */
+  confirmedRules: ReadonlySet<string> = new Set(),
 ): ChangesFile {
   const baseById = new Map(baseRules.map((r) => [r.id, r]));
   const entries: ChangesFile["entries"] = [];
@@ -75,7 +77,7 @@ export function buildChangesFile(
         base_rule_ref: baseRef,
         type: changeType === "added" ? "add" : "replace",
         subject: rule.meta.name,
-        diff_status: "candidate",
+        diff_status: confirmedRules.has(rule.meta.id) ? "confirmed" : "candidate",
         before: base?.body ?? null,
         after: rule.body,
         evidence: evidenceOf(rule),

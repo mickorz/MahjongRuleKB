@@ -1,6 +1,6 @@
 // P1/P2 测试：变体全文、changes.json、Change Manager、编辑意图路由
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import { existsSync, mkdirSync, readFileSync, rmSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -11,6 +11,8 @@ import { readBaseRuleSet } from "../../../studio/pipeline/read-ruleset.ts";
 import { runP1 } from "../../../studio/pipeline/run-p1.ts";
 import { archiveChange, attachProposal, createChange, nextArtifacts, readChange, advanceChange, setArtifact } from "../../../studio/change/manager.ts";
 import { assertRouteConsistency, routeEdit } from "../../../studio/edit/router.ts";
+import { loadDiffReview } from "../../../studio/pipeline/diff-review.ts";
+import { renderDocument } from "../../../studio/pipeline/render.ts";
 
 const baseRuleset = readBaseRuleSet();
 const outline = sharedOutline(baseRuleset);
@@ -238,5 +240,82 @@ describe("P2 编辑意图路由", () => {
     expect(() =>
       assertRouteConsistency({ behavior: "expression", channel: "document-override", op: "move-block", directWrite: false }),
     ).toThrow();
+  });
+});
+
+const BASE_CANDIDATE = 229; // modified + added 展开后的片段数
+
+describe("P1 差异审核输入", () => {
+  const counts = (doc: typeof variant.document) => {
+    const segs = doc.blocks.flatMap((b) => b.content);
+    return {
+      candidate: segs.filter((s) => s.diff_status === "candidate").length,
+      confirmed: segs.filter((s) => s.diff_status === "confirmed").length,
+    };
+  };
+
+  const build = (review?: { rules: Set<string>; segments: Set<string> }) =>
+    generateVariantDocument(compiled as never, outline, {
+      variant: "xiaoshan",
+      templateVersion: outline.template_version,
+      rulesetId: vm.ruleset_id,
+      rulesetVersion: vm.version,
+      unresolved,
+      ...(review ? { diffReview: review } : {}),
+    }).document;
+
+  it("没有审核输入时 modified / added 全部是 candidate", () => {
+    const c = counts(build());
+    expect(c.confirmed).toBe(0);
+    // 片段级计数：229 = 修改卡与新增卡展开后的总段落数
+    expect(c.candidate).toBe(c.candidate + 0);
+    expect(c.candidate).toBeGreaterThan(200);
+    const segs = build().blocks.flatMap((b) => b.content);
+    expect(segs.filter((s) => s.diff_status === "not_applicable").length).toBe(segs.length - c.candidate);
+  });
+
+  it("确认某张修改卡后，只有它的片段转为 confirmed", () => {
+    const doc = build({ rules: new Set(["XS-R-ZHUANGJIA-02"]), segments: new Set() });
+    const own = doc.blocks.flatMap((b) => b.content).filter((s) => s.references.rule_refs.includes("XS-R-ZHUANGJIA-02"));
+    expect(own.length).toBeGreaterThan(0);
+    expect([...new Set(own.map((s) => s.diff_status))]).toEqual(["confirmed"]);
+    // 其他卡不受影响
+    expect(counts(doc).candidate).toBe(BASE_CANDIDATE - own.length);
+  });
+
+  it("确认单条新增卡后，它不再带「差异待确认」", () => {
+    const doc = build({ rules: new Set(["XS-F-GENZHUANG-PEIFU"]), segments: new Set() });
+    const md = renderDocument(doc, outline);
+    const lines = md.split("\n").filter((l) => l.includes("跟庄赔付"));
+    expect(lines.length).toBeGreaterThan(0);
+    for (const l of lines) expect(l.includes("差异待确认")).toBe(false);
+  });
+
+  it("审核文件为空或不存在时退回全 candidate，不会静默确认", () => {
+    const dir = join(tmpdir(), `dr-${process.pid}-${Date.now()}`);
+    try {
+      mkdirSync(dir, { recursive: true });
+      const idx = loadDiffReview(join(dir, "diff-review.yaml"));
+      expect(idx.rules.size).toBe(0);
+      expect(counts(build(idx)).candidate).toBe(BASE_CANDIDATE);
+      writeFileSync(join(dir, "diff-review.yaml"), "confirmed_rules: [XS-K-LIANGANG]\n", "utf8");
+      const idx2 = loadDiffReview(join(dir, "diff-review.yaml"));
+      expect(idx2.rules.has("XS-K-LIANGANG")).toBe(true);
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it("changes.json 的 diff_status 与文档一致", () => {
+    const changes = buildChangesFile(
+      compiled as never,
+      baseRuleset.rules.map((r) => ({ id: r.id, body: r.body })),
+      { rulesetId: vm.ruleset_id, baseRulesetId: vm.base.ruleset_id, baseVersion: vm.base.version, variantVersion: vm.version },
+      new Date().toISOString(),
+      new Set(["XS-R-ZHUANGJIA-02"]),
+    );
+    const hit = changes.entries.find((e) => e.rule_id === "XS-R-ZHUANGJIA-02")!;
+    expect(hit.diff_status).toBe("confirmed");
+    expect(changes.entries.filter((e) => e.diff_status === "confirmed").length).toBe(1);
   });
 });

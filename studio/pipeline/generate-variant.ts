@@ -14,6 +14,7 @@ import {
 import type { DocumentOutline } from "../contracts/outline.ts";
 import type { RuleSetView } from "./read-ruleset.ts";
 import { cardSlots, slotText } from "./read-ruleset.ts";
+import { emptyDiffReview, isDiffConfirmed, type DiffReviewIndex } from "./diff-review.ts";
 import { buildHangzhouOutline, sectionOfRule } from "./outline-hangzhou.ts";
 
 interface CompiledRuleLike {
@@ -85,9 +86,12 @@ export function generateVariantDocument(
     documentVersion?: number;
     /** unresolved.yaml 条目：用于把卡级阻塞映射到 XS-U-### 引用 */
     unresolved?: UnresolvedItem[];
+    /** 差异审核结果：把 modified / added 片段的 diff_status 从 candidate 升为 confirmed */
+    diffReview?: DiffReviewIndex;
   },
 ): VariantGenerateResult {
   const rulesById = new Map(compiled.rules.map((r) => [r.meta.id, r]));
+  const review = opts.diffReview ?? emptyDiffReview();
   // 变体新增卡（added）不在基座 outline 里，按同一关键词规则补挂到章节，避免差异段落丢失
   const expanded = outline.sections.map((sec) => ({ ...sec, rule_refs: [...sec.rule_refs] }));
   for (const rule of compiled.rules) {
@@ -142,13 +146,21 @@ export function generateVariantDocument(
       }
       for (const text of texts) {
         segSeq += 1;
+        const segmentId = `SEG-${pad(segSeq, 6)}`;
+        // 差异审核：只有「修改 / 新增」才有差异可审；命中已确认清单才能升为 confirmed
+        const hasDiff = lineage === "modified" || lineage === "added";
+        const diffStatus: Segment["diff_status"] = hasDiff
+          ? isDiffConfirmed(review, rule.meta.id, segmentId)
+            ? "confirmed"
+            : "candidate"
+          : "not_applicable";
         segments.push({
-          segment_id: `SEG-${pad(segSeq, 6)}`,
+          segment_id: segmentId,
           text,
           editable: !looksLikeFormula(text) && !numericOnlyPattern.test(text),
           lineage,
           decision_status: (rule.meta.status as Segment["decision_status"]) ?? "confirmed",
-          diff_status: lineage === "modified" || lineage === "added" ? "candidate" : "not_applicable",
+          diff_status: diffStatus,
           // 未决项必须能被渲染层识别出来，否则待裁决内容在文档里看不见
           release_blocker_refs: blockerRefs,
           references: {
