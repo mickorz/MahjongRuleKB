@@ -23,6 +23,7 @@
 | v2.0 | 2026-11-24 | 按 `2026-11-24-需求全文生成与变体差异标注评审意见.md` 修订该能力（细节见增补文档 v1.2）：所有变体共用同一套章节模板；差异标记拆成来源关系 / 规则状态 / 差异审核三维（第一版不支持删除，`changeTypes` 无 `removed`）；Document Block 引用拆四类并接入原子需求，`block_id` 与章节解耦；三个修改通道（规则 / 表达 / 结构）统一走提案与 `based_on_document_version` 校验；实施拆 P0-A / P0-B / P1 / P2 与上游覆盖节奏对齐，AC-24 增设原子需求表达检查。编号扩至 FR-50、I-41、AD-33、AC-45 |
 | v2.1 | 2026-11-24 | **撤销 v2.0 的「AC-24 增设原子需求表达检查」与「需求覆盖作为全文生成上游质量门」两项决策**（依据 `dev-docs/design/2026-11-24-需求全文生成边界收敛评审意见.md`）：需求全文生成只对「已结构化规则与配置是否完整成文」负责，原子需求提取与六态覆盖保留为独立工作流，两者仅通过可选 `requirement_refs` 关联。对应增补文档升至 v1.4，新增 I-42、改写 I-28/FR-46/AC-24/AC-40；`documents/` 路径白名单与文档提案契约（AD-38/AD-39）**尚未写入本文档正文**，列为 D0 任务（见 `dev-docs/planning/2026-11-24-需求全文生成执行计划.md` 的 D0 交付目标） |
 | v2.2 | 2026-11-24 | D0 首批：I-3 扩展为三路径边界并新增 **I-51**（`documents/` 写入三级：Stage 生成 / 提案事务写人工修改 / Agent 不得直写）；AD-6 明确文档提案同库；新增 **AD-38** 文档提案契约（`baseRevision` 版本 + 逐文件 Hash 双校验）与 **AD-39** Proposal / Transaction 状态分层；10.2 增补 10.2.1 文档提案小节。修正 v2.1 中「已补 documents 白名单与 AD-38/39」的不实陈述 |
+| v2.3 | 2026-11-24 | D0-Final2：I-51 改为唯一权威并新增 **11.1 写入权限矩阵**（逐路径授权，Transaction 对 `document.json` 仅限授权字段与版本）；I-2 明确 Stage 复用 Transaction Executor 但不经 Proposal 状态机；AD-38 明确 `baseRevision.documentVersion` 读取自 `document.json` 顶层且 `files[]` 必须含 `document.json`；增补设计改为引用本条 |
 
 ## 一、对设计讨论稿前提的核对与纠正
 
@@ -170,7 +171,7 @@
 | # | 不变量 | 说明 |
 | --- | --- | --- |
 | I-1 | 麻将 Bot 下发给模型的工具集合等于显式白名单，不含任何通用写文件、补丁、Shell、通用工作区修改工具 | Agent 只能产生 Proposal。白名单按阶段启用；运行中的工具发现也只能加载白名单所在分组。**移除 PiBot Capability 不等于收回工具**：命令执行、文件写入等由 PiBot 内核提供，必须单独限制（AD-13） |
-| I-2 | **正式事实修改**只由 UI「应用」按钮触发的 RPC 执行；文档生成/重新生成由受控 Stage Run / Regenerate RPC 执行 | Agent 在对话中说「已修改」不产生任何写入；Stage 只能写生成产物，人工修改必须进入 Proposal + Transaction |
+| I-2 | **正式事实修改**只由 UI「应用」按钮触发的 RPC 执行；文档生成/重新生成由受控 Stage Run / Regenerate RPC 执行。**Stage 生成复用 Transaction Executor 做原子提交，但不经过 Proposal 审批状态机**（Proposal 状态机只服务人工修改） | Agent 在对话中说「已修改」不产生任何写入；两条写入路径共用事务机制，但业务状态机不混用 |
 | I-3 | `rulebook/sources/` 只读；`rulebook/compiled/` 只由编译器生成；`documents/` 按写入主体分级（见 I-51） | Capability 的路径白名单不包含对前二者的写权限 |
 | I-4 | 杭州底座任何卡或配置变更，必须在同一提案内升 `manifest.version` 并更新 `content_hash` | `content_hash`（基础内容指纹）由服务端按提案应用后的内容计算，Agent 不提供。KB 编译器只校验指纹一致与 `base.version` 匹配，检测不了「更新了指纹但忘升版本」（`AGENTS.md` 第 4 条）；这项发布流程约束由 Studio 的门禁 G3 检查，缺任一项门禁失败，错误信息明确指向缺失项 |
 | I-5 | 变种 `base.version` 不自动跟随底座 | 底座升版后下游锁定失配是「待升级」提示：不阻塞底座提案应用，但阻塞该变种可发布 |
@@ -183,7 +184,7 @@
 | I-12 | Agent 不提供文件路径 | 提案只含规则集 ID 与规则 ID；路径由服务端按注册表推导 |
 | I-13 | 领域层是纯函数 | 解析、校验、编译不触碰文件系统、不修改输入；结果与编译次数、变种顺序无关（AD-3） |
 | I-14 | Gold Set 门禁只能由用户显式触发 | 运行知识库目录里的 `npm test` 等于执行该目录的代码：默认关闭、首次确认、固定命令；Agent 没有任何可触发它的工具（FR-19） |
-| I-51 | `documents/` 的写入分三级：① Stage Executor 只写生成产物白名单（`document.json` / `需求全文.md` / `provenance.json` / `identity-map.json`）；② 经批准的文档 Proposal 由 Transaction 写人工修改（`editorial-overrides.yaml`、章节映射）；③ **Agent / Capability / 普通文件工具不得直接写 `documents/`** | Stage Run / Regenerate RPC 负责生成，UI Apply RPC 负责触发人工修改 Transaction，Agent 只能产生 Proposal |
+| I-51 | **写入主体按路径唯一授权，本节为唯一权威规范**：Stage Executor 写 `documents/<variant>/` 生成产物；批准后的文档 Transaction 只写服务端推导目标；Agent / Capability / 普通文件工具对 `documents/`、`.rule-studio/transactions/`、`rulebook/changes/archive/` **均无写权限** | 完整矩阵见 11.1；增补设计只引用本条并保留文件级说明，不得另立一套范围 |
 
 ## 七、功能需求
 
@@ -264,7 +265,7 @@ flowchart TD
 | AD-11 | **ID 前缀由 manifest 声明**：manifest 增加 `id_prefix`；Zod 只校验通用格式；校验器按注册表核对前缀 | 新增地方麻将不改 Schema | Phase A 完成，KB 测试覆盖 |
 | AD-12 | **validator 与 compile 显式接收 `kind`**，不依赖目录名 | Studio 在内存中叠加时没有真实目录 | Phase A 完成 |
 | AD-13 | **麻将 Bot 使用显式工具白名单**（`MAHJONG_BOT_TOOL_ALLOWLIST`，按阶段启用），并有运行时测试断言实际下发给模型的工具集合 | PiBot 的命令执行、文件写入等工具由内核提供，移除 Capability 不会收回它们；工具发现还能在运行中继续加载分组 | 注入点由 Spike S-9 确定；找不到时在 fork 内加 Bot 级白名单字段 |
-| AD-38 | **文档提案契约**：Agent 只提供 `op`、`target{blockId, segmentId}`、`after`、意图与证据；服务端确定/校验 `targetVariant`、生成 `baseRevision{documentVersion, files[{path, sha256}]}`、计算 `before` / `after` Hash、按 `op` 推导目标文件。应用前**同时**校验文档版本与每个目标文件 Hash，任一不匹配即 `stale` 拒绝 | Agent 不可信地传路径或基线；文档修改与规则修改共用审核与事务纪律，但文档还要校验 `document_version` |
+| AD-38 | **文档提案契约**：Agent 只提供 `op`、`target{blockId, segmentId}`、`after`、意图与证据；服务端确定/校验 `targetVariant`、生成 `baseRevision{documentVersion, files[{path, sha256}]}`、计算 `before` / `after` Hash、按 `op` 推导目标文件。`baseRevision.documentVersion` **必须读取自 `documents/<variant>/document.json` 的顶层 `document_version`**，且 `baseRevision.files[]` 必须包含 `document.json` 自身。应用前同时校验版本与逐文件 Hash，任一不匹配即 `stale` | Agent 不可信地传路径或基线；版本与内容双重校验闭合，防止只改版本或只改文件绕过 |
 | AD-39 | **Proposal 状态与 Transaction 状态分层**：Proposal `draft/ready/approved/applied/rejected/stale/failed`；Transaction `preparing/prepared/writing/committed/rolled_back/recovery_failed`。文档提案与规则提案共用 Proposal 状态机，应用时进入 Transaction，事务结果回写提案状态 | 两套生命周期职责不同；混用会让「提案是否已批准」与「文件是否已写入」无法区分 |
 
 ### 9.1 架构
@@ -457,6 +458,28 @@ flowchart TD
 | 外部代码执行 | 仅 Gold Set（G5）：默认关闭、用户触发、首次确认、固定命令、超时与取消、审计；Agent 无触发途径 |
 | Git | 不自动 commit / push |
 | 路径来源 | 永远由服务端从规则集 ID 与规则 ID 推导，Agent 不传路径 |
+
+### 11.1 写入权限矩阵（I-51 的完整展开）
+
+| 路径 | 唯一允许的写入主体 | 说明 |
+| --- | --- | --- |
+| `documents/<variant>/document.json` | Stage Executor；批准后的 Transaction **仅可更新授权字段与 `document_version`** | 结构与身份事实源；不得成为通用可写文件 |
+| `documents/<variant>/editorial-overrides.yaml` | Transaction | 人工表达权威输入 |
+| 章节映射文件 | Stage Executor（生成）/ Transaction（人工结构修改） | 两种来源分别留痕 |
+| `documents/<variant>/identity-map.json` | Stage Executor | 由 `document.json` 重建 |
+| `documents/<variant>/provenance.json` | Stage Executor | 由 `document.json` 重建 |
+| `documents/<variant>/需求全文.md` | Stage Executor | 渲染产物 |
+| `documents/<variant>/changes.json` | P1 Stage Executor | P0 不生成 |
+| `documents/<variant>/history/` | Stage Executor / Transaction | 各自提交的版本快照，互不覆盖 |
+| `.rule-studio/proposals/` | 专用 Proposal 工具 + UI/服务端状态推进 | 规则与文档共用，唯一 Proposal 存储 |
+| `.rule-studio/transactions/` | Transaction Executor | 唯一事务与恢复日志 |
+| `.rule-studio/workflow/` | Stage Executor | Stage 中间产物，不入库 |
+| `rulebook/changes/archive/` | Archive Executor | Verify 后的归档包 |
+| `rulebook/sources/` | 无（只读） | 原始证据 |
+| `rulebook/compiled/` | 编译器 | 禁手改 |
+| `rulebook/specs/` | 批准后的规则 Transaction | 规则事实 |
+
+所有主体均受服务端路径白名单与路径穿越 / 符号链接逃逸校验约束；未列出的路径即视为越权。
 
 ## 十二、验收标准
 
