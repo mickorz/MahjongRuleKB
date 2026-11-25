@@ -8,6 +8,7 @@
 |---|---|---|---|---|---|---|---|
 | REF-002 | PrdGameSkill | `https://github.com/mickorz/PrdGameSkill`（submodule 跟踪分支 `main`） | `thirdparties/PrdGameSkill` | `d28ed0a16cad8d9c23dde925e591ef326b81874d`（2026-11-24 引入，与远端 `main` 一致） | 未发现 LICENSE 文件 | 只读参考，禁止复制任何代码 | 游戏 PRD 技能库与 Interactive Game PRD 方法论；Game Requirement IR、交互式 HTML 需求文档与规则模拟器思路，供 MahjongRuleKB 后续 PRD / 规则代码生成对接参考。**其自身子模块（thirdparties/*）不拉取** |
 | REF-003 | OpenSpec | `https://github.com/Fission-AI/OpenSpec`（submodule 跟踪分支 `main`） | `thirdparties/OpenSpec` | `f1cd852f4edce22b8df9548a4df889172ca8ff25`（2026-11-24 引入，与远端 `main` 一致，tag @fission-ai/openspec@2.2.0） | MIT（Copyright 2025 FISSION AI INC） | 只读参考，复用方法论时可复制（MIT 允许），需保留版权声明 | Spec-driven development（SDD）规范与工作流方法论；供 Rule Studio 的提案、规格变更与验收流程设计参考 |
+| REF-004 | universal-spec-mcp | `https://github.com/ahmedelpannann/universal-spec-mcp`（submodule 跟踪分支 `main`） | `thirdparties/universal-spec-mcp` | `36c0eceb0a2c7e82fe7d2ea74f3596fcebf104f2`（2026-11-24 引入，与远端 `main` 一致） | MIT | 只读参考，复用方法论时可复制（MIT 允许），需保留版权声明 | MCP 形式的规格（spec）工作流工具；供 Rule Studio 的规格变更与校验流程设计参考 |
 
 ## Submodule 引入与登记流程
 
