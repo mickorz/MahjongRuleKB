@@ -19,9 +19,10 @@
 | `studio/transaction/` | 事务状态机、双校验、原子提交与崩溃恢复 | 是 |
 | `studio/graph/` | Artifact Graph 与失效传播（静态依赖图，不调度） | 是 |
 | `studio/identity/` | 片段身份匹配（结构锚点、split/merge、失效待处理） | 是 |
-| `studio/pipeline/` | 生成链路：读规则集 → 章节装配 → Document Block → 覆盖门禁 → 渲染；`run-p0a.ts` 单章节、`run-p0b.ts` 杭州全量 11 章 | 是 |
+| `studio/pipeline/` | 生成链路：读规则集 → 章节装配 → Document Block → 覆盖门禁 → 渲染；`run-p0a.ts` 单章节、`run-p0b.ts` 杭州全量、`run-p1.ts` 萧山变体；G5 Gold Set 门禁默认关闭（`--goldset` 开启） | 是 |
 | `studio/change/` | Change Manager：创建、挂提案、产物推进、Verify、归档导出 | 是 |
 | `studio/edit/` | 对话编辑意图路由（四种编辑行为分流，禁止直写） | 是 |
+| `studio/audit/` | 审计哈希链（`.rule-studio/workflow/audit.jsonl`，运行时） | 是 |
 | `compiler/` | 校验与编译 | 是 |
 | `calculators/` | 确定性计算纯函数 | 是 |
 | `tests/gold-set/` | Gold Set 用例（YAML） | 是 |
