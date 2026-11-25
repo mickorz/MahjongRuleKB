@@ -6,3 +6,6 @@
 	path = thirdparties/OpenSpec
 	url = https://github.com/Fission-AI/OpenSpec.git
 	branch = main
+[submodule "universal-spec-mcp"]
+	path = universal-spec-mcp
+	url = https://github.com/ahmedelpannann/universal-spec-mcp
