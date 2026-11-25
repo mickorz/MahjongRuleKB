@@ -171,7 +171,7 @@
 | --- | --- | --- |
 | I-1 | 麻将 Bot 下发给模型的工具集合等于显式白名单，不含任何通用写文件、补丁、Shell、通用工作区修改工具 | Agent 只能产生 Proposal。白名单按阶段启用；运行中的工具发现也只能加载白名单所在分组。**移除 PiBot Capability 不等于收回工具**：命令执行、文件写入等由 PiBot 内核提供，必须单独限制（AD-13） |
 | I-2 | **正式事实修改**只由 UI「应用」按钮触发的 RPC 执行；文档生成/重新生成由受控 Stage Run / Regenerate RPC 执行 | Agent 在对话中说「已修改」不产生任何写入；Stage 只能写生成产物，人工修改必须进入 Proposal + Transaction |
-| I-3 | `rulebook/sources/` 只读；`rulebook/compiled/` 只由编译器生成；`documents/` 按写入主体分级（见 I-15） | Capability 的路径白名单不包含对前二者的写权限 |
+| I-3 | `rulebook/sources/` 只读；`rulebook/compiled/` 只由编译器生成；`documents/` 按写入主体分级（见 I-51） | Capability 的路径白名单不包含对前二者的写权限 |
 | I-4 | 杭州底座任何卡或配置变更，必须在同一提案内升 `manifest.version` 并更新 `content_hash` | `content_hash`（基础内容指纹）由服务端按提案应用后的内容计算，Agent 不提供。KB 编译器只校验指纹一致与 `base.version` 匹配，检测不了「更新了指纹但忘升版本」（`AGENTS.md` 第 4 条）；这项发布流程约束由 Studio 的门禁 G3 检查，缺任一项门禁失败，错误信息明确指向缺失项 |
 | I-5 | 变种 `base.version` 不自动跟随底座 | 底座升版后下游锁定失配是「待升级」提示：不阻塞底座提案应用，但阻塞该变种可发布 |
 | I-6 | `modified` 卡必须是完整有效规则 | 门禁按 KB 的槽位策略（base / inherited / modified / added）校验 |
@@ -401,7 +401,7 @@ fork 内的工程规范以 PiBot `AGENTS.md` 为准：TypeScript strict、ESM、
 | 落点由服务端推导 | `op` 决定目标文件（表达层 → `editorial-overrides.yaml`；结构层 → 章节映射文件），Agent 不得传路径 |
 | 双校验 | 应用前比对 `baseRevision.documentVersion` 与当前文档版本，并逐文件重算 Hash；任一失配 → `stale` |
 | 状态机 | 沿用 10.2 的 Proposal 状态；`approved` 后进入 10.3 的 Transaction，结果回写 `applied` / `failed` |
-| 禁止直写 | Agent 无 `documents/` 写权限（I-15）；只能产生提案 |
+| 禁止直写 | Agent 无 `documents/` 写权限（I-51）；只能产生提案 |
 
 ### 10.3 事务
 
