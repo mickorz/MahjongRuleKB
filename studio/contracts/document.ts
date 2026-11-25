@@ -22,6 +22,8 @@ import {
   sourceEvidenceRefsSchema,
   requirementRefsSchema,
   unresolvedRefPattern,
+  ruleRefPattern,
+  configRefPattern,
 } from "./references.ts";
 
 /** 需要基座对照卡的来源关系：主动继承、默认继承、替换 */
@@ -34,7 +36,14 @@ export const lineagesRequiringBaseRef: ReadonlyArray<(typeof lineageValues)[numb
 /** 纯数值文本：只允许数字、千分位、小数与常见单位 */
 const numericOnlyPattern = /^\s*-?[\d.,]+\s*(倍|分|%|张|番|毫秒|秒)?\s*$/;
 /** 公式特征：显式算术符号或「底分 × 倍率」这类乘算式 */
-const formulaLikePattern = /[×÷+\-*/=]|\b(底分|倍率|牢数|番型)\b/;
+/**
+ * 日期样文本：不视为公式（避免 2026-11-24 被误判）
+ * 注意：中文关键词不能用 \b 做边界，改为显式运算符邻近判断。
+ */
+const dateLikePattern = /^\s*\d{4}[-/]\d{1,2}[-/]\d{1,2}([ T].*)?\s*$/;
+/** 公式特征：显式乘除号、数字之间的运算符、或关键词紧跟乘号 */
+const formulaLikePattern = /[×÷]|[\d)]\s*[+\-*/=]\s*[\d(]|\s[+\-*/=]\s|(底分|倍率|牢数|番型)\s*[×÷*]/;
+const looksLikeFormula = (text: string) => !dateLikePattern.test(text) && formulaLikePattern.test(text);
 
 /**
  * 片段间身份关系：
@@ -93,7 +102,7 @@ export const segmentSchema = z
     release_blocker_refs: z.array(z.string().regex(unresolvedRefPattern, "未决 ID 形如 XS-U-001")).default([]),
     references: referencesSchema,
     /** 变体相对基座的对照卡；是否需要由 lineage 决定（见下方校验） */
-    base_rule_ref: z.string().regex(/^[A-Z]{2}-[A-Z](-[A-Z0-9]+)+$/).nullish(),
+    base_rule_ref: z.union([z.string().regex(ruleRefPattern), z.string().regex(configRefPattern)]).nullish(),
   })
   .strict()
   .superRefine((seg, ctx) => {
@@ -102,7 +111,7 @@ export const segmentSchema = z
       ctx.addIssue({ code: "custom", path: ["editable"], message: "纯数值片段不得标记 editable=true" });
     }
     // 含公式特征的片段不得可编辑
-    if (seg.editable && formulaLikePattern.test(seg.text)) {
+    if (seg.editable && looksLikeFormula(seg.text)) {
       ctx.addIssue({ code: "custom", path: ["editable"], message: "公式类片段不得标记 editable=true，须由计算器渲染" });
     }
     // base_rule_ref 与 lineage 的对应关系：继承/替换必须有，base 与 added 不得有
@@ -240,16 +249,14 @@ export const documentSchema = z
         seenSegment.add(seg.segment_id);
       }
     }
-    // lineage 关系必须引用文档中真实存在的片段
+    // lineage 关系：
+    // - to_segment_ids 是本次生成产生的新片段，必须在当前文档中存在
+    // - from_segment_ids 是历史片段（旧版本），可能已不在当前文档，Schema 无法也不应校验其存在性；
+    //   历史对应关系由身份管理逻辑（上一版 document.json / identity-map）验证
     for (const entry of doc.segment_lineage) {
-      for (const id of entry.from_segment_ids) {
-        if (!seenSegment.has(id)) {
-          ctx.addIssue({ code: "custom", path: ["segment_lineage"], message: `lineage 引用不存在的片段：${id}` });
-        }
-      }
       for (const id of entry.to_segment_ids) {
         if (!seenSegment.has(id)) {
-          ctx.addIssue({ code: "custom", path: ["segment_lineage"], message: `lineage 引用不存在的片段：${id}` });
+          ctx.addIssue({ code: "custom", path: ["segment_lineage"], message: `to_segment_ids 引用当前文档不存在的片段：${id}` });
         }
       }
     }

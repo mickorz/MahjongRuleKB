@@ -66,12 +66,19 @@ describe("ProposalInput：操作与字段契约", () => {
     expect(ok(hide)).toBe(true);
     expect(ok({ ...hide, after_text: "x" })).toBe(false);
     expect(ok({ ...hide, after_outline: "sections: []" })).toBe(false);
-    expect(ok({ ...hide, target: { block_id: "DOC-HJ-000001", segment_id: "SEG-000001" } })).toBe(true && false);
+    expect(ok({ ...hide, target: { block_id: "DOC-HJ-000001", segment_id: "SEG-000001" } })).toBe(false);
+  });
+
+  it("move-block 必须是块级目标，不得带 segment_id", () => {
+    const move = { ...baseInput, op: "move-block", after_text: null, after_outline: "sections: []" };
+    expect(ok({ ...move, target: { block_id: "DOC-HJ-000001" } })).toBe(true);
+    expect(ok({ ...move, target: { block_id: "DOC-HJ-000001", segment_id: "SEG-000001" } })).toBe(false);
   });
 
   it("move-block / edit-outline 必须给 after_outline，且不得给 after_text", () => {
     for (const op of ["move-block", "edit-outline"]) {
-      const good = { ...baseInput, op, after_text: null, after_outline: "sections: []" };
+      const base = op === "move-block" ? { ...baseInput, target: { block_id: "DOC-HJ-000001" } } : baseInput;
+      const good = { ...base, op, after_text: null, after_outline: "sections: []" };
       expect(ok(good), op).toBe(true);
       expect(ok({ ...good, after_outline: null }), op).toBe(false);
       expect(ok({ ...good, after_text: "x" }), op).toBe(false);
@@ -138,7 +145,7 @@ describe("ProposalRecord：服务端可信记录", () => {
       documentProposalRecordSchema.safeParse({
         ...record,
         op: "move-block",
-        target: { ...record.target, file: "documents/hangzhou/document-outline.yaml" },
+        target: { block_id: "DOC-HJ-000001", file: "documents/hangzhou/document-outline.yaml" },
         base_revision: {
           document_version: 3,
           files: [

@@ -25,7 +25,7 @@ export const outlineOps: ReadonlyArray<DocumentOp> = ["move-block", "edit-outlin
  * append        after_text                        after_outline
  * replace-text  target.segment_id、after_text     after_outline
  * hide          target（block 级）                after_text、after_outline
- * move-block    after_outline                     after_text
+ * move-block    after_outline（块级目标）          after_text、segment_id
  * edit-outline  after_outline                     after_text
  */
 export const opContract: Record<
@@ -40,7 +40,7 @@ export const opContract: Record<
     requiresBlockOnly: false,
   },
   hide: { requiresAfterText: false, requiresAfterOutline: false, requiresSegment: false, requiresBlockOnly: true },
-  "move-block": { requiresAfterText: false, requiresAfterOutline: true, requiresSegment: false, requiresBlockOnly: false },
+  "move-block": { requiresAfterText: false, requiresAfterOutline: true, requiresSegment: false, requiresBlockOnly: true },
   "edit-outline": {
     requiresAfterText: false,
     requiresAfterOutline: true,
