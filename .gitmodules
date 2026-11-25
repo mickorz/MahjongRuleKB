@@ -2,3 +2,7 @@
 	path = thirdparties/PrdGameSkill
 	url = https://github.com/mickorz/PrdGameSkill.git
 	branch = main
+[submodule "thirdparties/OpenSpec"]
+	path = thirdparties/OpenSpec
+	url = https://github.com/Fission-AI/OpenSpec.git
+	branch = main
