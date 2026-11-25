@@ -6,7 +6,15 @@
     "strict": true,
     "allowImportingTsExtensions": true,
     "noEmit": true,
-    "types": ["node"]
+    "types": [
+      "node"
+    ]
   },
-  "include": ["schemas", "compiler", "calculators", "tests"]
+  "include": [
+    "schemas",
+    "compiler",
+    "calculators",
+    "studio",
+    "tests"
+  ]
 }
