@@ -4,6 +4,7 @@ import { execSync } from "node:child_process";
 import { readFileSync, readdirSync, existsSync, mkdtempSync, rmSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
+import { createHash } from "node:crypto";
 import { parse as parseYaml } from "yaml";
 import { splitFrontMatter, loadRuleset } from "../../compiler/validator.ts";
 import { DEFAULT_PATHS, main as compileTo } from "../../compiler/compile.ts";
@@ -144,20 +145,47 @@ describe("rulebook/compiled/hangzhou", () => {
   });
 });
 
-describe("重新编译无 diff", () => {
-  // 编译到临时目录：不改写仓库产物，避免与其他测试文件读 rulebook/compiled 产生竞争
-  it("连续两次 compile 结果一致", () => {
+describe("编译产物一致性", () => {
+  // 编译到临时目录：不改写仓库产物，避免与其他测试文件读 rulebook/compiled 产生竞争。
+  // 比对使用完整内容 SHA256（不用长度或前缀）：长度与前缀相同但内容不同也应失败。
+  const relOf = (root: string, file: string) => file.slice(root.length).replaceAll("\\", "/").replace(/^\//, "");
+  const hashTree = (root: string): Record<string, string> => {
+    const out: Record<string, string> = {};
+    for (const file of walk(root).sort()) {
+      out[relOf(root, file)] = createHash("sha256").update(readFileSync(file)).digest("hex");
+    }
+    return out;
+  };
+
+  it("同一输入连续两次编译，产物逐文件 SHA256 一致", () => {
     const out = mkdtempSync(join(tmpdir(), "kb-compile-"));
     const paths = { ...DEFAULT_PATHS, compiledDir: out };
-    const snapshot = () => {
-      const files = walk(out).sort();
-      return files.map((f) => `${f}:${readFileSync(f, "utf8").length}:${readFileSync(f, "utf8").slice(0, 200)}`).join("\n");
-    };
     try {
       compileTo(paths);
-      const a = snapshot();
+      const first = hashTree(out);
       compileTo(paths);
-      expect(snapshot()).toBe(a);
+      expect(hashTree(out)).toEqual(first);
+    } finally {
+      rmSync(out, { recursive: true, force: true });
+    }
+  }, 30000);
+
+  it("仓库中的 rulebook/compiled 与当前 specs 重新编译结果逐文件一致", () => {
+    const out = mkdtempSync(join(tmpdir(), "kb-compile-"));
+    const paths = { ...DEFAULT_PATHS, compiledDir: out };
+    try {
+      compileTo(paths);
+      const fresh = hashTree(out);
+      const committed = hashTree(DEFAULT_PATHS.compiledDir);
+
+      // 文件集合必须相同（不多不少），再逐个比对内容指纹
+      expect(Object.keys(fresh).sort()).toEqual(Object.keys(committed).sort());
+
+      const mismatched = Object.keys(fresh).filter((rel) => fresh[rel] !== committed[rel]);
+      expect(
+        mismatched,
+        `以下产物与 specs 重新编译结果不一致，请跑 node compiler/compile.ts 后提交：\n${mismatched.join("\n")}`,
+      ).toEqual([]);
     } finally {
       rmSync(out, { recursive: true, force: true });
     }

@@ -2,12 +2,18 @@
 
 ## 环境与常用命令
 
-只需 Git 与任意 Markdown 编辑器。常用命令：
+需要 Git、Node（≥ 24）与 npm。规则内容用 Markdown 编写，但校验、编译与测试是工程化的：
 
 ```bash
-git pull            # 同步最新规则文档
-git add . && git commit   # 提交文档变更
+npm install                 # 首次
+node compiler/validator.ts  # 校验基础规则集
+node compiler/validator.ts rulebook/specs/variants/xiaoshan --kind variant
+node compiler/compile.ts    # 编译到 rulebook/compiled/
+npm test                    # 全部测试（含编译产物一致性）
+npm run typecheck           # 类型检查
 ```
+
+> 根路径统一定义在 `compiler/paths.ts`，不要在代码或测试里硬编码 `rulesets/`、`variants/`、`compiled/`（`tests/compiler/paths.test.ts` 会失败）。
 
 ## 架构总览
 
@@ -15,19 +21,26 @@ git add . && git commit   # 提交文档变更
 - **compiler/、schemas/、calculators/、tests/**：校验编译、数据结构、计算纯函数与测试。
 - **docs/**：读者向文档（快速开始、配置、指南等）。
 - **dev-docs/**：开发过程文档（设计、调研、进度等），规范见仓库根 `CLAUDE.md`。
-- **规则组织方式**：萧山文档的九类分类法（规则/判定/时序/状态/算分/界面），新增玩法沿用此结构。
+- **规则组织方式**：11 类槽位（规则/判定/时序/状态/算分/表格/结算/界面），新增玩法沿用此结构，`modified` 卡必须是完整有效规则。
+
+## 版本与发布
+
+这不是「合并即发布」的纯文档仓库：
+
+- **规则集有版本**：`rulebook/specs/*/manifest.yaml` 的 `version`。
+- **基础规则有内容指纹**：`content_hash` 由编译器按规则卡与配置计算；内容变更必须同时升 `version` 并更新指纹，且同步派生玩法的 `base.version`。
+- **派生玩法锁定基座**：`variants/*/manifest.yaml` 的 `base.version` 必须与当前基础规则版本一致，否则编译失败。
+- **存在发布阻塞项**：`unresolved.yaml` 中 `release_blocker: true` 的未裁决项会让 `compiled/*/manifest.yaml` 的 `releasable` 为 `false`。**`releasable: false` 的规则集不得对外声称已发布。**
+
+版本递增是发布流程约束，编译器只检查 `content_hash` 与内容一致、`base.version` 匹配，**不会**自动发现「改了内容却忘记升版本」。
 
 ## 测试
 
-文档变更的验收方式见 `zh-CN/testing.md`（结构完整、分类覆盖、交叉引用有效）。
+验收方式见 `zh-CN/testing.md`（结构校验、引用闭合、编译产物一致性、Gold Set 回归）。
 
 ## 本地开发流程
 
-1. 修改或新增规则文档，保持与现有九类分类结构一致。
+1. 改 `rulebook/specs/` 下的规则卡或配置（`rulebook/sources/` 只读，`rulebook/compiled/` 只能由编译器生成）。
 2. 派生玩法只写「相对杭州麻将的差异」，不重复抄写基础规则。
-3. 提交前自查：分类完整、无与基础规则矛盾的描述、文件命名规范。
-4. 提交并推送；涉及过程性结论的同步登记到 `dev-docs/`。
-
-## 发布
-
-当前为文档仓库，合并到 `main` 分支即视为发布。后续接入 AI Agent / 游戏规则生成时再引入版本化发布流程。
+3. 跑校验 → 编译 → 测试；涉及基础规则内容变更时按上节升版本、更新指纹、同步 `base.version`。
+4. 提交并推送；过程性结论同步登记到 `dev-docs/`。
