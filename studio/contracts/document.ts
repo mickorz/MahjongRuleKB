@@ -37,13 +37,14 @@ export const lineagesRequiringBaseRef: ReadonlyArray<(typeof lineageValues)[numb
 const numericOnlyPattern = /^\s*-?[\d.,]+\s*(倍|分|%|张|番|毫秒|秒)?\s*$/;
 /** 公式特征：显式算术符号或「底分 × 倍率」这类乘算式 */
 /**
- * 日期样文本：不视为公式（避免 2026-11-24 被误判）
- * 注意：中文关键词不能用 \b 做边界，改为显式运算符邻近判断。
+ * 日期片段：在公式判定前先剔除，避免「本规则自 2026-11-24 起生效」被误判为公式。
+ * 不用 ^…$ 限定整段，因为日期常嵌在中文句子里。
  */
-const dateLikePattern = /^\s*\d{4}[-/]\d{1,2}[-/]\d{1,2}([ T].*)?\s*$/;
+const dateFragmentPattern = /\d{4}[-/]\d{1,2}[-/]\d{1,2}/g;
 /** 公式特征：显式乘除号、数字之间的运算符、或关键词紧跟乘号 */
 const formulaLikePattern = /[×÷]|[\d)]\s*[+\-*/=]\s*[\d(]|\s[+\-*/=]\s|(底分|倍率|牢数|番型)\s*[×÷*]/;
-const looksLikeFormula = (text: string) => !dateLikePattern.test(text) && formulaLikePattern.test(text);
+const looksLikeFormula = (text: string) =>
+  formulaLikePattern.test(text.replace(dateFragmentPattern, " "));
 
 /**
  * 片段间身份关系：

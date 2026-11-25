@@ -106,6 +106,9 @@ describe("Document / Block / Segment 契约", () => {
       "庄家-闲家之间的结算关系",
       "A/B 两种处理方式",
       "2026-11-24 起生效",
+      "本规则自 2026-11-24 起生效",
+      "规则于2026/11/24更新",
+      "结算流程于 2026-11-24 调整，之前按旧版",
       "流局-连庄的判断",
     ]) {
       expect(segmentSchema.safeParse({ ...segment, text, editable: true }).success, text).toBe(true);
