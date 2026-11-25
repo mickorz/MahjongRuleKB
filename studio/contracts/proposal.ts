@@ -13,9 +13,43 @@ import {
 
 /** 文档修改操作 */
 export const documentOpValues = ["append", "replace-text", "hide", "move-block", "edit-outline"] as const;
+export type DocumentOp = (typeof documentOpValues)[number];
 
 /** 结构修改类操作（落点为 document-outline.yaml） */
-export const outlineOps: ReadonlyArray<(typeof documentOpValues)[number]> = ["move-block", "edit-outline"];
+export const outlineOps: ReadonlyArray<DocumentOp> = ["move-block", "edit-outline"];
+
+/**
+ * 每种操作的必填 / 禁止字段契约（K0-1 冻结）：
+ *
+ * op            必填                              禁止
+ * append        after_text                        after_outline
+ * replace-text  target.segment_id、after_text     after_outline
+ * hide          target（block 级）                after_text、after_outline
+ * move-block    after_outline                     after_text
+ * edit-outline  after_outline                     after_text
+ */
+export const opContract: Record<
+  DocumentOp,
+  { requiresAfterText: boolean; requiresAfterOutline: boolean; requiresSegment: boolean; requiresBlockOnly: boolean }
+> = {
+  append: { requiresAfterText: true, requiresAfterOutline: false, requiresSegment: false, requiresBlockOnly: false },
+  "replace-text": {
+    requiresAfterText: true,
+    requiresAfterOutline: false,
+    requiresSegment: true,
+    requiresBlockOnly: false,
+  },
+  hide: { requiresAfterText: false, requiresAfterOutline: false, requiresSegment: false, requiresBlockOnly: true },
+  "move-block": { requiresAfterText: false, requiresAfterOutline: true, requiresSegment: false, requiresBlockOnly: false },
+  "edit-outline": {
+    requiresAfterText: false,
+    requiresAfterOutline: true,
+    requiresSegment: false,
+    requiresBlockOnly: false,
+  },
+};
+
+const nonEmptyText = z.string().min(1, "内容不得为空字符串");
 
 /**
  * Agent 可提交的文档提案输入（不可信）。
@@ -37,24 +71,38 @@ export const documentProposalInputSchema = z
       .strict(),
     rationale: z.string().min(1),
     evidence: z.array(z.string().min(1)).default([]),
-    /** 修改后的文本；move-block / edit-outline 使用 after_outline */
-    after_text: z.string().nullish(),
-    after_outline: z.string().nullish(),
+    /** 修改后的文本；结构类操作为 null 或缺省 */
+    after_text: nonEmptyText.nullish(),
+    /** 结构类操作的装配内容；文本类操作为 null 或缺省 */
+    after_outline: nonEmptyText.nullish(),
   })
   .strict()
   .superRefine((input, ctx) => {
-    const structured = outlineOps.includes(input.op);
-    if (structured && !input.after_outline) {
-      ctx.addIssue({ code: "custom", path: ["after_outline"], message: `${input.op} 必须提供 after_outline` });
+    const rule = opContract[input.op];
+    const hasText = input.after_text !== undefined && input.after_text !== null;
+    const hasOutline = input.after_outline !== undefined && input.after_outline !== null;
+
+    // 必填：缺失（undefined）与 null 一视同仁
+    if (rule.requiresAfterText && !hasText) {
+      ctx.addIssue({ code: "custom", path: ["after_text"], message: `${input.op} 必须提供非空 after_text` });
     }
-    if (!structured && input.after_text === null) {
-      ctx.addIssue({ code: "custom", path: ["after_text"], message: `${input.op} 必须提供 after_text` });
+    if (rule.requiresAfterOutline && !hasOutline) {
+      ctx.addIssue({ code: "custom", path: ["after_outline"], message: `${input.op} 必须提供非空 after_outline` });
     }
-    if (input.op === "replace-text" && !input.target.segment_id) {
-      ctx.addIssue({ code: "custom", path: ["target", "segment_id"], message: "replace-text 必须指定 segment_id" });
+    // 禁止：两个方向都算违规
+    if (!rule.requiresAfterText && hasText) {
+      ctx.addIssue({ code: "custom", path: ["after_text"], message: `${input.op} 不得提交 after_text` });
     }
-    if (structured && input.after_text) {
-      ctx.addIssue({ code: "custom", path: ["after_text"], message: "结构修改不应同时提交 after_text" });
+    if (!rule.requiresAfterOutline && hasOutline) {
+      ctx.addIssue({ code: "custom", path: ["after_outline"], message: `${input.op} 不得提交 after_outline` });
+    }
+    // 片段粒度要求
+    const hasSegment = input.target.segment_id !== undefined && input.target.segment_id !== null;
+    if (rule.requiresSegment && !hasSegment) {
+      ctx.addIssue({ code: "custom", path: ["target", "segment_id"], message: `${input.op} 必须指定 segment_id` });
+    }
+    if (rule.requiresBlockOnly && hasSegment) {
+      ctx.addIssue({ code: "custom", path: ["target", "segment_id"], message: `${input.op} 只允许块级目标` });
     }
   });
 export type DocumentProposalInput = z.infer<typeof documentProposalInputSchema>;
@@ -76,8 +124,21 @@ export const baseRevisionSchema = z
       )
       .min(1),
   })
-  .strict();
+  .strict()
+  .superRefine((rev, ctx) => {
+    const paths = rev.files.map((f) => f.path);
+    if (paths.length !== new Set(paths).size) {
+      ctx.addIssue({ code: "custom", path: ["files"], message: "base_revision.files 不得包含重复路径" });
+    }
+  });
 export type BaseRevision = z.infer<typeof baseRevisionSchema>;
+
+const textDigestSchema = z
+  .object({
+    text: z.string(),
+    sha256: sha256Schema,
+  })
+  .strict();
 
 /** 文档提案持久化记录（服务端生成，可信） */
 export const documentProposalRecordSchema = z
@@ -97,8 +158,8 @@ export const documentProposalRecordSchema = z
       })
       .strict(),
     base_revision: baseRevisionSchema,
-    before: z.object({ text: z.string(), sha256: sha256Schema }),
-    after: z.object({ text: z.string(), sha256: sha256Schema }),
+    before: textDigestSchema,
+    after: textDigestSchema,
     rationale: z.string().min(1),
     evidence: z.array(z.string().min(1)).default([]),
     status: z.enum(proposalStatusValues),
@@ -107,15 +168,23 @@ export const documentProposalRecordSchema = z
   })
   .strict()
   .superRefine((rec, ctx) => {
-    const structured = outlineOps.includes(rec.op);
-    // 落点必须与 op 匹配
-    const expected = structured ? "document-outline.yaml" : "editorial-overrides.yaml";
+    const rule = opContract[rec.op];
+    // 落点必须与 op 匹配（K0-1 只校验文件名；完整路径推导与逃逸校验属 K0-2）
+    const expected = rule.requiresAfterOutline ? "document-outline.yaml" : "editorial-overrides.yaml";
     if (!rec.target.file.endsWith(expected)) {
       ctx.addIssue({
         code: "custom",
         path: ["target", "file"],
         message: `${rec.op} 的落点必须是 ${expected}，实际为 ${rec.target.file}`,
       });
+    }
+    // 结构类操作必须给 segment_id 时的一致性
+    const hasSegment = rec.target.segment_id !== undefined && rec.target.segment_id !== null;
+    if (rule.requiresSegment && !hasSegment) {
+      ctx.addIssue({ code: "custom", path: ["target", "segment_id"], message: `${rec.op} 必须指定 segment_id` });
+    }
+    if (rule.requiresBlockOnly && hasSegment) {
+      ctx.addIssue({ code: "custom", path: ["target", "segment_id"], message: `${rec.op} 只允许块级目标` });
     }
     // baseRevision 必须包含 document.json
     if (!rec.base_revision.files.some((f) => f.path.endsWith("document.json"))) {

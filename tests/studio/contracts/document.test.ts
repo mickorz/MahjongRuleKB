@@ -1,8 +1,13 @@
 // 文档契约测试：Document / DocumentBlock / Segment 的合法与非法样本
 import { describe, it, expect } from "vitest";
-import { documentSchema, segmentSchema } from "../../../studio/contracts/document.ts";
+import { documentBlockSchema, documentSchema, segmentSchema, unionReferences } from "../../../studio/contracts/document.ts";
 
-const refs = { requirement_refs: [], rule_refs: ["HJ-R-LUNZHUANG"], config_refs: [], source_evidence_refs: ["rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.2.4"] };
+const refs = {
+  requirement_refs: [],
+  rule_refs: ["HJ-R-LUNZHUANG"],
+  config_refs: [],
+  source_evidence_refs: ["rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.2.4"],
+};
 
 const segment = {
   segment_id: "SEG-000001",
@@ -35,6 +40,16 @@ const doc = {
   segment_lineage: [],
 };
 
+const docWithSegments = (ids: string[]) => ({
+  ...doc,
+  blocks: [
+    {
+      ...block,
+      content: ids.map((id) => ({ ...segment, segment_id: id })),
+    },
+  ],
+});
+
 describe("Document / Block / Segment 契约", () => {
   it("合法文档通过校验", () => {
     const r = documentSchema.safeParse(doc);
@@ -47,8 +62,7 @@ describe("Document / Block / Segment 契约", () => {
   });
 
   it("块版本快照不得高于文档版本", () => {
-    const bad = { ...doc, blocks: [{ ...block, document_version: 9 }] };
-    expect(documentSchema.safeParse(bad).success).toBe(false);
+    expect(documentSchema.safeParse({ ...doc, blocks: [{ ...block, document_version: 9 }] }).success).toBe(false);
   });
 
   it("block_id / segment_id 不得重复", () => {
@@ -57,26 +71,107 @@ describe("Document / Block / Segment 契约", () => {
     expect(documentSchema.safeParse({ ...doc, blocks: [dupSeg] }).success).toBe(false);
   });
 
-  it("块级聚合引用必须等于片段并集", () => {
-    const bad = { ...doc, blocks: [{ ...block, references: { ...refs, rule_refs: [] } }] };
-    expect(documentSchema.safeParse(bad).success).toBe(false);
+  it("块级聚合引用必须等于片段并集（不多不少）", () => {
+    const fewer = { ...block, references: { ...refs, rule_refs: [] } };
+    expect(documentBlockSchema.safeParse(fewer).success).toBe(false);
+    const more = { ...block, references: { ...refs, rule_refs: [...refs.rule_refs, "HJ-R-CHI"] } };
+    expect(documentBlockSchema.safeParse(more).success).toBe(false);
+  });
+
+  it("单独使用 documentBlockSchema 也校验引用并集（已下沉）", () => {
+    const bad = { ...block, references: { ...refs, config_refs: ["HJ-C-DIFEN"] } };
+    expect(documentBlockSchema.safeParse(bad).success).toBe(false);
+  });
+
+  it("unionReferences 与块聚合一致", () => {
+    expect(unionReferences([segment as never])).toEqual({
+      requirement_refs: [],
+      rule_refs: ["HJ-R-LUNZHUANG"],
+      config_refs: [],
+      source_evidence_refs: ["rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.2.4"],
+    });
   });
 
   it("纯数值片段不得 editable", () => {
-    const bad = { ...segment, text: "24", editable: true };
-    expect(segmentSchema.safeParse(bad).success).toBe(false);
+    expect(segmentSchema.safeParse({ ...segment, text: "24", editable: true }).success).toBe(false);
   });
 
-  it("非 not_applicable 的差异片段必须给 base_rule_ref", () => {
-    const bad = { ...segment, diff_status: "confirmed" };
-    expect(segmentSchema.safeParse(bad).success).toBe(false);
-    const ok = { ...bad, base_rule_ref: "HJ-R-LUNZHUANG" };
-    expect(segmentSchema.safeParse(ok).success).toBe(true);
+  it("公式类片段不得 editable", () => {
+    for (const text of ["底分 × 庄家倍率 × 牢数", "a + b", "底分 1 × 8 = 8"]) {
+      expect(segmentSchema.safeParse({ ...segment, text, editable: true }).success, text).toBe(false);
+    }
   });
 
-  it("未知字段被拒绝（strict 边界）", () => {
-    const bad = { ...doc, extra_field: true };
+  it("formula 块内所有片段必须 editable=false", () => {
+    const formulaBlock = { ...block, type: "formula" };
+    expect(documentBlockSchema.safeParse(formulaBlock).success).toBe(false);
+    const frozen = {
+      ...formulaBlock,
+      content: [{ ...segment, text: "底分 × 庄家倍率", editable: false }],
+    };
+    expect(documentBlockSchema.safeParse(frozen).success).toBe(true);
+  });
+
+  it("base 片段不得给 base_rule_ref", () => {
+    expect(segmentSchema.safeParse({ ...segment, base_rule_ref: "HJ-R-CHI" }).success).toBe(false);
+  });
+
+  it("added 片段不需要 base_rule_ref，且允许 diff_status=confirmed", () => {
+    const added = {
+      ...segment,
+      lineage: "added",
+      diff_status: "confirmed",
+      references: { ...refs, rule_refs: ["XS-R-NEW-RULE"] },
+    };
+    expect(segmentSchema.safeParse(added).success).toBe(true);
+    // 但 added 片段不得反过来给 base_rule_ref
+    expect(segmentSchema.safeParse({ ...added, base_rule_ref: "HJ-R-CHI" }).success).toBe(false);
+  });
+
+  it("inherited / modified 片段必须给 base_rule_ref", () => {
+    for (const lineage of ["explicit_inherited", "default_inherited", "modified"]) {
+      const bad = { ...segment, lineage, diff_status: "candidate" };
+      expect(segmentSchema.safeParse(bad).success, lineage).toBe(false);
+      expect(segmentSchema.safeParse({ ...bad, base_rule_ref: "HJ-R-LUNZHUANG" }).success, lineage).toBe(true);
+    }
+  });
+
+  it("基座片段 diff_status 只能 not_applicable", () => {
+    expect(segmentSchema.safeParse({ ...segment, diff_status: "candidate" }).success).toBe(false);
+  });
+
+  it("split：一个旧片段 → 至少两个新片段", () => {
+    const d = docWithSegments(["SEG-000001", "SEG-000002", "SEG-000003"]);
+    const ok = { ...d, segment_lineage: [{ type: "split", from_segment_ids: ["SEG-000001"], to_segment_ids: ["SEG-000002", "SEG-000003"] }] };
+    expect(documentSchema.safeParse(ok).success).toBe(true);
+    const badFrom = { ...d, segment_lineage: [{ type: "split", from_segment_ids: ["SEG-000001", "SEG-000002"], to_segment_ids: ["SEG-000003"] }] };
+    expect(documentSchema.safeParse(badFrom).success).toBe(false);
+    const badTo = { ...d, segment_lineage: [{ type: "split", from_segment_ids: ["SEG-000001"], to_segment_ids: ["SEG-000002"] }] };
+    expect(documentSchema.safeParse(badTo).success).toBe(false);
+  });
+
+  it("merge：至少两个旧片段 → 一个新片段", () => {
+    const d = docWithSegments(["SEG-000001", "SEG-000002", "SEG-000003", "SEG-000004"]);
+    const ok = { ...d, segment_lineage: [{ type: "merge", from_segment_ids: ["SEG-000002", "SEG-000003"], to_segment_ids: ["SEG-000001"] }] };
+    expect(documentSchema.safeParse(ok).success).toBe(true);
+    const badFrom = { ...d, segment_lineage: [{ type: "merge", from_segment_ids: ["SEG-000002"], to_segment_ids: ["SEG-000001"] }] };
+    expect(documentSchema.safeParse(badFrom).success).toBe(false);
+    const badTo = { ...d, segment_lineage: [{ type: "merge", from_segment_ids: ["SEG-000002", "SEG-000003"], to_segment_ids: ["SEG-000001", "SEG-000004"] }] };
+    expect(documentSchema.safeParse(badTo).success).toBe(false);
+  });
+
+  it("lineage 引用的片段必须存在于文档中", () => {
+    const bad = { ...doc, segment_lineage: [{ type: "split", from_segment_ids: ["SEG-000099"], to_segment_ids: ["SEG-000002", "SEG-000003"] }] };
     expect(documentSchema.safeParse(bad).success).toBe(false);
+  });
+
+  it("未知字段被拒绝（顶层与嵌套）", () => {
+    expect(documentSchema.safeParse({ ...doc, extra_field: true }).success).toBe(false);
+    expect(documentSchema.safeParse({ ...doc, blocks: [{ ...block, extra: 1 }] }).success).toBe(false);
+    const badRefs = { ...block, references: { ...refs, unexpected: true } };
+    expect(documentBlockSchema.safeParse(badRefs).success).toBe(false);
+    const badSeg = { ...segment, references: { ...refs, unexpected: true } };
+    expect(segmentSchema.safeParse(badSeg).success).toBe(false);
   });
 
   it("非法 lineage / decision_status / diff_status 被拒绝", () => {

@@ -18,16 +18,25 @@ export const artifactKindValues = [
 /** 产物状态：可否继续生成由 Artifact Graph 在后续阶段计算 */
 export const artifactStatusValues = ["missing", "candidate", "ready", "stale", "failed", "confirmed"] as const;
 
-export const artifactSchema = z.object({
-  artifact_id: z.string().regex(/^ART-[A-Z0-9-]+$/, "artifact_id 形如 ART-DIFF-01"),
-  kind: z.enum(artifactKindValues),
-  status: z.enum(artifactStatusValues),
-  /** 生成该产物时的输入指纹；输入变化即失效 */
-  input_hash: sha256Schema.nullish(),
-  /** 产物文件相对路径；不放绝对路径 */
-  path: z.string().min(1).nullish(),
-  generated_at: z.string().datetime().nullish(),
-}).strict();
+/**
+ * Proposal ID：规则提案与文档提案共用同一存储与生命周期（主需求 AD-6 / AD-35）。
+ * - 文档提案：DOC-P-001
+ * - 规则 / 配置提案：PR-001（前缀在 K0-3 提案契约中确认，此处先允许，避免 Change 无法容纳规则提案）
+ */
+export const proposalIdPattern = /^(DOC-P|PR)-\d{3}$/;
+
+export const artifactSchema = z
+  .object({
+    artifact_id: z.string().regex(/^ART-[A-Z0-9-]+$/, "artifact_id 形如 ART-DIFF-01"),
+    kind: z.enum(artifactKindValues),
+    status: z.enum(artifactStatusValues),
+    /** 生成该产物时的输入指纹；输入变化即失效 */
+    input_hash: sha256Schema.nullish(),
+    /** 产物文件相对路径；不放绝对路径 */
+    path: z.string().min(1).nullish(),
+    generated_at: z.string().datetime().nullish(),
+  })
+  .strict();
 export type Artifact = z.infer<typeof artifactSchema>;
 
 /** Change Package 的静态数据契约 */
@@ -41,8 +50,8 @@ export const changeSchema = z
     /** 变更意图与范围（人类可读） */
     intent: z.string().min(1),
     scope: z.array(z.string().min(1)).default([]),
-    /** 成员提案 ID：同一 Change 可包含多个 Proposal */
-    proposal_ids: z.array(z.string().regex(/^DOC-P-\d{3}$/)).default([]),
+    /** 成员提案 ID：同一 Change 可包含文档提案与规则提案 */
+    proposal_ids: z.array(z.string().regex(proposalIdPattern)).default([]),
     artifacts: z.array(artifactSchema).default([]),
     created_at: z.string().datetime(),
     updated_at: z.string().datetime(),
@@ -66,6 +75,11 @@ export const changeSchema = z
           });
         }
       }
+    }
+    // Proposal ID 唯一
+    const pids = change.proposal_ids;
+    if (pids.length !== new Set(pids).size) {
+      ctx.addIssue({ code: "custom", path: ["proposal_ids"], message: "proposal_ids 不得重复" });
     }
     // 归档状态与归档路径必须同时存在
     if (change.status === "archived" && !change.archive_path) {

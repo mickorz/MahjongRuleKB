@@ -3,12 +3,15 @@
 // 与 document.json 的区别：outline 是可编辑装配输入；document.json 是生成后的结构唯一事实源。
 import { z } from "zod";
 import { sectionIdSchema, semverSchema } from "./common.ts";
+import { configRefsSchema, ruleRefsSchema } from "./references.ts";
 
-/** 章节内的一项装配目标：规则卡或配置项 */
-export const outlineTargetSchema = z.object({
-  rule_refs: z.array(z.string().regex(/^[A-Z]{2}-[RRTNMKFPVIA](-[A-Z0-9]+)+$/)).default([]),
-  config_refs: z.array(z.string().regex(/^[A-Z]{2}-C(-[A-Z0-9]+)+$/)).default([]),
-});
+/** 装配目标（规则 / 配置），供按章节分组使用 */
+export const outlineTargetSchema = z
+  .object({
+    rule_refs: ruleRefsSchema.default([]),
+    config_refs: configRefsSchema.default([]),
+  })
+  .strict();
 export type OutlineTarget = z.infer<typeof outlineTargetSchema>;
 
 export const outlineSectionSchema = z
@@ -16,8 +19,8 @@ export const outlineSectionSchema = z
     section_id: sectionIdSchema,
     title: z.string().min(1),
     /** 该章节装配的规则卡与配置项；允许为空（例如纯说明章节） */
-    rule_refs: z.array(z.string().regex(/^[A-Z]{2}-[A-Z](-[A-Z0-9]+)+$/)).default([]),
-    config_refs: z.array(z.string().regex(/^[A-Z]{2}-C(-[A-Z0-9]+)+$/)).default([]),
+    rule_refs: ruleRefsSchema.default([]),
+    config_refs: configRefsSchema.default([]),
     /** 交叉引用章节：正文只在本章节展开，其他章节只引用 */
     cross_reference_sections: z.array(sectionIdSchema).default([]),
   })
@@ -25,6 +28,15 @@ export const outlineSectionSchema = z
   .superRefine((sec, ctx) => {
     if (sec.cross_reference_sections.includes(sec.section_id)) {
       ctx.addIssue({ code: "custom", path: ["cross_reference_sections"], message: "章节不能交叉引用自身" });
+    }
+    // 同一章节内不得重复同一引用
+    for (const [key, refs] of [
+      ["rule_refs", sec.rule_refs],
+      ["config_refs", sec.config_refs],
+    ] as const) {
+      if (refs.length !== new Set(refs).size) {
+        ctx.addIssue({ code: "custom", path: [key], message: `${key} 不得重复` });
+      }
     }
   });
 export type OutlineSection = z.infer<typeof outlineSectionSchema>;
