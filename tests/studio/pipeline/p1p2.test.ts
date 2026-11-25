@@ -14,14 +14,16 @@ import { assertRouteConsistency, routeEdit } from "../../../studio/edit/router.t
 
 const baseRuleset = readBaseRuleSet();
 const outline = sharedOutline(baseRuleset);
-const { compiled } = compileXiaoshan();
+const { compiled, variant: variantRuleset } = compileXiaoshan();
 const vm = compiled.manifest as { ruleset_id: string; version: string; base: { ruleset_id: string; version: string } };
+const unresolved = (variantRuleset.unresolved as never[]) ?? [];
 
 const variant = generateVariantDocument(compiled as never, outline, {
   variant: "xiaoshan",
   templateVersion: outline.template_version,
   rulesetId: vm.ruleset_id,
   rulesetVersion: vm.version,
+  unresolved,
 });
 
 describe("P1 变体全文", () => {
@@ -46,9 +48,28 @@ describe("P1 变体全文", () => {
     }
   });
 
-  it("release_blocker 规则卡被识别为待裁决", () => {
-    expect(variant.blockers.length).toBeGreaterThan(0);
-    for (const b of variant.blockers) expect(["unresolved", "disputed", "confirmed"]).toContain(b.status);
+  it("release_blocker 卡被映射到 unresolved.yaml 的未决 ID", () => {
+    expect(variant.blockers.length).toBe(2);
+    const refs = variant.blockers.flatMap((b) => b.unresolved_refs);
+    expect(refs).toContain("XS-U-002");
+    expect(refs).toContain("XS-U-003");
+    // 未决引用必须真的出现在片段上，否则渲染层看不到
+    const segRefs = variant.document.blocks.flatMap((b) => b.content).flatMap((s) => s.release_blocker_refs);
+    expect(new Set(segRefs)).toEqual(new Set(refs));
+  });
+
+  it("对照槽（杭麻 / 差异）不进变体正文，只进 changes.json", () => {
+    for (const seg of variant.document.blocks.flatMap((b) => b.content)) {
+      expect(seg.text.includes("·杭麻：")).toBe(false);
+      expect(seg.text.includes("·差异：")).toBe(false);
+    }
+  });
+
+  it("每段都来自卡的已填写槽位，不出现只剩规则名的空壳", () => {
+    const shells = variant.document.blocks
+      .flatMap((b) => b.content)
+      .filter((s) => !s.text.includes("·"));
+    expect(shells.map((s) => s.text)).toEqual([]);
   });
 
   it("changes.json 只含 modified / added，且 replace 必须有 before", () => {

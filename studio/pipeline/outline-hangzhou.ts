@@ -59,14 +59,15 @@ const configRules: Array<{ section: string; match: RegExp }> = [
   { section: "ui", match: /^[A-Z]{2}-C-UI-|倒计时|长按|动画|积分换算|昵称/ },
 ];
 
+/** 规则卡归章：界面类型先判（避免 UI 卡被「承包」等关键词误捕到事实章节） */
 export function sectionOfRule(id: string, name: string): string {
-  for (const r of ruleRules) if (r.match.test(id) || r.match.test(name)) return r.section;
   const type = id.split("-")[1];
+  if (["V", "I", "A"].includes(type)) return "ui";
+  for (const r of ruleRules) if (r.match.test(id) || r.match.test(name)) return r.section;
   // 兜底：按类型归章
   if (type === "F") return "scoring";
   if (type === "K") return "patterns";
   if (type === "P") return "settlement";
-  if (["V", "I", "A"].includes(type)) return "ui";
   return "gameplay";
 }
 

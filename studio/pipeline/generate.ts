@@ -11,7 +11,7 @@ import {
 import type { DocumentOutline } from "../contracts/outline.ts";
 import { calculateBankerMultiplier } from "../../calculators/banker-multiplier.ts";
 import type { RuleSetView } from "./read-ruleset.ts";
-import { slotText } from "./read-ruleset.ts";
+import { cardSlots } from "./read-ruleset.ts";
 
 export interface GenerateOptions {
   /** 生成任务使用的模板版本 */
@@ -35,14 +35,21 @@ const variantCode = (variant: string): string => {
 
 const pad = (n: number, width: number) => String(n).padStart(width, "0");
 
-/** 规则卡正文里挑一个可读槽位作为段落文本 */
-function ruleText(body: string, name: string): string {
-  const preferred = ["结果", "触发", "公式", "表", "入账时点", "步骤", "画面", "位置"];
-  for (const slot of preferred) {
-    const text = slotText(body, slot);
-    if (text) return `${name}：${text.replace(/\r?\n/g, " ").trim()}`;
-  }
-  return name;
+/** 去掉正文里嵌套列表的列表符号，保留编号步骤 */
+export const flattenSlotText = (text: string): string =>
+  text
+    .replace(/[ \t]*[-*][ \t]+/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .trim();
+
+/**
+ * 把一张规则卡展开成若干段：一个槽位一段，全部槽位都保留。
+ * 只剩规则名的空壳段落只会在卡内确实没有槽位时出现。
+ */
+function ruleSegments(rule: { name: string; body: string }): Array<{ text: string; slot: string | null }> {
+  const slots = cardSlots(rule.body);
+  if (slots.length === 0) return [{ text: rule.name, slot: null }];
+  return slots.map((s) => ({ text: `${rule.name}·${s.slot}：${flattenSlotText(s.text)}`, slot: s.slot }));
 }
 
 /**
@@ -74,22 +81,25 @@ export function generateDocument(
       const rule = rulesById.get(ruleId);
       if (!rule) continue;
       assignedRules.add(ruleId);
-      segmentSeq += 1;
-      segments.push({
-        segment_id: `SEG-${pad(segmentSeq, 6)}`,
-        text: ruleText(rule.body, rule.name),
-        editable: !looksLikeFormula(ruleText(rule.body, rule.name)) && !numericOnlyPattern.test(ruleText(rule.body, rule.name)),
-        lineage: "base",
-        decision_status: "confirmed",
-        diff_status: "not_applicable",
-        release_blocker_refs: [],
-        references: {
-          requirement_refs: [],
-          rule_refs: [ruleId],
-          config_refs: [],
-          source_evidence_refs: rule.evidence,
-        },
-      });
+      for (const part of ruleSegments(rule)) {
+        segmentSeq += 1;
+        const editable = !looksLikeFormula(part.text) && !numericOnlyPattern.test(part.text);
+        segments.push({
+          segment_id: `SEG-${pad(segmentSeq, 6)}`,
+          text: part.text,
+          editable,
+          lineage: "base",
+          decision_status: "confirmed",
+          diff_status: "not_applicable",
+          release_blocker_refs: [],
+          references: {
+            requirement_refs: [],
+            rule_refs: [ruleId],
+            config_refs: [],
+            source_evidence_refs: rule.evidence,
+          },
+        });
+      }
     }
 
     for (const configId of section.config_refs) {
@@ -116,7 +126,8 @@ export function generateDocument(
     }
 
     // 算分章节附加一个确定性算例（数值来自 calculators，AI 不得改写）
-    if (section.section_id === "scoring" && assignedRules.size > 0) {
+    // 只在杭州（庄闲倍率 8）基座文档里加；变体倍率由变体规则卡与 changes.json 表达
+    if (section.section_id === "scoring" && ruleset.rulesetId === "hangzhou-friends-4p") {
       const multiplier = calculateBankerMultiplier({
         ruleset_id: ruleset.rulesetId as "hangzhou-friends-4p" | "xiaoshan-friends-4p",
         winner_is_banker: true,

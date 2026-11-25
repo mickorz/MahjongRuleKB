@@ -52,9 +52,42 @@ export function readBaseRuleSet(baseDir: string = PATHS.baseDir): RuleSetView {
   };
 }
 
+const SLOT_LINE = /^\s*[-*]\s*\*\*(.+?)\*\*\s*[：:]\s*(.*)$/;
+
+/**
+ * 解析整卡正文的全部槽位（`- **槽**：内容`），按出现顺序返回。
+ * 把一张规则卡完整展开成文档段落，避免只取一个槽位导致正文只剩标题。
+ * 后续续行（缩进的列表内容）会被并入上一槽位。
+ */
+export function cardSlots(body: string): Array<{ slot: string; text: string }> {
+  const out: Array<{ slot: string; text: string }> = [];
+  const lines = body.split(/\r?\n/);
+  for (let i = 0; i < lines.length; i += 1) {
+    const m = SLOT_LINE.exec(lines[i]);
+    if (!m) continue;
+    const slot = m[1].trim();
+    const parts: string[] = [];
+    if (m[2].trim()) parts.push(m[2].trim());
+    // 续行：缩进更深的列表项属于该槽位内容
+    for (let j = i + 1; j < lines.length; j += 1) {
+      const line = lines[j];
+      if (line.trim() === "") break;
+      if (/^\s*[-*]\s*\*\*/.test(line)) break;
+      if (/^\s{2,}\S/.test(line) || /^\s{2,}[-*]/.test(line) || /^\s*\d+[.、]/.test(line)) {
+        parts.push(line.trim());
+        i = j;
+        continue;
+      }
+      break;
+    }
+    const text = parts.join(" ").replace(/\s+/g, " ").trim();
+    if (text) out.push({ slot, text });
+  }
+  return out;
+}
+
 /** 从规则卡正文提取第一个匹配槽位的内容（例如「结果」槽） */
 export function slotText(body: string, slot: string): string | null {
-  const re = new RegExp(`^\\s*[-*]\\s*\\*\\*${slot}\\*\\*\\s*[：:]([\\s\\S]*?)(?=^\\s*[-*]\\s*\\*\\*|\\s*$)`, "m");
-  const m = re.exec(body);
-  return m ? m[1].trim() : null;
+  const found = cardSlots(body).find((s) => s.slot === slot);
+  return found ? found.text : null;
 }

@@ -19,7 +19,7 @@ export function runP1(outDir = "documents/xiaoshan"): {
 } {
   const baseRuleset = readBaseRuleSet();
   const outline = sharedOutline(baseRuleset);
-  const { compiled } = compileXiaoshan();
+  const { compiled, variant } = compileXiaoshan();
   const vm = compiled.manifest as { ruleset_id: string; version: string; base: { ruleset_id: string; version: string } };
 
   const { document, blockers } = generateVariantDocument(compiled as never, outline, {
@@ -27,6 +27,7 @@ export function runP1(outDir = "documents/xiaoshan"): {
     templateVersion: outline.template_version,
     rulesetId: vm.ruleset_id,
     rulesetVersion: vm.version,
+    unresolved: (variant.unresolved as never[]) ?? [],
   });
   const report = checkCoverage(baseRuleset, outline, {
     ...document,

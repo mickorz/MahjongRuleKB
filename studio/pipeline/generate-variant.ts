@@ -13,7 +13,7 @@ import {
 } from "../contracts/document.ts";
 import type { DocumentOutline } from "../contracts/outline.ts";
 import type { RuleSetView } from "./read-ruleset.ts";
-import { slotText } from "./read-ruleset.ts";
+import { cardSlots, slotText } from "./read-ruleset.ts";
 import { buildHangzhouOutline, sectionOfRule } from "./outline-hangzhou.ts";
 
 interface CompiledRuleLike {
@@ -30,12 +30,21 @@ interface CompiledRuleLike {
 }
 
 const preferredSlots = ["结果", "触发", "公式", "表", "入账时点", "步骤", "画面", "位置"];
-const textOf = (rule: CompiledRuleLike): string => {
-  for (const slot of preferredSlots) {
-    const t = slotText(rule.body, slot);
-    if (t) return `${rule.meta.name}：${t.replace(/\r?\n/g, " ").trim()}`;
-  }
-  return rule.meta.name;
+/** 对照槽：属于「杭麻怎么写的」，不是萧山有效规则本体，不进正文（AGENTS.md 约束 2） */
+const comparisonSlots = new Set(["杭麻", "差异"]);
+
+/** 去掉正文里嵌套列表的列表符号，保留编号步骤 */
+const flatten = (text: string): string =>
+  text
+    .replace(/[ \t]*[-*][ \t]+/g, " ")
+    .replace(/[ \t]+/g, " ")
+    .trim();
+
+/** 一张卡展开为多段（与基座文档保持一致的可读粒度），对照槽除外 */
+const textOf = (rule: CompiledRuleLike): string[] => {
+  const slots = cardSlots(rule.body).filter((s) => !comparisonSlots.has(s.slot));
+  if (slots.length === 0) return [rule.meta.name];
+  return slots.map((s) => `${rule.meta.name}·${s.slot}：${flatten(s.text)}`);
 };
 
 const evidenceOf = (rule: CompiledRuleLike): string[] =>
@@ -44,9 +53,17 @@ const evidenceOf = (rule: CompiledRuleLike): string[] =>
 export interface VariantGenerateResult {
   document: Document;
   /** 待裁决项（release_blocker 为 true 的规则卡） */
-  blockers: Array<{ rule_id: string; name: string; status: string }>;
+  blockers: Array<{ rule_id: string; name: string; status: string; unresolved_refs: string[] }>;
   /** 资源映射：变体卡 → 基座卡 */
   mapping: Record<string, string>;
+}
+
+/** 未决条目：card_ref 指向被阻塞的卡 */
+export interface UnresolvedItem {
+  id: string;
+  card_ref: string;
+  status: string;
+  release_blocker: boolean;
 }
 
 /**
@@ -60,7 +77,15 @@ export interface VariantGenerateResult {
 export function generateVariantDocument(
   compiled: { rules: CompiledRuleLike[]; ruleAliases: Record<string, string>; blockers?: string[] },
   outline: DocumentOutline,
-  opts: { variant: string; templateVersion: string; rulesetId: string; rulesetVersion: string; documentVersion?: number },
+  opts: {
+    variant: string;
+    templateVersion: string;
+    rulesetId: string;
+    rulesetVersion: string;
+    documentVersion?: number;
+    /** unresolved.yaml 条目：用于把卡级阻塞映射到 XS-U-### 引用 */
+    unresolved?: UnresolvedItem[];
+  },
 ): VariantGenerateResult {
   const rulesById = new Map(compiled.rules.map((r) => [r.meta.id, r]));
   // 变体新增卡（added）不在基座 outline 里，按同一关键词规则补挂到章节，避免差异段落丢失
@@ -92,8 +117,7 @@ export function generateVariantDocument(
   for (const sec of outline.sections) {
     const rules = blockBySection.get(sec.section_id) ?? [];
     const segments: Segment[] = [];
-    for (const rule of rules) {
-      const changeType = rule.meta.change_type as string | undefined;
+    for (const rule of rules) {      const changeType = rule.meta.change_type as string | undefined;
       const lineage =
         rule.origin === "base"
           ? "default_inherited"
@@ -103,27 +127,39 @@ export function generateVariantDocument(
               ? "added"
               : "modified";
       const baseRef = (rule.meta.base_rule_ref as string | undefined) ?? (rule.origin === "base" ? rule.meta.id : undefined);
-      const text = textOf(rule);
-      segSeq += 1;
-      if (rule.meta.release_blocker) {
-        blockers.push({ rule_id: rule.meta.id, name: rule.meta.name, status: rule.meta.status });
+      const texts = textOf(rule);
+      // 卡级 release_blocker 必须映射到 unresolved.yaml 的 XS-U-### 才会被渲染层识别
+      const blockerRefs = (opts.unresolved ?? [])
+        .filter((u) => u.card_ref === rule.meta.id && u.release_blocker)
+        .map((u) => u.id);
+      if (blockerRefs.length > 0) {
+        blockers.push({
+          rule_id: rule.meta.id,
+          name: rule.meta.name,
+          status: rule.meta.status,
+          unresolved_refs: blockerRefs,
+        });
       }
-      segments.push({
-        segment_id: `SEG-${pad(segSeq, 6)}`,
-        text,
-        editable: !looksLikeFormula(text) && !numericOnlyPattern.test(text),
-        lineage,
-        decision_status: (rule.meta.status as Segment["decision_status"]) ?? "confirmed",
-        diff_status: lineage === "modified" || lineage === "added" ? "candidate" : "not_applicable",
-        release_blocker_refs: [],
-        references: {
-          requirement_refs: [],
-          rule_refs: [rule.meta.id],
-          config_refs: [],
-          source_evidence_refs: evidenceOf(rule),
-        },
-        ...(lineage === "added" ? {} : { base_rule_ref: baseRef }),
-      });
+      for (const text of texts) {
+        segSeq += 1;
+        segments.push({
+          segment_id: `SEG-${pad(segSeq, 6)}`,
+          text,
+          editable: !looksLikeFormula(text) && !numericOnlyPattern.test(text),
+          lineage,
+          decision_status: (rule.meta.status as Segment["decision_status"]) ?? "confirmed",
+          diff_status: lineage === "modified" || lineage === "added" ? "candidate" : "not_applicable",
+          // 未决项必须能被渲染层识别出来，否则待裁决内容在文档里看不见
+          release_blocker_refs: blockerRefs,
+          references: {
+            requirement_refs: [],
+            rule_refs: [rule.meta.id],
+            config_refs: [],
+            source_evidence_refs: evidenceOf(rule),
+          },
+          ...(lineage === "added" ? {} : { base_rule_ref: baseRef }),
+        });
+      }
     }
     if (segments.length === 0) continue;
     blockSeq += 1;
