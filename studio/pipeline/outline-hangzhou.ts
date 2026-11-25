@@ -59,7 +59,7 @@ const configRules: Array<{ section: string; match: RegExp }> = [
   { section: "ui", match: /^[A-Z]{2}-C-UI-|倒计时|长按|动画|积分换算|昵称/ },
 ];
 
-function sectionOfRule(id: string, name: string): string {
+export function sectionOfRule(id: string, name: string): string {
   for (const r of ruleRules) if (r.match.test(id) || r.match.test(name)) return r.section;
   const type = id.split("-")[1];
   // 兜底：按类型归章
