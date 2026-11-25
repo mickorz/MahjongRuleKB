@@ -28,6 +28,7 @@ function emptyVariant(base: LoadedRuleset, rulesetId: string): LoadedRuleset {
   const bm = base.manifest as { ruleset_id: string; version: string };
   return {
     dir: `variants/${rulesetId}`,
+    kind: "variant",
     manifest: { ruleset_id: rulesetId, version: "0.1.0", base: { ruleset_id: bm.ruleset_id, version: bm.version }, scope: {} },
     config: [],
     configUi: [],

@@ -1,5 +1,6 @@
 // 规则集结构校验脚本
-// 用法：node compiler/validator.ts [rulesets/hangzhou]
+// 用法：node compiler/validator.ts [规则集目录] [--kind base|variant]
+//   --kind 省略时按目录位置推断（过渡期兼容），显式传入时以传入为准
 // 检查：ID 唯一、ID 前缀与类型一致、引用闭合、YAML 元数据、正文必填槽位、config 可解析、ID 唯一
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
@@ -11,6 +12,12 @@ import { baseManifestSchema, variantManifestSchema } from "../schemas/manifest.t
 import { requiredSlotsFor } from "../schemas/slot-definitions.ts";
 import { unresolvedListSchema, type UnresolvedEntry } from "../schemas/unresolved.ts";
 
+/** 规则集类型。校验与编译只认这个显式值，不看目录位置 */
+export type RuleSetKind = "base" | "variant";
+
+/** 默认基础规则集目录（过渡期默认值；迁移到 rulebook/ 后由 paths 模块接管） */
+export const DEFAULT_BASE_DIR = "rulesets/hangzhou";
+
 export interface LoadedRule {
   meta: RuleMeta;
   body: string;
@@ -19,6 +26,7 @@ export interface LoadedRule {
 
 export interface LoadedRuleset {
   dir: string;
+  kind: RuleSetKind;
   manifest: Record<string, unknown>;
   config: ConfigItem[];
   configUi: ConfigItem[];
@@ -69,8 +77,18 @@ export function extractBodyRefs(body: string): string[] {
   return ids;
 }
 
-/** 加载一个规则集目录（rulesets/xxx 或 variants/xxx） */
-export function loadRuleset(dir: string): LoadedRuleset {
+/**
+ * 按目录位置推断规则集类型。
+ * 过渡期兼容用：仅当调用方没有显式传 kind 时才走这里。
+ * 目录迁移到 rulebook/specs/{base,variants} 后应逐步改为全部显式传入。
+ */
+export function inferRulesetKind(dir: string): RuleSetKind {
+  const norm = dir.replaceAll("\\", "/");
+  return /(^|\/)variants\//.test(norm) ? "variant" : "base";
+}
+
+/** 加载一个规则集目录（kind 省略时按目录位置推断） */
+export function loadRuleset(dir: string, kind: RuleSetKind = inferRulesetKind(dir)): LoadedRuleset {
   const manifestFile = join(dir, "manifest.yaml");
   const manifest = parseYaml(readFileSync(manifestFile, "utf8"));
   const configFile = join(dir, "config.yaml");
@@ -94,7 +112,7 @@ export function loadRuleset(dir: string): LoadedRuleset {
     // 文件不存在时才按可选处理；文件存在但格式错误必须暴露。
     if (statSync(unresolvedFile, { throwIfNoEntry: false })) throw error;
   }
-  return { dir, manifest, config, configUi, rules, unresolved };
+  return { dir, kind, manifest, config, configUi, rules, unresolved };
 }
 
 /** 校验一个规则集，返回错误列表（空数组表示通过） */
@@ -102,9 +120,8 @@ export function validateRuleset(rs: LoadedRuleset, base?: LoadedRuleset): Valida
   const errs: ValidationError[] = [];
   const push = (file: string, path: string, message: string) => errs.push({ file, path, message });
 
-  // manifest
-  const isVariant = rs.dir.startsWith("variants");
-  const mres = (isVariant ? variantManifestSchema : baseManifestSchema).safeParse(rs.manifest);
+  // manifest：按显式 kind 选 Schema，不看目录前缀
+  const mres = (rs.kind === "variant" ? variantManifestSchema : baseManifestSchema).safeParse(rs.manifest);
   if (!mres.success) for (const i of mres.error.issues) push("manifest.yaml", i.path.join("."), i.message);
 
   // ID 唯一：规则卡 + 配置项 + UI 配置项
@@ -174,19 +191,22 @@ export function validateRuleset(rs: LoadedRuleset, base?: LoadedRuleset): Valida
 
 // 直接运行时执行（argv[1] 是本文件路径）
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  const dir = process.argv[2] ?? "rulesets/hangzhou";
-  let base: LoadedRuleset | undefined;
-  let target = dir;
-  if (dir.startsWith("variants")) {
-    target = dir;
-    base = loadRuleset("rulesets/hangzhou");
+  const args = process.argv.slice(2);
+  const kindFlag = args.indexOf("--kind");
+  const explicitKind = kindFlag >= 0 ? (args[kindFlag + 1] as RuleSetKind | undefined) : undefined;
+  if (explicitKind && explicitKind !== "base" && explicitKind !== "variant") {
+    console.error(`--kind 只能是 base 或 variant，收到：${explicitKind}`);
+    process.exit(2);
   }
-  const rs = loadRuleset(target);
+  const target = args.find((a, i) => !a.startsWith("--") && i !== (kindFlag >= 0 ? kindFlag + 1 : -1)) ?? DEFAULT_BASE_DIR;
+  const kind = explicitKind ?? inferRulesetKind(target);
+  const rs = loadRuleset(target, kind);
+  const base = kind === "variant" ? loadRuleset(DEFAULT_BASE_DIR, "base") : undefined;
   const errs = validateRuleset(rs, base);
   if (errs.length === 0) {
-    console.log(`[通过] ${target}：${rs.rules.length} 张卡，${rs.config.length} 项玩法配置，${rs.configUi.length} 项界面配置`);
+    console.log(`[通过] ${target}（${kind}）：${rs.rules.length} 张卡，${rs.config.length} 项玩法配置，${rs.configUi.length} 项界面配置`);
   } else {
-    console.error(`[失败] ${target}：${errs.length} 处错误`);
+    console.error(`[失败] ${target}（${kind}）：${errs.length} 处错误`);
     for (const e of errs) console.error(`  ${e.file}  ${e.path}  ${e.message}`);
     process.exit(1);
   }

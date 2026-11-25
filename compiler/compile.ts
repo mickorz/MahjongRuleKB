@@ -9,10 +9,26 @@ import { createHash } from "node:crypto";
 import { join, relative, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { stringify as toYaml } from "yaml";
-import { loadRuleset, splitFrontMatter, type LoadedRuleset, type LoadedRule } from "./validator.ts";
+import { loadRuleset, splitFrontMatter, type LoadedRuleset, type LoadedRule, type RuleSetKind } from "./validator.ts";
 import type { RuleMeta, VariantRuleMeta } from "../schemas/rule.ts";
 import type { ConfigItem } from "../schemas/config.ts";
 import { validateRuleset } from "./validator.ts";
+
+/**
+ * 默认根路径（过渡期默认值）。
+ * 目录迁移到 rulebook/ 后由 paths 模块统一接管，此处不得再新增硬编码路径。
+ */
+export const DEFAULT_PATHS = {
+  baseDir: "rulesets/hangzhou",
+  variantsDir: "variants",
+  compiledDir: "compiled",
+} as const;
+
+export interface CompilePaths {
+  baseDir: string;
+  variantsDir: string;
+  compiledDir: string;
+}
 
 interface CompiledRule extends LoadedRule {
   /** base = 直接取自杭州；variant = 来自萧山 */
@@ -300,22 +316,21 @@ function writeOutput(dir: string, result: CompileResult, unresolved: import("../
   writeFileSync(join(dir, "compile-report.md"), report, "utf8");
 }
 
-/** 主流程：校验并编译杭州与 variants/ 下全部变种，写入 compiled/ */
-function main() {
-  const base = loadRuleset("rulesets/hangzhou");
-  if (validateRuleset(base).length) throw new Error("rulesets/hangzhou 校验未通过，先跑 node compiler/validator.ts");
+/** 主流程：校验并编译基础规则集与变种目录下全部变种，写入编译产物目录 */
+function main(paths: CompilePaths = DEFAULT_PATHS) {
+  const base = loadRuleset(paths.baseDir, "base");
+  if (validateRuleset(base).length) throw new Error(`${paths.baseDir} 校验未通过，先跑 node compiler/validator.ts`);
 
-  writeOutput("compiled/hangzhou", compileBase(base), []);
+  writeOutput(join(paths.compiledDir, "hangzhou"), compileBase(base), []);
 
-  const variantsDir = "variants";
-  for (const name of readdirSync(variantsDir)) {
-    const vdir = join(variantsDir, name);
+  for (const name of readdirSync(paths.variantsDir)) {
+    const vdir = join(paths.variantsDir, name);
     if (!statSync(vdir).isDirectory()) continue;
-    const variant = loadRuleset(vdir);
+    const variant = loadRuleset(vdir, "variant");
     const errs = validateRuleset(variant, base);
     if (errs.length) throw new Error(`${vdir} 校验未通过：\n${errs.map((e) => `  ${e.file} ${e.path} ${e.message}`).join("\n")}`);
     const result = compileVariant(base, variant);
-    writeOutput(join("compiled", name), result, variant.unresolved);
+    writeOutput(join(paths.compiledDir, name), result, variant.unresolved);
     console.log(`[compiled] ${name}: ${result.rules.length} 条规则（继承 ${result.counts.inherited} / 替换 ${result.counts.replaced} / 新增 ${result.counts.added}），配置 ${result.config.length} 项，${result.manifest.releasable ? "可发布" : `不可发布（${result.blockers.length} 个阻塞）`}`);
   }
   console.log(`[compiled] hangzhou: ${base.rules.length} 条规则（pass-through）`);
