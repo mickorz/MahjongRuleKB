@@ -21,7 +21,8 @@
 | v1.8 | 2026-11-24 | 新增第二个核心能力「需求全文生成与变体差异标注」，独立文档 `dev-docs/design/2026-11-24-需求全文生成与变体差异标注.md`（FR-29 至 FR-37、I-22 至 I-28、AD-15 至 AD-20、AC-24 至 AC-31）：复用编译器得有效规则集，按对局流程分章生成完整需求全文，派生变体带五种来源标记与段落级差异；需求覆盖与补齐是其上游质量门 |
 | v1.9 | 2026-11-24 | 需求全文生成并入「Document Block + 对话式段落编辑 + 增量重生成」（细节见增补文档）：Stage 3 改为生成文档块、Stage 6 改为渲染、新增 Stage 7 对话式段落编辑与按依赖最小重跑；新增片段级来源追踪、四种编辑行为分流（表达 / 规则 / 补充 / 结构）、重生成不覆盖人工修改（段落四态）；产品定位明确为三层（规则知识库 / 文档生成引擎 / AI 需求编辑器）与闭环原则。编号扩至 FR-43、I-34、AD-26、AC-37 |
 | v2.0 | 2026-11-24 | 按 `2026-11-24-需求全文生成与变体差异标注评审意见.md` 修订该能力（细节见增补文档 v1.2）：所有变体共用同一套章节模板；差异标记拆成来源关系 / 规则状态 / 差异审核三维（第一版不支持删除，`changeTypes` 无 `removed`）；Document Block 引用拆四类并接入原子需求，`block_id` 与章节解耦；三个修改通道（规则 / 表达 / 结构）统一走提案与 `based_on_document_version` 校验；实施拆 P0-A / P0-B / P1 / P2 与上游覆盖节奏对齐，AC-24 增设原子需求表达检查。编号扩至 FR-50、I-41、AD-33、AC-45 |
-| v2.1 | 2026-11-24 | **撤销 v2.0 的「AC-24 增设原子需求表达检查」与「需求覆盖作为全文生成上游质量门」两项决策**（依据 `dev-docs/design/2026-11-24-需求全文生成边界收敛评审意见.md`）：需求全文生成只对「已结构化规则与配置是否完整成文」负责，原子需求提取与六态覆盖保留为独立工作流，两者仅通过可选 `requirement_refs` 关联。对应增补文档升至 v1.4，新增 I-42、改写 I-28/FR-46/AC-24/AC-40；同时补 `documents/` 路径白名单与文档提案契约（AD-38/AD-39 见增补文档 v1.3 边界修订与 v1.3 清单） |
+| v2.1 | 2026-11-24 | **撤销 v2.0 的「AC-24 增设原子需求表达检查」与「需求覆盖作为全文生成上游质量门」两项决策**（依据 `dev-docs/design/2026-11-24-需求全文生成边界收敛评审意见.md`）：需求全文生成只对「已结构化规则与配置是否完整成文」负责，原子需求提取与六态覆盖保留为独立工作流，两者仅通过可选 `requirement_refs` 关联。对应增补文档升至 v1.4，新增 I-42、改写 I-28/FR-46/AC-24/AC-40；`documents/` 路径白名单与文档提案契约（AD-38/AD-39）**尚未写入本文档正文**，列为 D0 任务（见 `dev-docs/planning/2026-11-24-需求全文生成执行计划.md` 的 D0 交付目标） |
+| v2.2 | 2026-11-24 | D0 落实：I-3 扩展为三路径边界并新增 **I-15**（`documents/` 写入三级：Stage 生成 / 提案事务写人工修改 / Agent 不得直写）；AD-6 明确文档提案同库；新增 **AD-38** 文档提案契约（`baseRevision` 版本 + 逐文件 Hash 双校验）与 **AD-39** Proposal / Transaction 状态分层；10.2 增补 10.2.1 文档提案小节。修正 v2.1 中「已补 documents 白名单与 AD-38/39」的不实陈述 |
 
 ## 一、对设计讨论稿前提的核对与纠正
 
@@ -170,7 +171,7 @@
 | --- | --- | --- |
 | I-1 | 麻将 Bot 下发给模型的工具集合等于显式白名单，不含任何通用写文件、补丁、Shell、通用工作区修改工具 | Agent 只能产生 Proposal。白名单按阶段启用；运行中的工具发现也只能加载白名单所在分组。**移除 PiBot Capability 不等于收回工具**：命令执行、文件写入等由 PiBot 内核提供，必须单独限制（AD-13） |
 | I-2 | 正式写入只由 UI「应用」按钮触发的 RPC 执行 | Agent 在对话中说「已修改」不产生任何写入 |
-| I-3 | `rulebook/sources/` 只读；`rulebook/compiled/` 只由编译器生成 | Capability 的路径白名单不包含对二者的写权限 |
+| I-3 | `rulebook/sources/` 只读；`rulebook/compiled/` 只由编译器生成；`documents/` 按写入主体分级（见 I-15） | Capability 的路径白名单不包含对前二者的写权限 |
 | I-4 | 杭州底座任何卡或配置变更，必须在同一提案内升 `manifest.version` 并更新 `content_hash` | `content_hash`（基础内容指纹）由服务端按提案应用后的内容计算，Agent 不提供。KB 编译器只校验指纹一致与 `base.version` 匹配，检测不了「更新了指纹但忘升版本」（`AGENTS.md` 第 4 条）；这项发布流程约束由 Studio 的门禁 G3 检查，缺任一项门禁失败，错误信息明确指向缺失项 |
 | I-5 | 变种 `base.version` 不自动跟随底座 | 底座升版后下游锁定失配是「待升级」提示：不阻塞底座提案应用，但阻塞该变种可发布 |
 | I-6 | `modified` 卡必须是完整有效规则 | 门禁按 KB 的槽位策略（base / inherited / modified / added）校验 |
@@ -182,6 +183,7 @@
 | I-12 | Agent 不提供文件路径 | 提案只含规则集 ID 与规则 ID；路径由服务端按注册表推导 |
 | I-13 | 领域层是纯函数 | 解析、校验、编译不触碰文件系统、不修改输入；结果与编译次数、变种顺序无关（AD-3） |
 | I-14 | Gold Set 门禁只能由用户显式触发 | 运行知识库目录里的 `npm test` 等于执行该目录的代码：默认关闭、首次确认、固定命令；Agent 没有任何可触发它的工具（FR-19） |
+| I-15 | `documents/` 的写入分三级：① Stage 执行器写生成产物（`document.json` / `需求全文.md` / 派生索引）；② 经批准的文档 Proposal 由 Transaction 写人工修改（`editorial-overrides.yaml`、章节映射）；③ **Agent 不得直接写 `documents/` 下任何文件** | 「需要写 `documents/`」不等于「把整个目录开放给通用写文件工具」；Agent 只能产生提案 |
 
 ## 七、功能需求
 
@@ -254,7 +256,7 @@ flowchart TD
 | AD-3 | **KB 领域代码以同步复制方式进 fork**，不在运行时 import。KB 的三个纯领域目录 `schemas/`、`parser/`、`compiler/` 整体同步到 `packages/mahjong-kb/src/kb/`，相对导入不变；`cli/` 不同步。KB 侧以纯度测试保证这三个目录不引用 `node:` 模块，并提供 `npm run sync:studio` 与 `npm run sync:check`（逐文件比对哈希，不一致、缺失或多出即失败） | 运行时 import 外部目录的 `.ts` 依赖 Electron 内置 Node 的类型剥离行为，且应用版本会绑死构建时的知识库代码版本；策划机器可能没有 Node。同步检查让漂移无法被忽略 | 改 KB 领域代码后多一步同步；`sync:check` 进 fork 的 `pnpm check` 前置说明 |
 | AD-4 | **门禁 G1 至 G4 在进程内运行**，对提案做内存叠加，不写盘、不起子进程。Gold Set（G5）需要 Node 时走宿主端口，端口缺失时返回显式「不支持」 | 策划无需安装 Node 即可使用门禁；符合 PiBot「`packages/*` 不为 Agent 命令 spawn 子进程」与「不支持就明说」的约束 | G5 在无 Node 机器上不可用，UI 明示 |
 | AD-5 | **Zod 保持双主版本：KB 与 `@pibot/mahjong-kb` 用 Zod 3，PiBot RPC 契约用 Zod 4**；不迁移 | 两者只交换普通对象与类型，不互相嵌入 Schema 实例；pnpm 允许工作区内多主版本共存；不迁移就没有「校验行为悄悄变化」的风险 | 需验证 fork 的边界检查不禁止双 Zod 主版本（Spike S-7）；不通过时才回到迁移方案 |
-| AD-6 | **提案存储用文件**：`<kb>/.rule-studio/` 下 JSON + 事务目录，加入 `.gitignore`。不用 SQLite | 提案与 KB 目录绑定、可 grep、随目录迁移；无需迁移脚本；PiBot 的 `node:sqlite` 留给需要查询能力时再引入 | 单写入锁；并发由本地单人前提保证 |
+| AD-6 | **提案存储用文件**：`<kb>/.rule-studio/` 下 JSON + 事务目录（含文档提案 `type: document`），加入 `.gitignore`。不用 SQLite | 提案与 KB 目录绑定、可 grep、随目录迁移；无需迁移脚本；PiBot 的 `node:sqlite` 留给需要查询能力时再引入 | 单写入锁；并发由本地单人前提保证 |
 | AD-7 | **Agent 领域知识用 PiBot Skill 承载**（SKILL.md，内容来自 KB `AGENTS.md`），工具由 Capability 注册并经 PiBot 策略引擎。只读工具与 `mahjong_propose_change` 均 allow（后者不写盘）；审批发生在 Proposal 卡，不用通用审批卡 | 不重复造审批；审批界面需要展示 Diff 与门禁，通用审批卡不够 | 需确认内置 Skill 的打包方式（Spike S-4） |
 | AD-8 | **裁剪 PiBot 功能**：组合根只保留桌面运行所需 Capability 与 mahjong；禁用电脑操作、浏览器、例程、远程、手机端、中继、外部 Agent、Office、图片 | 缩小攻击面与维护面 | 最小集合需实验确定（Spike S-2） |
 | AD-9 | **产品改名 Mahjong Rule Studio**；fork 仓库命名不暗示背书；保留 LICENSE、NOTICE、THIRD_PARTY_NOTICES，增加衍生说明 | `NOTICE` 名称与 Logo 条款 | 无 |
@@ -262,6 +264,8 @@ flowchart TD
 | AD-11 | **ID 前缀由 manifest 声明**：manifest 增加 `id_prefix`；Zod 只校验通用格式；校验器按注册表核对前缀 | 新增地方麻将不改 Schema | Phase A 完成，KB 测试覆盖 |
 | AD-12 | **validator 与 compile 显式接收 `kind`**，不依赖目录名 | Studio 在内存中叠加时没有真实目录 | Phase A 完成 |
 | AD-13 | **麻将 Bot 使用显式工具白名单**（`MAHJONG_BOT_TOOL_ALLOWLIST`，按阶段启用），并有运行时测试断言实际下发给模型的工具集合 | PiBot 的命令执行、文件写入等工具由内核提供，移除 Capability 不会收回它们；工具发现还能在运行中继续加载分组 | 注入点由 Spike S-9 确定；找不到时在 fork 内加 Bot 级白名单字段 |
+| AD-38 | **文档提案契约**：`type: document`、`targetVariant`、`baseRevision{documentVersion, files[{path, sha256}]}`、`target{blockId, segmentId}`、`op`（append / replace-text / hide / move-block / edit-outline）、`before` / `after`（各带 sha256）。应用前**同时**校验文档版本与每个目标文件 Hash，任一不匹配即 `stale` 拒绝 | 文档修改与规则修改共用一套审核与事务纪律，但校验对象不同：规则看文件 Hash，文档还要看 `document_version` |
+| AD-39 | **Proposal 状态与 Transaction 状态分层**：Proposal `draft/ready/approved/applied/rejected/stale/failed`；Transaction `preparing/prepared/writing/committed/rolled_back/recovery_failed`。文档提案与规则提案共用 Proposal 状态机，应用时进入 Transaction，事务结果回写提案状态 | 两套生命周期职责不同；混用会让「提案是否已批准」与「文件是否已写入」无法区分 |
 
 ### 9.1 架构
 
@@ -369,6 +373,35 @@ fork 内的工程规范以 PiBot `AGENTS.md` 为准：TypeScript strict、ESM、
 | `createdAt`、`updatedAt` | 时间 |
 
 第一阶段不支持删除规则卡。提案独立于聊天记录：一个会话可产生多个提案；关闭窗口或重启后提案仍在。
+
+### 10.2.1 文档提案（`type: document`）
+
+规则、配置、manifest 的提案走 10.2 主结构；文档修改（表达层与章节结构）在同库中新增一种类型：
+
+```json
+{
+  "id": "DOC-P-001",
+  "type": "document",
+  "rulesetId": "xiaoshan-friends-4p",
+  "targetVariant": "xiaoshan",
+  "baseRevision": {
+    "documentVersion": 3,
+    "files": [{ "path": "documents/xiaoshan/editorial-overrides.yaml", "sha256": "…" }]
+  },
+  "target": { "blockId": "DOC-XS-000123", "segmentId": "SEG-000456" },
+  "op": "replace-text",
+  "before": { "text": "…", "sha256": "…" },
+  "after": { "text": "…", "sha256": "…" },
+  "status": "ready"
+}
+```
+
+| 约束 | 说明 |
+| --- | --- |
+| 落点由服务端推导 | `op` 决定目标文件（表达层 → `editorial-overrides.yaml`；结构层 → 章节映射文件），Agent 不得传路径 |
+| 双校验 | 应用前比对 `baseRevision.documentVersion` 与当前文档版本，并逐文件重算 Hash；任一失配 → `stale` |
+| 状态机 | 沿用 10.2 的 Proposal 状态；`approved` 后进入 10.3 的 Transaction，结果回写 `applied` / `failed` |
+| 禁止直写 | Agent 无 `documents/` 写权限（I-15）；只能产生提案 |
 
 ### 10.3 事务
 
