@@ -21,11 +21,11 @@ export type ApplyErrorCode =
   | "lock_busy";
 
 export class ApplyError extends Error {
-  constructor(
-    message: string,
-    readonly code: ApplyErrorCode,
-  ) {
+  readonly code: ApplyErrorCode;
+
+  constructor(message: string, code: ApplyErrorCode) {
     super(message);
+    this.code = code;
     this.name = "ApplyError";
   }
 }

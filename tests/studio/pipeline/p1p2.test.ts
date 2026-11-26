@@ -12,6 +12,7 @@ import { runP1 } from "../../../studio/pipeline/run-p1.ts";
 import { archiveChange, attachProposal, createChange, nextArtifacts, readChange, advanceChange, setArtifact } from "../../../studio/change/manager.ts";
 import { assertRouteConsistency, routeEdit } from "../../../studio/edit/router.ts";
 import { loadDiffReview } from "../../../studio/pipeline/diff-review.ts";
+import { archiveDir } from "../../../studio/paths/registry.ts";
 import { renderDocument } from "../../../studio/pipeline/render.ts";
 
 const baseRuleset = readBaseRuleSet();
@@ -317,5 +318,44 @@ describe("P1 差异审核输入", () => {
     const hit = changes.entries.find((e) => e.rule_id === "XS-R-ZHUANGJIA-02")!;
     expect(hit.diff_status).toBe("confirmed");
     expect(changes.entries.filter((e) => e.diff_status === "confirmed").length).toBe(1);
+  });
+});
+
+describe("W0-7 Change ID 契约", () => {
+  let kb: string;
+  beforeEach(() => {
+    kb = join(tmpdir(), `kb-chgid-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+    mkdirSync(kb, { recursive: true });
+  });
+  afterEach(() => rmSync(kb, { recursive: true, force: true }));
+
+  const create = (changeId: string) =>
+    createChange({
+      kbRoot: kb,
+      changeId,
+      rulesetId: "xiaoshan-friends-4p",
+      targetVariant: "xiaoshan",
+      templateVersion: "1.0.0",
+      intent: "夹具",
+    });
+
+  it("合法：CHG-001 / CHG-012 形式", () => {
+    expect(create("CHG-001").change_id).toBe("CHG-001");
+    expect(create("CHG-012").change_id).toBe("CHG-012");
+  });
+
+  it("非法：日期前缀形式的 Change ID 被拒（执行计划 v1.0 曾用此写法）", () => {
+    expect(() => create("CHG-2026-11-25-base-variant-workflow")).toThrow();
+  });
+
+  it("非法：缺编号、编号位数不符、带后缀、大小写不符", () => {
+    for (const bad of ["CHG-1", "CHG-0001", "CHG-001-x", "chg-001", "CHG_001"]) {
+      expect(() => create(bad), bad).toThrow();
+    }
+  });
+
+  it("归档目录同样拒绝非法 Change ID", () => {
+    expect(archiveDir("2026-11-25", "CHG-001")).toBe("rulebook/changes/archive/2026-11-25-CHG-001");
+    expect(() => archiveDir("2026-11-25", "CHG-2026-11-25-x")).toThrow(/Change ID 不合法/);
   });
 });

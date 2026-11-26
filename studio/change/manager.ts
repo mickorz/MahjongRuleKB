@@ -14,12 +14,15 @@ import {
 import { artifactKindValues, artifactSchema, changeSchema, type Change } from "../contracts/change.ts";
 import { assertWritable, archiveDir, ROOT_RUNTIME } from "../paths/registry.ts";
 
+export type ChangeErrorCode = "not_found" | "invalid_transition" | "artifact_blocked" | "already_exists";
+
+// 不用 TS 参数属性：会让本模块在 node strip-types 下无法直跑，而 CLI 入口需要能直跑。
 export class ChangeError extends Error {
-  constructor(
-    message: string,
-    readonly code: "not_found" | "invalid_transition" | "artifact_blocked" | "already_exists",
-  ) {
+  readonly code: ChangeErrorCode;
+
+  constructor(message: string, code: ChangeErrorCode) {
     super(message);
+    this.code = code;
     this.name = "ChangeError";
   }
 }

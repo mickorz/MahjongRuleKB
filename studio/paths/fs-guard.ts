@@ -4,12 +4,15 @@ import { realpathSync, existsSync, mkdirSync, writeFileSync, symlinkSync, rmSync
 import { resolve, sep } from "node:path";
 import { tmpdir } from "node:os";
 
+export type FsPathErrorCode = "not_found" | "escaped_root" | "symlink_escape";
+
+// 不用 TS 参数属性：保持 node strip-types 可直接运行。
 export class FsPathError extends Error {
-  constructor(
-    message: string,
-    readonly code: "not_found" | "escaped_root" | "symlink_escape",
-  ) {
+  readonly code: FsPathErrorCode;
+
+  constructor(message: string, code: FsPathErrorCode) {
     super(message);
+    this.code = code;
     this.name = "FsPathError";
   }
 }
