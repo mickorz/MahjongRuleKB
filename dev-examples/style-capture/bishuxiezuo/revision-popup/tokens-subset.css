@@ -1,0 +1,17 @@
+/* 仅保留修订浮层所需的变量（从原站 :root 计算值导出） */
+:root {
+  --card: #FFFFFF;
+  --gold-soft: oklch(0.92 0.045 78);
+  --shadow: rgba(34,29,22,.16);
+  --gold-deep: oklch(0.56 0.125 58);
+  --serif: "Noto Serif SC","Songti SC",serif;
+  --paper-2: #F8F4EB;
+  --gold-wash: oklch(0.975 0.018 80);
+  --ink-3: #938979;
+  --latin: "Newsreader",Georgia,serif;
+  --terra: oklch(0.58 0.15 35);
+  --ink: #221D16;
+  --ink-2: #5E5447;
+  --sans: "Noto Sans SC","PingFang SC",system-ui,sans-serif;
+  /* 原站未在 :root 暴露、或由 Tailwind 注入的变量用近似值兜底 */
+}

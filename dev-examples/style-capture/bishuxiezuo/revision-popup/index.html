@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>修订记录浮层（本地复刻）</title>
+<link rel="stylesheet" href="tokens-subset.css" />
+<link rel="stylesheet" href="../revision-popup.css" />
+<style>
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: #F8F4EC; color: #221D16;
+    font: 14px/1.6 "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+    display: grid; place-items: start center; padding: 64px 16px;
+  }
+  .demo-note { max-width: 620px; margin-bottom: 20px; color: #5E5447; font-size: 12.5px; line-height: 1.7; }
+  .demo-note b { color: #221D16; }
+  /* 触发器（原站为 .c-content-action.utility） */
+  .anchor { position: relative; display: inline-block; }
+  .c-content-action {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1px solid rgba(34,29,22,.14); background: #fff; color: #221D16;
+    border-radius: 8px; padding: 7px 12px; font: inherit; font-size: 13px; cursor: pointer;
+  }
+  .c-content-action:hover { border-color: oklch(0.62 0.10 72); color: oklch(0.62 0.10 72); }
+  .c-content-action .icon { font-size: 12px; opacity: .8; }
+  .demo-frame { background: #FEFCF8; border: 1px solid rgba(34,29,22,.08); border-radius: 12px; padding: 28px 28px 64px; min-height: 360px; }
+  .field-label { font-size: 12px; color: #938979; letter-spacing: .04em; margin-bottom: 6px; }
+  .field-value { font-family: "Noto Serif SC", "Songti SC", serif; font-size: 15px; line-height: 1.9; max-width: 520px; }
+</style>
+</head>
+<body>
+  <div class="demo-note">
+    <b>这是本地复刻，不是在线页面。</b>
+    浮层样式来自原站 <code>console.css</code> 中 <code>.c-revpop</code> 的 16 条规则（原样抽取，见 <code>../revision-popup.css</code>）；
+  DOM 结构按类名语义重建（<code>rv-head / rv-diff / rv-row.old / rv-conn / rv-row.new / rv-why / rv-acts</code>），示例数据为构造值。
+  </div>
+
+  <div class="demo-frame">
+    <div class="field-label">角色 · 陈烬 · 核心欲望</div>
+    <div class="field-value">活下去，并弄清楚自己为什么会记得别人的死。</div>
+
+    <div class="anchor" style="margin-top:18px">
+      <button class="c-content-action utility cr-history-trigger" id="trigger" aria-expanded="false">
+        <span class="icon">◷</span><span>修订记录</span>
+      </button>
+
+      <!-- 浮层：结构与类名按原站 CSS 复原 -->
+      <div class="c-revpop" id="revpop" hidden>
+        <div class="rv-arrow"></div>
+        <div class="rv-head">
+          <span class="rv-ad">陈</span>
+          <span>核心欲望 · 修订记录</span>
+        </div>
+
+        <div class="rv-diff">
+          <div class="rv-row old">
+            <span class="rv-k">原</span>
+            <span class="rv-orig">活下去。</span>
+          </div>
+          <div class="rv-conn">
+            <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6h6M5 3l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </div>
+          <div class="rv-row new">
+            <span class="rv-k">新</span>
+            <span class="rv-new">活下去，并弄清楚自己为什么会记得别人的死。</span>
+          </div>
+        </div>
+
+        <div class="rv-why">
+          <span class="rv-k">为什么</span>
+          <span>原句只给出生存目标，未体现他的记忆异常；本版把「记得别人的死」写进欲望，为后续与鬼医的师徒线留钩子。</span>
+        </div>
+
+        <div class="rv-acts">
+          <button class="c-content-action" data-act="restore">恢复此版本</button>
+          <button class="c-content-action" data-act="close">关闭</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  var trigger = document.getElementById('trigger');
+  var pop = document.getElementById('revpop');
+  function toggle(open) {
+    var next = open == null ? pop.hidden : open;
+    pop.hidden = !next;
+    trigger.setAttribute('aria-expanded', String(next));
+  }
+  trigger.addEventListener('click', function (e) { e.stopPropagation(); toggle(); });
+  pop.addEventListener('click', function (e) {
+    var act = e.target.closest('[data-act]');
+    if (act) toggle(false);
+    e.stopPropagation();
+  });
+  document.addEventListener('click', function () { toggle(false); });
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') toggle(false); });
+</script>
+</body>
+</html>
