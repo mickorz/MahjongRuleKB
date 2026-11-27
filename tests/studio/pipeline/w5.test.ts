@@ -4,6 +4,13 @@ import { describe, it, expect } from "vitest";
 import { analyzeVariantImpact, conflictId, diffBaseDocuments, summarizeImpact } from "../../../studio/pipeline/impact.ts";
 import { merge3, type MergeInput } from "../../../studio/pipeline/merge3.ts";
 import { documentSchema } from "../../../studio/contracts/document.ts";
+import {
+  buildConflictReport,
+  conflictDecisionSchema,
+  conflictReportSchema,
+  resolveConflicts,
+  summarizeConflictReport,
+} from "../../../studio/pipeline/conflicts.ts";
 import { block, documentFixture, segment } from "../fixtures.ts";
 import type { VariantRule } from "../../../studio/pipeline/generate-variant-ai.ts";
 
@@ -166,5 +173,91 @@ describe("W5-2 三方合并（W5-0 判定表）", () => {
     ]);
     expect(r.conflicts.map((c) => c.conflict_id)).toEqual(["CFL-001", "CFL-002"]);
     expect(r.conflicts[0]).toMatchObject({ section_id: "opening", old_text: "旧1", new_text: "新1" });
+  });
+});
+
+describe("W5-3 冲突报告与裁决", () => {
+  const mergeWith = (conflicts: Parameters<typeof buildConflictReport>[0]["conflicts"]) => ({
+    autoAdopted: [],
+    keptOverrides: [],
+    removed: [],
+    conflicts,
+  });
+
+  it("报告 Schema 合法，摘要计数正确", () => {
+    const merge = {
+      autoAdopted: [{ segment_id: "SEG-1", text: "a", reason: "regenerated" as const }],
+      keptOverrides: [{ segment_id: "SEG-2", text: "b" }],
+      removed: ["SEG-3"],
+      conflicts: [
+        {
+          conflict_id: "CFL-001",
+          kind: "override-vs-regeneration" as const,
+          segment_id: "SEG-4",
+          section_id: "opening",
+          old_text: "旧",
+          new_text: "新",
+          override_text: "人工",
+          suggested: "keep-override" as const,
+        },
+      ],
+    };
+    const report = buildConflictReport(merge, { baseOld: 1, baseNew: 2 });
+    expect(conflictReportSchema.safeParse(report).success).toBe(true);
+    expect(report.summary).toEqual({ auto_adopted: 1, kept_overrides: 1, removed: 1, conflicts: 1 });
+  });
+
+  it("未裁决的冲突必须报错，不得用默认值糊过去", () => {
+    const merge = mergeWith([
+      { conflict_id: "CFL-001", kind: "override-vs-regeneration", segment_id: "SEG-4", section_id: "opening", new_text: "新", override_text: "人工", suggested: "keep-override" },
+    ]);
+    expect(() => resolveConflicts(merge.conflicts, [])).toThrow(/未裁决/);
+  });
+
+  it("三种裁决各自产出正确内容", () => {
+    const merge = mergeWith([
+      { conflict_id: "CFL-001", kind: "override-vs-regeneration", segment_id: "SEG-1", section_id: "opening", new_text: "新1", override_text: "人工1", suggested: "keep-override" },
+      { conflict_id: "CFL-002", kind: "override-vs-regeneration", segment_id: "SEG-2", section_id: "opening", new_text: "新2", override_text: "人工2", suggested: "keep-override" },
+      { conflict_id: "CFL-003", kind: "override-vs-regeneration", segment_id: "SEG-3", section_id: "opening", new_text: "新3", override_text: "人工3", suggested: "keep-override" },
+    ]);
+    const at = new Date().toISOString();
+    const resolved = resolveConflicts(merge.conflicts, [
+      { conflict_id: "CFL-001", decision: "keep-override", by: "策划", at },
+      { conflict_id: "CFL-002", decision: "take-regeneration", by: "策划", at },
+      { conflict_id: "CFL-003", decision: "manual", text: "手写最终版", by: "策划", at },
+    ]);
+    expect(resolved).toEqual([
+      { segment_id: "SEG-1", text: "人工1", source: "override" },
+      { segment_id: "SEG-2", text: "新2", source: "regeneration" },
+      { segment_id: "SEG-3", text: "手写最终版", source: "manual" },
+    ]);
+  });
+
+  it("取新生成但新版本已删除 → 得到 removed（明确确认删除）", () => {
+    const merge = mergeWith([
+      { conflict_id: "CFL-001", kind: "override-vs-removal", segment_id: "SEG-9", section_id: "ui", override_text: "人工", suggested: "keep-override" },
+    ]);
+    const resolved = resolveConflicts(merge.conflicts, [
+      { conflict_id: "CFL-001", decision: "take-regeneration", by: "策划", at: new Date().toISOString() },
+    ]);
+    expect(resolved[0]).toEqual({ segment_id: "SEG-9", source: "removed" });
+  });
+
+  it("裁决结构校验：manual 必须带文本，其他不得带", () => {
+    const at = new Date().toISOString();
+    expect(() => conflictDecisionSchema.parse({ conflict_id: "CFL-001", decision: "manual", by: "x", at })).toThrow();
+    expect(() => conflictDecisionSchema.parse({ conflict_id: "CFL-001", decision: "keep-override", text: "多余", by: "x", at })).toThrow();
+  });
+
+  it("摘要含每条冲突与建议", () => {
+    const report = buildConflictReport(
+      mergeWith([
+        { conflict_id: "CFL-001", kind: "orphan-override", segment_id: "SEG-1", section_id: "opening", override_text: "孤儿", suggested: "manual" },
+      ]),
+      { baseOld: 1, baseNew: 2 },
+    );
+    const text = summarizeConflictReport(report);
+    expect(text).toContain("CFL-001");
+    expect(text).toContain("orphan-override");
   });
 });

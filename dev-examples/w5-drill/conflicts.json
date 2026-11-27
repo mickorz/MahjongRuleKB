@@ -1,0 +1,31 @@
+{
+  "generated_at": "2026-11-27T03:58:32.913Z",
+  "base_old_document_version": 0,
+  "base_new_document_version": 0,
+  "conflicts": [
+    {
+      "conflict_id": "CFL-001",
+      "kind": "override-vs-regeneration",
+      "segment_id": "SEG-000090",
+      "section_id": "gameplay",
+      "old_text": "连庄与换庄：差异：修改；杭麻：胡牌者坐庄。流局由原庄连庄。连庄后仍是三牢、8 倍，三牢封顶；触发：一小局结束，且还会开下一小局；条件：本局庄家自摸，或本局流局；否则：闲家自摸时赢家接庄，下一局走 `XS-R-ZHUANGJIA-03`；结果：庄家继续坐庄。掷骰前牢数 = 上一小局实际牢数 + 1。上一小局实际牢数含上一局掷骰加的那一牢。牢数无上限，每加一牢庄闲倍率翻倍；验收：上局实际三牢且庄家连庄 → 本局掷骰前四牢、16 倍。闲家自摸 → 赢家成为新庄，掷骰前二牢",
+      "new_text": "AI 重写后的萧山规则",
+      "override_text": "策划手改过的萧山规则",
+      "suggested": "keep-override"
+    },
+    {
+      "conflict_id": "CFL-002",
+      "kind": "orphan-override",
+      "segment_id": "SEG-999999",
+      "section_id": "opening",
+      "override_text": "已废弃片段上的人工修改",
+      "suggested": "manual"
+    }
+  ],
+  "summary": {
+    "auto_adopted": 3,
+    "kept_overrides": 0,
+    "removed": 0,
+    "conflicts": 2
+  }
+}
