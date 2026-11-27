@@ -11,6 +11,8 @@ export interface RuleSummary {
   evidence: string[];
   /** 正文（Markdown 槽位文本） */
   body: string;
+  /** 声明依赖的规则 / 配置 ID（来自 front matter） */
+  depends_on: string[];
 }
 
 export interface ConfigSummary {
@@ -42,6 +44,7 @@ export function readBaseRuleSet(baseDir: string = PATHS.baseDir): RuleSetView {
         s.section ? `${s.source}#${s.section}` : s.source,
       ),
       body: r.body,
+      depends_on: (r.meta.depends_on ?? []) as string[],
     })),
     configs: [...rs.config, ...rs.configUi].map((c) => ({
       id: c.id,
