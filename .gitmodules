@@ -10,3 +10,7 @@
 	path = thirdparties/universal-spec-mcp
 	url = https://github.com/ahmedelpannann/universal-spec-mcp
 	branch = main
+[submodule "thirdparties/zenstory"]
+	path = thirdparties/zenstory
+	url = https://github.com/zenstory-ai/zenstory.git
+	branch = main

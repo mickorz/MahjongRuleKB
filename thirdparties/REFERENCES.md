@@ -9,6 +9,7 @@
 | REF-002 | PrdGameSkill | `https://github.com/mickorz/PrdGameSkill`（submodule 跟踪分支 `main`） | `thirdparties/PrdGameSkill` | `d28ed0a16cad8d9c23dde925e591ef326b81874d`（2026-11-24 引入，与远端 `main` 一致） | 未发现 LICENSE 文件 | 只读参考，禁止复制任何代码 | 游戏 PRD 技能库与 Interactive Game PRD 方法论；Game Requirement IR、交互式 HTML 需求文档与规则模拟器思路，供 MahjongRuleKB 后续 PRD / 规则代码生成对接参考。**其自身子模块（thirdparties/*）不拉取** |
 | REF-003 | OpenSpec | `https://github.com/Fission-AI/OpenSpec`（submodule 跟踪分支 `main`） | `thirdparties/OpenSpec` | `f1cd852f4edce22b8df9548a4df889172ca8ff25`（2026-11-24 引入，与远端 `main` 一致，tag @fission-ai/openspec@2.2.0） | MIT（Copyright 2025 FISSION AI INC） | 只读参考，复用方法论时可复制（MIT 允许），需保留版权声明 | Spec-driven development（SDD）规范与工作流方法论；供 Rule Studio 的提案、规格变更与验收流程设计参考 |
 | REF-004 | universal-spec-mcp | `https://github.com/ahmedelpannann/universal-spec-mcp`（submodule 跟踪分支 `main`） | `thirdparties/universal-spec-mcp` | `36c0eceb0a2c7e82fe7d2ea74f3596fcebf104f2`（2026-11-24 引入，与远端 `main` 一致） | MIT | 只读参考，复用方法论时可复制（MIT 允许），需保留版权声明 | MCP 形式的规格（spec）工作流工具；供 Rule Studio 的规格变更与校验流程设计参考 |
+| REF-005 | zenstory | `https://github.com/zenstory-ai/zenstory`（submodule 跟踪分支 `main`） | `thirdparties/zenstory` | `93f3654ede5230bb62d51d9a7fd0f6b7827cfc46`（2026-11-25 引入，与远端 `main` 一致） | AGPL-3.0 | 只读参考，**禁止复制任何代码**（AGPL 传染风险）；布局思路提炼后写入本项目自己的文档 | 对话式创作工作台的三栏布局实现：跨断点单树、可拖拽面板、常驻状态栏、侧栏 tab 化、Diff 审阅交互；供 Rule Studio 本地 Web 工作台的布局与冲突裁决 UI 参考。调研结论：`dev-docs/research/2026-11-25-zenstory UI布局调研与借鉴.md` |
 
 ## Submodule 引入与登记流程
 
