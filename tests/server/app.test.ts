@@ -117,8 +117,12 @@ describe("W3-1 HTTP 行为", () => {
     expect(res.status).toBe(200);
     const html = await res.text();
     expect(html).toContain("Rule Studio 需求文档工作台");
-    expect(html).toContain("<nav>");
-    expect(html).toContain("<aside>");
+    // S1/S2：外壳不滚 + 可拖拽分栏 + 状态栏
+    expect(html).toContain('data-layout="three-pane"');
+    expect(html).toContain('class="splitter"');
+    expect(html).toContain('aria-label="状态栏"');
+    expect(html).toContain('id="pane-nav"');
+    expect(html).toContain('id="pane-aside"');
   });
 
   it("文档接口返回投影结构（章节标题已翻译）", async () => {

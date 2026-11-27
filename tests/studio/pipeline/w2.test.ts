@@ -331,6 +331,14 @@ describe("runW2 端到端", () => {
     expect(res.baseBinding.ruleset_version).toBe("1.2.0");
     expect(res.baseBinding.content_hash).toMatch(/^[a-f0-9]{64}$/);
     expect(res.inheritedSegments).toBeGreaterThan(0);
+    // 变体也必须产出机器检查结论（此前缺失，导致工作台状态栏显示「—」）
+    const report = JSON.parse(readFileSync(join(kb, "documents/xiaoshan/quality-report.json"), "utf8")) as {
+      status: string;
+      summary: { failed: number; warning: number };
+    };
+    expect(["passed", "warning", "failed"]).toContain(report.status);
+    expect(report.summary.failed + report.summary.warning).toBeGreaterThanOrEqual(0);
+    expect(res.qualityStatus).toBe(report.status);
     expect(res.ok, res.reasons.join("；")).toBe(true);
   });
 });

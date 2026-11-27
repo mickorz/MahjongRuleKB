@@ -13,6 +13,7 @@ import { DEFAULT_TIER, resolveTierModel } from "../generate/model-tiers.ts";
 import { isDocumentOutputDir, writeStageArtifact } from "../paths/stage-writer.ts";
 import { buildChangesFile } from "./changes-json.ts";
 import { checkVariantDiffs, type CardView } from "./diff-checks.ts";
+import { statusOfFindings, type MachineCheckFinding } from "../contracts/machine-check.ts";
 import { generateVariantWithProvider, checkInheritedIntegrity, type VariantRule } from "./generate-variant-ai.ts";
 import { loadDiffReview } from "./diff-review.ts";
 import { buildInputLock } from "./lock.ts";
@@ -44,6 +45,8 @@ export interface RunW2Result {
   inheritedSegments: number;
   generatedSegments: number;
   diffFindings: number;
+  /** 变体机器检查结论（写入 quality-report.json） */
+  qualityStatus: "not_checked" | "passed" | "warning" | "failed";
 }
 
 const BASE_DOC = "documents/hangzhou/document.json";
@@ -174,6 +177,32 @@ export async function runW2(options: RunW2Options = {}): Promise<RunW2Result> {
   if (baseDocument.ruleset_id !== vm.base.ruleset_id) reasons.push(`基座绑定不一致：${baseDocument.ruleset_id} vs ${vm.base.ruleset_id}`);
   if (options.generator === undefined && !options.useLlm) reasons.push("走了确定性降级路径（degraded），不计为 W2 通过");
 
+  // 变体的机器检查结论：继承一致性失败 → failed；其余差异告警为 warning
+  const findings: MachineCheckFinding[] = [
+    ...integrityProblems.map((p) => ({
+      code: "inherit.text-drift" as const,
+      severity: "failed" as const,
+      message: p,
+      segment_ids: [] as string[],
+      rule_refs: [] as string[],
+    })),
+    ...diffReport.findings,
+  ];
+  const qualityStatus = statusOfFindings(findings);
+  const qualityReport = {
+    ruleset_id: vm.ruleset_id,
+    target_variant: "xiaoshan",
+    document_version: assembled.document.document_version,
+    checked_at: new Date().toISOString(),
+    status: qualityStatus,
+    findings,
+    summary: {
+      total: findings.length,
+      failed: findings.filter((f) => f.severity === "failed").length,
+      warning: findings.filter((f) => f.severity === "warning").length,
+    },
+  };
+
   const changes = buildChangesFile(
     compiled as never,
     base.rules.map((r) => ({ id: r.meta.id, body: r.body })),
@@ -190,6 +219,7 @@ export async function runW2(options: RunW2Options = {}): Promise<RunW2Result> {
     ["对照视图.md", renderComparisonView(baseDocument, assembled.document)],
     ["changes.json", `${JSON.stringify(changes, null, 2)}\n`],
     ["diff-warnings.json", `${JSON.stringify({ findings: diffReport.findings, byRule: diffReport.byRule }, null, 2)}\n`],
+    ["quality-report.json", `${JSON.stringify(qualityReport, null, 2)}\n`],
   ];
   if (isDocumentOutputDir(outDir)) {
     for (const [name, content] of artifacts) writeStageArtifact(kbRoot, "xiaoshan", name, content);
@@ -217,6 +247,7 @@ export async function runW2(options: RunW2Options = {}): Promise<RunW2Result> {
     inheritedSegments: assembled.inheritedSegments,
     generatedSegments: assembled.generatedSegments,
     diffFindings: diffReport.findings.length,
+    qualityStatus,
   };
 }
 
@@ -229,6 +260,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   console.log(`[W2] 继承片段：${result.inheritedSegments}，生成片段：${result.generatedSegments}`);
   console.log(`[W2] 基座绑定：v${result.baseBinding.ruleset_version} 文档版本 ${result.baseBinding.document_version}`);
   console.log(`[W2] 差异告警：${result.diffFindings} 条`);
+  console.log(`[W2] 机器检查：${result.qualityStatus}`);
   console.log(`[W2] 产出：${result.documentPath}`);
   console.log(`[W2] 视图：${result.diffViewPath} / ${result.compareViewPath}`);
   if (!result.ok) {
