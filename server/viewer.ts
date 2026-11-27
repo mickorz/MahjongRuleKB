@@ -241,6 +241,7 @@ export function viewerHtml(): string {
   .c-btn:hover { border-color: var(--gold-deep); color: var(--gold-deep); }
   .c-btn.primary { background: var(--gold-deep); border-color: var(--gold-deep); color: #fff; }
   .c-btn.primary:hover { background: var(--gold); border-color: var(--gold); color: #fff; }
+  .c-btn:disabled { opacity: .45; cursor: default; border-color: var(--line); color: var(--ink-3); }
 
   .diffbox {
     font-size: 12px; border: 1px solid var(--line); border-radius: 8px;
@@ -287,7 +288,10 @@ export function viewerHtml(): string {
   .revpop .rv-k { flex: none; width: 30px; font-size: 10.5px; color: var(--ink-3); font-family: var(--latin); font-style: italic; padding-top: 2px; }
   .revpop .rv-orig { color: var(--ink-3); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--terra) 70%, transparent); }
   .revpop .rv-new { color: var(--ink); font-weight: 500; }
-  .revpop .rv-conn { display: grid; place-items: center; color: var(--gold-deep); height: 16px; }
+  .revpop .rv-diff { display: flex; flex-direction: column; margin-bottom: 11px; }
+  .revpop .rv-conn { display: flex; justify-content: center; align-items: center; color: var(--gold-deep); height: 15px; }
+  .revpop .rv-conn svg { transform: rotate(90deg); }
+  .revpop .rv-why .rv-k { font-style: normal; font-family: var(--sans); padding-top: 1px; }
   .revpop .rv-why { display: flex; gap: 8px; font-size: 11.5px; color: var(--ink-2); background: var(--paper-2); border-radius: 6px; padding: 9px 11px; margin: 10px 0 12px; }
   .revpop .rv-acts { display: flex; justify-content: flex-end; gap: 8px; }
   .seg-head .rev-btn {
@@ -355,11 +359,18 @@ export function viewerHtml(): string {
 <div class="revpop" id="revpop" hidden role="dialog" aria-label="修订记录">
   <div class="rv-arrow" id="rv-arrow"></div>
   <div class="rv-head"><span class="rv-ad" id="rv-ad">段</span><span id="rv-title">修订记录</span></div>
-  <div class="rv-row old"><span class="rv-k">原</span><span class="rv-orig" id="rv-before"></span></div>
-  <div class="rv-conn">↓</div>
-  <div class="rv-row new"><span class="rv-k">新</span><span class="rv-new" id="rv-after"></span></div>
-  <div class="rv-why"><span class="rv-k">说明</span><span id="rv-why"></span></div>
-  <div class="rv-acts"><button class="c-btn" id="rv-close">关闭</button></div>
+  <div class="rv-diff">
+    <div class="rv-row old"><span class="rv-k">原</span><span class="rv-orig" id="rv-before"></span></div>
+    <div class="rv-conn">
+      <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6h6M5 3l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+    </div>
+    <div class="rv-row new"><span class="rv-k">新</span><span class="rv-new" id="rv-after"></span></div>
+  </div>
+  <div class="rv-why"><span class="rv-k">为什么</span><span id="rv-why"></span></div>
+  <div class="rv-acts">
+    <button class="c-btn" id="rv-restore">恢复此版本</button>
+    <button class="c-btn" id="rv-close">关闭</button>
+  </div>
 </div>
 
 <script>
@@ -374,6 +385,17 @@ const nameOf = (rulesetId) => (VARIANTS.find((v) => v.rulesetId === rulesetId) |
 
 let currentVariant = "xiaoshan";
 let currentDoc = null;
+
+/** 按 segment_id 在已加载文档里找片段（修订浮层「恢复此版本」用） */
+function currentSegById(segmentId) {
+  if (!currentDoc) return null;
+  for (const block of currentDoc.blocks) {
+    for (const seg of block.segments) {
+      if (seg.segment_id === segmentId) return seg;
+    }
+  }
+  return null;
+}
 let reviewSections = {};
 const draft = new Map();
 
@@ -487,10 +509,16 @@ function openRevpop(anchor, seg) {
   const entry = draft.get(seg.segment_id);
   el("rv-before").textContent = seg.text;
   el("rv-after").textContent = entry ? entry.text : "（尚未修改：在卡片里直接改字）";
-  el("rv-title").textContent = "修订记录 · " + (seg.lineage === "modified" ? "修改" : "新增") + "片段";
+  const topic = (seg.text.split(/[：:；。]/)[0] || "本段").trim().slice(0, 14);
+  el("rv-title").textContent = "修订记录 · " + topic;
   el("rv-ad").textContent = seg.references.config_refs.length > 0 ? "配" : "规";
   const diffLabel = { candidate: "待确认", confirmed: "已确认", not_applicable: "不适用" }[seg.diff_status] || seg.diff_status;
-  el("rv-why").textContent = ["段落 " + seg.segment_id, "差异 " + diffLabel, refsLabel(seg.references.rule_refs)].filter(Boolean).join("　");
+  const why = entry
+    ? "人工改写草稿，尚未应用。依据：" + (refsLabel(seg.references.rule_refs) || "本段引用")
+    : "尚无改动，当前显示文档原文。本段依据：" + (refsLabel(seg.references.rule_refs) || "本段引用");
+  el("rv-why").textContent = why;
+  el("rv-restore").disabled = !entry;
+  el("rv-restore").textContent = entry ? "恢复此版本" : "无改动可恢复";
 
   const card = anchor.closest(".seg") || anchor;
   const cardRect = card.getBoundingClientRect();
@@ -512,6 +540,7 @@ function openRevpop(anchor, seg) {
   pop.style.left = Math.round(left) + "px";
   pop.style.top = Math.round(top) + "px";
   el("rv-arrow").style.top = Math.round(Math.min(popH - 24, Math.max(14, cardRect.top + 22 - top))) + "px";
+  pop.dataset.segId = seg.segment_id;
   pop.hidden = false;
   revAnchor = anchor;
 }
@@ -680,7 +709,7 @@ async function loadDoc(variant) {
         head.appendChild(flag);
         const revBtn = document.createElement("button");
         revBtn.className = "rev-btn";
-        revBtn.textContent = "✎ 修订";
+        revBtn.textContent = "修订记录";
         revBtn.onclick = (ev) => { ev.stopPropagation(); openRevpop(revBtn, seg); };
         head.appendChild(revBtn);
         div.dataset.segId = seg.segment_id;
@@ -910,6 +939,21 @@ document.addEventListener("click", (e) => {
 });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeRevpop(); });
 el("rv-close").onclick = closeRevpop;
+el("rv-restore").onclick = () => {
+  const id = el("revpop").dataset.segId;
+  if (!id || !draft.has(id)) { closeRevpop(); return; }
+  const card = document.querySelector('.seg[data-seg-id="' + id + '"] .editable');
+  draft.delete(id);
+  if (card) {
+    const seg = currentSegById(id);
+    if (seg) { card.innerHTML = ""; renderRich(card, seg.text); }
+  }
+  el("foot-count").textContent = draft.size + " 处改动";
+  if (draft.size === 0) el("foot-actions").hidden = true;
+  el("diff-preview").hidden = true;
+  updateStatus();
+  closeRevpop();
+};
 
 bindSplitters();
 renderVariants();
