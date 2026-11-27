@@ -192,7 +192,11 @@ export async function generateVariantWithProvider(
           // C4：只有 modified 需要指向被改写的基座片段（继承已共享 segment_id，added 无基座片段）
           const baseSeg = lineage === "modified" && baseRef ? (baseSegmentsByRule.get(baseRef) ?? [])[0] : undefined;
           if (baseSeg) baseSegmentOfModified[segId] = baseSeg.segment_id;
-          const text = paragraph.title ? `${paragraph.title}：${paragraph.text}` : paragraph.text;
+          // 与基座一致：正文已含小标题时不重复加前缀
+          const text =
+            paragraph.title && !paragraph.text.startsWith(`${paragraph.title}：`)
+              ? `${paragraph.title}：${paragraph.text}`
+              : paragraph.text;
           segments.push({
             segment_id: segId,
             text,

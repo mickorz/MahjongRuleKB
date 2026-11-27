@@ -53,7 +53,11 @@ function segmentOf(
   paragraph: ChapterDraft["paragraphs"][number],
   evidenceOf: (ruleId: string) => string[],
 ): Omit<Segment, "segment_id"> {
-  const text = paragraph.title ? `${paragraph.title}：${paragraph.text}` : paragraph.text;
+  // 生成器可能已经把小标题写进正文（如「人数：4」），此时不再重复加前缀
+  const text =
+    paragraph.title && !paragraph.text.startsWith(`${paragraph.title}：`)
+      ? `${paragraph.title}：${paragraph.text}`
+      : paragraph.text;
   const ruleRefs = [...new Set(paragraph.claims.flatMap((c) => c.rule_refs))];
   const configRefs = [...new Set(paragraph.claims.flatMap((c) => c.config_refs))];
   const evidence = [...new Set(ruleRefs.flatMap(evidenceOf))];
