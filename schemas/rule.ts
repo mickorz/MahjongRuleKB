@@ -67,6 +67,21 @@ export const variantRuleMetaSchema = z
     change_type: z.enum(changeTypes),
     base_rule_ref: z.string().regex(ruleIdPattern).optional(),
     compares_to: z.array(z.string().regex(ruleIdPattern)).default([]),
+    /**
+     * W2-4：显式声明「某槽位在本玩法不适用」。
+     * 仅靠文档里写一句「本玩法无此分支」不能消除 R1 告警，必须有结构化声明。
+     */
+    not_applicable_slots: z
+      .array(
+        z
+          .object({
+            slot: z.string().min(1),
+            reason: z.string().min(1),
+            source: z.string().min(1).optional(),
+          })
+          .strict(),
+      )
+      .default([]),
   })
   .superRefine((v, ctx) => {
     if (v.change_type === "added") {

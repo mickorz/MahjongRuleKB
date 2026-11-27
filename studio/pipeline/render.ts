@@ -137,3 +137,77 @@ export function renderSourceAppendix(document: Document): string {
   }
   return `${rows.join("\n")}\n`;
 }
+
+/** W2-6：差异视图 —— 只列 modified / added，附基座对照文本 */
+export function renderDiffView(base: Document, variant: Document, baseSegmentOfModified: Record<string, string> = {}): string {
+  const baseBySegment = new Map<string, Segment>();
+  for (const b of base.blocks) for (const s of b.content) baseBySegment.set(s.segment_id, s);
+
+  const lines: string[] = [
+    `# ${variant.ruleset_id} 差异视图`,
+    "",
+    `> 基座：${base.ruleset_id} v${base.ruleset_version}（文档版本 ${base.document_version}）`,
+    `> 变体：${variant.target_variant} v${variant.ruleset_version}（文档版本 ${variant.document_version}）`,
+    "> 本视图只列与基座不同的内容；继承内容见完整视图。",
+    "",
+  ];
+  const grouped = new Map<string, Segment[]>();
+  for (const block of variant.blocks) {
+    for (const seg of block.content) {
+      if (seg.lineage !== "modified" && seg.lineage !== "added") continue;
+      grouped.set(block.section_id, [...(grouped.get(block.section_id) ?? []), seg]);
+    }
+  }
+  for (const [sectionId, segs] of grouped) {
+    lines.push(`## ${SECTION_TITLES[sectionId] ?? sectionId}`, "");
+    for (const seg of segs) {
+      const tag = seg.lineage === "modified" ? "修改" : "新增";
+      const confirm = seg.diff_status === "candidate" ? "（差异待确认）" : "";
+      lines.push(`### [${tag}]${confirm} ${seg.references.rule_refs.join("、")}`);
+      lines.push("", seg.text, "");
+      const baseSeg = seg.base_segment_ref ? baseBySegment.get(seg.base_segment_ref) : undefined;
+      if (baseSeg) {
+        lines.push(`基座原文（\`${baseSeg.segment_id}\`）：`, "", `> ${baseSeg.text}`, "");
+      }
+      for (const blocker of seg.release_blocker_refs) lines.push(`待裁决：${blocker}`, "");
+      for (const ev of seg.references.source_evidence_refs) lines.push(`来源：\`${ev}\``);
+      lines.push("");
+    }
+  }
+  if (grouped.size === 0) lines.push("（未发现差异）", "");
+  return `${lines.join("\n").trimEnd()}\n`;
+}
+
+/** W2-6：对照视图 —— 章节内基座 vs 变体并排 */
+export function renderComparisonView(base: Document, variant: Document): string {
+  const lines: string[] = [
+    `# ${variant.ruleset_id} 对照视图`,
+    "",
+    `> 左：基座 ${base.ruleset_id} v${base.ruleset_version}｜右：变体 ${variant.target_variant} v${variant.ruleset_version}`,
+    "",
+  ];
+  const baseBySection = new Map(base.blocks.map((b) => [b.section_id, b]));
+  const sections = [...new Set([...base.blocks.map((b) => b.section_id), ...variant.blocks.map((b) => b.section_id)])];
+  for (const sectionId of sections) {
+    const baseBlock = baseBySection.get(sectionId);
+    const variantBlock = variant.blocks.find((b) => b.section_id === sectionId);
+    const title = SECTION_TITLES[sectionId] ?? sectionId;
+    const inherited = variantBlock?.content.filter((s) => s.lineage.endsWith("inherited")).length ?? 0;
+    const modified = variantBlock?.content.filter((s) => s.lineage === "modified").length ?? 0;
+    const added = variantBlock?.content.filter((s) => s.lineage === "added").length ?? 0;
+    lines.push(`## ${title}`, "");
+    lines.push(`继承 ${inherited} 段｜修改 ${modified} 段｜新增 ${added} 段`, "");
+    const summarize = (d?: Document) => d?.blocks.find((b) => b.section_id === sectionId)?.content.map((s) => s.text) ?? [];
+    const baseTexts = summarize(base);
+    const variantTexts = summarize(variant);
+    lines.push("| 基座 | 变体 |", "| --- | --- |");
+    const rows = Math.max(baseTexts.length, variantTexts.length);
+    for (let i = 0; i < rows; i += 1) {
+      const left = (baseTexts[i] ?? "—").replace(/\|/g, "\|").slice(0, 200);
+      const right = (variantTexts[i] ?? "—").replace(/\|/g, "\|").slice(0, 200);
+      lines.push(`| ${left} | ${right} |`);
+    }
+    lines.push("");
+  }
+  return `${lines.join("\n").trimEnd()}\n`;
+}

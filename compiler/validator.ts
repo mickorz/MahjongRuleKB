@@ -2,7 +2,7 @@
 // 用法：node compiler/validator.ts [规则集目录] [--kind base|variant]
 //   --kind 省略时按目录位置推断（过渡期兼容），显式传入时以传入为准
 // 检查：ID 唯一、ID 前缀与类型一致、引用闭合、YAML 元数据、正文必填槽位、config 可解析、ID 唯一
-import { readFileSync, readdirSync, statSync } from "node:fs";
+import { existsSync, readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parse as parseYaml } from "yaml";
@@ -160,9 +160,15 @@ export function validateRuleset(rs: LoadedRuleset, base?: LoadedRuleset): Valida
 
     // 引用闭合
     if (meta.origin === "variant") {
-      if (meta.base_rule_ref) {
-        const where = meta.change_type === "inherited" ? baseIds : baseIds;
-        if (!where.has(meta.base_rule_ref)) push(file, "base_rule_ref", `指向的 ${meta.base_rule_ref} 不存在于基础规则集`);
+      if (meta.base_rule_ref && !baseIds.has(meta.base_rule_ref)) {
+        push(file, "base_rule_ref", `指向的 ${meta.base_rule_ref} 不存在于基础规则集`);
+      }
+      // W2-4：not_applicable_slots 必须声明真实存在的基础卡槽位，且原因非空
+      for (const na of meta.not_applicable_slots ?? []) {
+        if (!na.reason.trim()) push(file, "not_applicable_slots", `槽位「${na.slot}」未写原因`);
+        if (na.source && !existsSync(na.source)) {
+          push(file, "not_applicable_slots", `槽位「${na.slot}」的 source 指向不存在的文件：${na.source}`);
+        }
       }
       for (const c of meta.compares_to) if (!baseIds.has(c)) push(file, "compares_to", `指向的 ${c} 不存在于基础规则集`);
     }
