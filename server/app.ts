@@ -130,14 +130,25 @@ export function projectDocument(kbRoot: string, variant: string): { ruleset_id: 
   };
 }
 
+/** 本地开发工具：一律不缓存，避免改了 HTML/API 却看到旧页面 */
+const NO_STORE = { "cache-control": "no-store, must-revalidate" } as const;
+
 const json = (res: ServerResponse, status: number, payload: unknown) => {
   const body = JSON.stringify(payload);
-  res.writeHead(status, { "content-type": "application/json; charset=utf-8", "content-length": Buffer.byteLength(body) });
+  res.writeHead(status, {
+    "content-type": "application/json; charset=utf-8",
+    "content-length": Buffer.byteLength(body),
+    ...NO_STORE,
+  });
   res.end(body);
 };
 
 const text = (res: ServerResponse, status: number, body: string, contentType = "text/plain; charset=utf-8") => {
-  res.writeHead(status, { "content-type": contentType, "content-length": Buffer.byteLength(body) });
+  res.writeHead(status, {
+    "content-type": contentType,
+    "content-length": Buffer.byteLength(body),
+    ...NO_STORE,
+  });
   res.end(body);
 };
 
