@@ -8,6 +8,11 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { SECTION_TITLES } from "../studio/pipeline/render.ts";
+import { addMutation, createSession } from "../studio/edit/session.ts";
+import { applySession } from "../studio/edit/apply-batch.ts";
+import { checkMutation, computeBaseRevision, mutationSchema, mutationToProposalInput } from "../studio/edit/mutation.ts";
+import { documentSchema } from "../studio/contracts/document.ts";
+import { markReviewed, readReviewFile, reviewSummary } from "../studio/review/store.ts";
 
 const variantPattern = /^[a-z][a-z0-9-]*$/;
 
@@ -31,6 +36,7 @@ export type ApiRoute =
   | { kind: "diffs"; variant: string }
   | { kind: "artifact"; variant: string; name: ReadableArtifact }
   | { kind: "segment"; variant: string; segmentId: string }
+  | { kind: "reviews"; variant: string }
   | { kind: "not-found" };
 
 /** 纯函数路由解析：便于单测，不碰文件系统 */
@@ -58,6 +64,10 @@ export function resolveRoute(pathname: string): ApiRoute {
     // 名称必须精确命中白名单（不做后缀匹配，防 ../ 与同前缀绕过）
     if (!(readableArtifacts as readonly string[]).includes(name)) return { kind: "not-found" };
     return { kind: "artifact", variant, name: name as ReadableArtifact };
+  }
+
+  if (parts[1] === "reviews" && parts.length === 3 && variantPattern.test(parts[2])) {
+    return { kind: "reviews", variant: parts[2] };
   }
 
   if (parts[1] === "segment" && parts.length === 4) {
@@ -147,14 +157,21 @@ export function createWorkbenchServer(options: WorkbenchOptions = {}): Server {
       res.end("Host 不被允许");
       return;
     }
-    // 只读阶段：任何写入一律拒绝，且不回 CORS 头
+    const url = new URL(req.url ?? "/", `http://${req.headers.host}`);
+
+    // 写入接口：必须带自定义头 + 同源 Origin（评审 P1-5）
+    if (req.method === "POST") {
+      handleWrite(req, res, { kbRoot, url }).catch((e: Error) =>
+        json(res, 500, { error: "internal_error", message: e.message }),
+      );
+      return;
+    }
     if (req.method !== "GET" && req.method !== "HEAD") {
-      res.writeHead(405, { "content-type": "text/plain; charset=utf-8", allow: "GET, HEAD" });
-      res.end("只读工作台：仅支持 GET");
+      res.writeHead(405, { "content-type": "text/plain; charset=utf-8", allow: "GET, HEAD, POST" });
+      res.end("工作台只支持 GET / POST");
       return;
     }
 
-    const url = new URL(req.url ?? "/", `http://${req.headers.host}`);
     const route = resolveRoute(url.pathname);
 
     if (route.kind === "index") {
@@ -186,6 +203,12 @@ export function createWorkbenchServer(options: WorkbenchOptions = {}): Server {
       const content = readFileSync(file, "utf8");
       return route.name.endsWith(".md") ? text(res, 200, content, "text/markdown; charset=utf-8") : json(res, 200, JSON.parse(content));
     }
+    if (route.kind === "reviews") {
+      const doc = projectDocument(kbRoot, route.variant);
+      if (!doc) return json(res, 404, { error: "document_not_found" });
+      const file = readReviewFile(kbRoot, route.variant, doc.ruleset_id);
+      return json(res, 200, reviewSummary(file, doc.ruleset_id, doc.document_version, doc.blocks.map((b) => b.section_id)));
+    }
     if (route.kind === "segment") {
       const doc = projectDocument(kbRoot, route.variant);
       if (!doc) return json(res, 404, { error: "document_not_found" });
@@ -198,6 +221,172 @@ export function createWorkbenchServer(options: WorkbenchOptions = {}): Server {
     json(res, 404, { error: "not_found" });
   });
   return server;
+}
+
+const readBody = (req: IncomingMessage): Promise<unknown> =>
+  new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    req.on("data", (c: Buffer) => chunks.push(c));
+    req.on("end", () => {
+      try {
+        resolve(JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}"));
+      } catch (e) {
+        reject(new Error(`请求体不是合法 JSON：${(e as Error).message}`));
+      }
+    });
+    req.on("error", reject);
+  });
+
+interface WriteContext {
+  kbRoot: string;
+  url: URL;
+}
+
+/** 写接口统一入口：来源校验 → 分流到 proposal / apply / review */
+async function handleWrite(req: IncomingMessage, res: ServerResponse, ctx: WriteContext): Promise<void> {
+  // CSRF：必须带自定义头（浏览器跨源表单无法自由添加）
+  if (req.headers["x-rule-studio"] !== "1") {
+    return json(res, 403, { error: "missing_csrf_header", hint: "写入请求必须带 X-Rule-Studio: 1" });
+  }
+  // Origin：给了就必须同源；缺失视为同源工具调用（curl/测试）
+  const origin = req.headers.origin;
+  if (origin) {
+    let originHost = "";
+    try {
+      originHost = new URL(origin).host;
+    } catch {
+      return json(res, 403, { error: "bad_origin" });
+    }
+    if (originHost.toLowerCase() !== (req.headers.host ?? "").toLowerCase()) {
+      return json(res, 403, { error: "cross_origin_denied" });
+    }
+  }
+
+  let body: Record<string, unknown>;
+  try {
+    body = (await readBody(req)) as Record<string, unknown>;
+  } catch (e) {
+    return json(res, 400, { error: "bad_body", message: (e as Error).message });
+  }
+
+  const variant = typeof body.variant === "string" ? body.variant : "";
+  if (!variantPattern.test(variant)) return json(res, 400, { error: "bad_variant" });
+
+  if (ctx.url.pathname === "/api/proposal") return proposalPreview(res, ctx.kbRoot, variant, body);
+  if (ctx.url.pathname === "/api/apply") return applyBatch(res, ctx.kbRoot, variant, body);
+  if (ctx.url.pathname === "/api/review") return writeReview(res, ctx.kbRoot, variant, body);
+  return json(res, 404, { error: "not_found" });
+}
+
+function loadDocument(kbRoot: string, variant: string) {
+  const file = join(kbRoot, "documents", variant, "document.json");
+  if (!existsSync(file)) return undefined;
+  return documentSchema.parse(JSON.parse(readFileSync(file, "utf8")));
+}
+
+/** POST /api/proposal：只预览，不写盘 */
+function proposalPreview(res: ServerResponse, kbRoot: string, variant: string, body: Record<string, unknown>): void {
+  const document = loadDocument(kbRoot, variant);
+  if (!document) return json(res, 404, { error: "document_not_found" });
+
+  const parsed = mutationSchema.safeParse(body.mutation);
+  if (!parsed.success) {
+    return json(res, 400, {
+      error: "bad_mutation",
+      issues: parsed.error.issues.map((i) => `${i.path.join(".")} ${i.message}`),
+    });
+  }
+  const check = checkMutation(parsed.data, { document, targetVariant: variant, isBaseDocument: variant === "hangzhou" });
+  if (!check.ok) return json(res, 403, { ok: false, reasons: check.reasons });
+
+  const proposal = mutationToProposalInput({
+    mutation: parsed.data,
+    document,
+    rulesetId: document.ruleset_id,
+    targetVariant: variant,
+  });
+  const revision = computeBaseRevision(kbRoot, variant, [`documents/${variant}/editorial-overrides.yaml`]);
+  return json(res, 200, {
+    ok: true,
+    before: check.segment?.before ?? null,
+    after: proposal.after_text ?? null,
+    proposal,
+    base_revision: revision,
+  });
+}
+
+/** POST /api/apply：一批 mutation 作为一次会话提交（全或无） */
+function applyBatch(res: ServerResponse, kbRoot: string, variant: string, body: Record<string, unknown>): void {
+  const document = loadDocument(kbRoot, variant);
+  if (!document) return json(res, 404, { error: "document_not_found" });
+
+  const raw = Array.isArray(body.mutations) ? body.mutations : [];
+  if (raw.length === 0) return json(res, 400, { error: "no_mutations" });
+
+  const mutations = [];
+  for (const item of raw) {
+    const parsed = mutationSchema.safeParse(item);
+    if (!parsed.success) {
+      return json(res, 400, {
+        error: "bad_mutation",
+        issues: parsed.error.issues.map((i) => `${i.path.join(".")} ${i.message}`),
+      });
+    }
+    mutations.push(parsed.data);
+  }
+
+  const sessionId = typeof body.session_id === "string" ? body.session_id : `SES-${String(Date.now()).slice(-4)}`;
+  try {
+    createSession({
+      kbRoot,
+      sessionId,
+      rulesetId: document.ruleset_id,
+      targetVariant: variant,
+      documentVersion: document.document_version,
+    });
+    for (const m of mutations) addMutation(kbRoot, variant, sessionId, m);
+    const result = applySession({
+      kbRoot,
+      variant,
+      sessionId,
+      ...(typeof body.transaction_id === "string" ? { transactionId: body.transaction_id } : {}),
+      ...(typeof body.proposal_id === "string" ? { proposalId: body.proposal_id } : {}),
+    });
+    return json(res, result.ok ? 200 : 409, result);
+  } catch (e) {
+    return json(res, 409, { ok: false, error: "apply_failed", message: (e as Error).message });
+  }
+}
+
+/** POST /api/review：写一条审查记录（actor=server） */
+function writeReview(res: ServerResponse, kbRoot: string, variant: string, body: Record<string, unknown>): void {
+  const document = loadDocument(kbRoot, variant);
+  if (!document) return json(res, 404, { error: "document_not_found" });
+  const target = body.target as { type?: string; id?: string } | undefined;
+  if (!target || !["document", "section", "segment"].includes(target.type ?? "") || !target.id) {
+    return json(res, 400, { error: "bad_target" });
+  }
+  const status = body.status === "reviewed" ? "reviewed" : body.status === "unreviewed" ? "unreviewed" : undefined;
+  if (!status) return json(res, 400, { error: "bad_status" });
+  const reviewer = typeof body.reviewer === "string" && body.reviewer.trim() ? body.reviewer.trim() : "策划";
+
+  const file = markReviewed({
+    kbRoot,
+    variant,
+    rulesetId: document.ruleset_id,
+    target: { type: target.type as "document" | "section" | "segment", id: target.id },
+    status,
+    documentVersion: document.document_version,
+    reviewer,
+    ...(typeof body.note === "string" ? { note: body.note } : {}),
+  });
+  const summary = reviewSummary(
+    file,
+    document.ruleset_id,
+    document.document_version,
+    document.blocks.map((b) => b.section_id),
+  );
+  return json(res, 200, { ok: true, file, summary });
 }
 
 /** 无构建前端：三栏只读视图。故意不引入框架，W3-2 需要交互再换。 */
@@ -225,6 +414,13 @@ export function viewerHtml(): string {
   .warn { color:#c92a2a; }
   button.link { background:none; border:none; color:inherit; text-decoration:underline; cursor:pointer; font-size:12px; padding:0; }
   .sources { font-size:12px; white-space:pre-wrap; }
+  .editable { outline:1px dashed #e08a1e88; border-radius:4px; padding:2px 4px; }
+  .editable:focus { outline:2px solid #e08a1e; background:#e08a1e10; }
+  #editor-bar { position:sticky; top:0; background:canvas; padding:8px 0; border-bottom:1px solid #8884; z-index:5; }
+  #editor-bar button { margin-right:6px; }
+  .diffbox { font-size:12px; border:1px solid #8884; border-radius:6px; padding:8px; margin-top:8px; white-space:pre-wrap; }
+  .diffbox .before { color:#c92a2a; }
+  .diffbox .after { color:#2f9e44; }
 </style>
 </head>
 <body>
@@ -233,7 +429,17 @@ export function viewerHtml(): string {
   <div id="variants"></div>
   <div id="toc"></div>
 </nav>
-<main id="doc"><p class="muted">选择左侧文档</p></main>
+<main id="doc">
+  <div id="editor-bar" hidden>
+    <strong>编辑草稿</strong>
+    <span id="edit-count" class="muted">0 处改动</span>
+    <button onclick="previewChanges()">预览改动</button>
+    <button onclick="applyChanges()">应用</button>
+    <button onclick="clearDraft()">清空</button>
+    <div id="diff-preview" class="diffbox" hidden></div>
+  </div>
+  <div id="doc-body"><p class="muted">选择左侧文档</p></div>
+</main>
 <aside>
   <strong>信息面板</strong>
   <div id="checks" class="muted"></div>
@@ -255,10 +461,13 @@ async function loadDoc(variant) {
   const res = await fetch("/api/doc/" + variant);
   if (!res.ok) { el("doc").innerHTML = '<p class="warn">文档不存在：' + variant + '</p>'; return; }
   const doc = await res.json();
-  el("doc").innerHTML = "";
+  currentVariant = variant;
+  el("doc-body").innerHTML = "";
+  draft.clear();
+  el("editor-bar").hidden = true;
   const h1 = document.createElement("h1");
   h1.textContent = doc.ruleset_id + "（文档版本 " + doc.document_version + "）";
-  el("doc").appendChild(h1);
+  el("doc-body").appendChild(h1);
 
   const toc = el("toc");
   toc.innerHTML = "<hr /><strong>章节</strong>";
@@ -266,13 +475,19 @@ async function loadDoc(variant) {
     const h2 = document.createElement("h2");
     h2.textContent = block.title;
     h2.id = "sec-" + block.section_id;
-    el("doc").appendChild(h2);
+    el("doc-body").appendChild(h2);
     const link = document.createElement("div");
     const btn = document.createElement("button");
     btn.className = "link";
     btn.textContent = block.title;
     btn.onclick = () => h2.scrollIntoView({ behavior: "smooth" });
     link.appendChild(btn);
+    const rv = document.createElement("button");
+    rv.className = "link";
+    rv.textContent = "标为已审";
+    rv.style.marginLeft = "6px";
+    rv.onclick = () => markReviewed("section", block.section_id);
+    link.appendChild(rv);
     toc.appendChild(link);
 
     for (const seg of block.segments) {
@@ -289,8 +504,21 @@ async function loadDoc(variant) {
       const p = document.createElement("span");
       p.textContent = " " + seg.text;
       div.appendChild(p);
-      div.onclick = () => showSources(variant, seg.segment_id);
-      el("doc").appendChild(div);
+      const editableNow = seg.editable && (seg.lineage === "modified" || seg.lineage === "added");
+      if (editableNow) {
+        p.contentEditable = "true";
+        p.className = "editable";
+        p.spellcheck = false;
+        p.onblur = () => {
+          const next = p.textContent.replace(/^\s+/, "");
+          if (next !== seg.text) markEdited(seg.segment_id, next, seg.text);
+        };
+      }
+      div.onclick = (ev) => {
+        if (ev.target === p && editableNow) return;
+        showSources(variant, seg.segment_id);
+      };
+      el("doc-body").appendChild(div);
     }
   }
   loadChecks(variant);
@@ -326,6 +554,94 @@ async function loadChecks(variant) {
     }
     box.appendChild(line);
   }
+}
+
+let currentVariant = "xiaoshan";
+const draft = new Map();
+
+function markEdited(segmentId, text, before) {
+  draft.set(segmentId, { text, before });
+  el("editor-bar").hidden = false;
+  el("edit-count").textContent = draft.size + " 处改动";
+  el("diff-preview").hidden = true;
+}
+
+function clearDraft() {
+  draft.clear();
+  el("editor-bar").hidden = true;
+  el("diff-preview").hidden = true;
+  loadDoc(currentVariant);
+}
+
+function mutationsPayload() {
+  return [...draft.entries()].map(([segmentId, d]) => ({
+    target: { segment_id: segmentId },
+    op: "replace-text",
+    text: d.text,
+    source: "richtext",
+    rationale: "工作台段落编辑",
+  }));
+}
+
+async function previewChanges() {
+  const box = el("diff-preview");
+  box.hidden = false;
+  box.innerHTML = "";
+  for (const [segmentId, d] of draft) {
+    const res = await fetch("/api/proposal", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-rule-studio": "1" },
+      body: JSON.stringify({
+        variant: currentVariant,
+        mutation: { target: { segment_id: segmentId }, op: "replace-text", text: d.text, source: "richtext", rationale: "工作台段落编辑" },
+      }),
+    });
+    const data = await res.json();
+    const line = document.createElement("div");
+    if (!data.ok) {
+      line.className = "before";
+      line.textContent = segmentId + " 被拒：" + (data.reasons || [data.error]).join("；");
+    } else {
+      line.innerHTML = "";
+      const b = document.createElement("div"); b.className = "before"; b.textContent = "改动前：" + (data.before || "");
+      const a = document.createElement("div"); a.className = "after"; a.textContent = "改动后：" + (data.after || "");
+      const meta = document.createElement("div"); meta.className = "muted";
+      meta.textContent = "基线版本 " + data.base_revision.document_version;
+      line.append(b, a, meta);
+    }
+    box.appendChild(line);
+  }
+}
+
+async function applyChanges() {
+  if (draft.size === 0) return;
+  const res = await fetch("/api/apply", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-rule-studio": "1" },
+    body: JSON.stringify({ variant: currentVariant, mutations: mutationsPayload() }),
+  });
+  const data = await res.json();
+  const box = el("diff-preview");
+  box.hidden = false;
+  if (data.ok) {
+    box.textContent = "已应用 " + data.applied + " 处，文档版本 " + data.documentVersionBefore + " → " + data.documentVersionAfter;
+    draft.clear();
+    el("editor-bar").hidden = true;
+    await loadDoc(currentVariant);
+    return;
+  }
+  box.textContent = "未应用：" + (data.rejected || [data.message || data.error]).map((r) => r.reasons ? r.reasons.join("；") : r).join(" | ");
+}
+
+async function markReviewed(targetType, targetId) {
+  const res = await fetch("/api/review", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-rule-studio": "1" },
+    body: JSON.stringify({ variant: currentVariant, target: { type: targetType, id: targetId }, status: "reviewed", reviewer: "策划" }),
+  });
+  const data = await res.json();
+  el("sources").textContent = data.ok ? "已标记审查：" + targetType + " " + targetId : "标记失败";
+  loadChecks(currentVariant);
 }
 
 const nav = el("variants");

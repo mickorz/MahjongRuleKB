@@ -1,7 +1,7 @@
 // W3-1：只读工作台服务端测试（本地临时端口，不依赖外部服务）
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import type { Server } from "node:http";
-import { mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 
@@ -38,7 +38,12 @@ const doc = (variant: string) => ({
           base_rule_ref: "HJ-R-LUNZHUANG",
         },
       ],
-      references: { requirement_refs: [], rule_refs: ["XS-R-ZHUANGJIA-02"], config_refs: [], source_evidence_refs: [] },
+      references: {
+        requirement_refs: [],
+        rule_refs: ["XS-R-ZHUANGJIA-02"],
+        config_refs: [],
+        source_evidence_refs: ["rulebook/sources/xiaoshan/xiaoshan-rules.md#R-BANK-02"],
+      },
     },
   ],
   segment_lineage: [],
@@ -143,12 +148,14 @@ describe("W3-1 HTTP 行为", () => {
     expect((await fetch(`${base}/api/artifact/xiaoshan/${encodeURIComponent("changes.json")}`)).status).toBe(404);
   });
 
-  it("写请求一律 405（只读阶段）", async () => {
-    for (const method of ["POST", "PUT", "DELETE"] as const) {
+  it("非 GET/POST 方法 405；POST 无 CSRF 头 403", async () => {
+    for (const method of ["PUT", "DELETE"] as const) {
       const res = await fetch(`${base}/api/doc/xiaoshan`, { method });
       expect(res.status, method).toBe(405);
-      expect(res.headers.get("allow")).toContain("GET");
+      expect(res.headers.get("allow")).toContain("POST");
     }
+    const res = await fetch(`${base}/api/doc/xiaoshan`, { method: "POST" });
+    expect(res.status).toBe(403);
   });
 
   it("Host 不在白名单 → 403（DNS rebinding 防护）", async () => {
@@ -181,5 +188,145 @@ describe("W3-1 文档投影", () => {
     mkdirSync(kb, { recursive: true });
     expect(projectDocument(kb, "xiaoshan")).toBeUndefined();
     rmSync(kb, { recursive: true, force: true });
+  });
+});
+
+describe("W3-4 写接口", () => {
+  let kb: string;
+  let server: Server;
+  let base: string;
+  const headers = { "content-type": "application/json", "x-rule-studio": "1" };
+
+  beforeEach(async () => {
+    kb = join(tmpdir(), `kb-w34-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`);
+    mkdirSync(join(kb, "documents/xiaoshan"), { recursive: true });
+    mkdirSync(join(kb, ".rule-studio/transactions"), { recursive: true });
+    const d = doc("xiaoshan") as unknown as { blocks: Array<{ content: Array<Record<string, unknown>> }> };
+    // 让片段可编辑：lineage=modified 且 editable=true（夹具默认已是 modified）
+    writeFileSync(join(kb, "documents/xiaoshan/document.json"), JSON.stringify(d), "utf8");
+    writeFileSync(join(kb, "documents/xiaoshan/editorial-overrides.yaml"), "- overrides: []\n", "utf8");
+    server = createWorkbenchServer({ kbRoot: kb });
+    await new Promise<void>((r) => server.listen(0, "127.0.0.1", () => r()));
+    base = `http://127.0.0.1:${(server.address() as { port: number }).port}`;
+  });
+
+  afterEach(async () => {
+    await new Promise<void>((r) => server.close(() => r()));
+    rmSync(kb, { recursive: true, force: true });
+  });
+
+  const mutation = { target: { segment_id: "SEG-000001" }, op: "replace-text", text: "改写后的段落", source: "richtext", rationale: "编辑" };
+
+  it("缺 CSRF 头的写请求被拒", async () => {
+    const res = await fetch(`${base}/api/proposal`, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ variant: "xiaoshan", mutation }),
+    });
+    expect(res.status).toBe(403);
+    expect(((await res.json()) as { error: string }).error).toBe("missing_csrf_header");
+  });
+
+  it("跨源 Origin 被拒", async () => {
+    const res = await fetch(`${base}/api/proposal`, {
+      method: "POST",
+      headers: { ...headers, origin: "https://evil.example.com" },
+      body: JSON.stringify({ variant: "xiaoshan", mutation }),
+    });
+    expect(res.status).toBe(403);
+  });
+
+  it("proposal 返回改动前后与基线版本，但不写盘", async () => {
+    const res = await fetch(`${base}/api/proposal`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ variant: "xiaoshan", mutation }),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { ok: boolean; before: string; after: string; base_revision: { document_version: number } };
+    expect(body.ok).toBe(true);
+    expect(body.after).toBe("改写后的段落");
+    expect(body.before.length).toBeGreaterThan(0);
+    expect(body.base_revision.document_version).toBe(3);
+    // 未写盘
+    expect(readFileSync(join(kb, "documents/xiaoshan/editorial-overrides.yaml"), "utf8")).toBe("- overrides: []\n");
+  });
+
+  it("proposal 对继承片段返回 403 与原因", async () => {
+    const d = JSON.parse(readFileSync(join(kb, "documents/xiaoshan/document.json"), "utf8")) as {
+      blocks: Array<{ content: Array<Record<string, unknown>> }>;
+    };
+    d.blocks[0].content[0].lineage = "default_inherited";
+    d.blocks[0].content[0].base_rule_ref = "HJ-R-DINGZHUANG";
+    writeFileSync(join(kb, "documents/xiaoshan/document.json"), JSON.stringify(d), "utf8");
+    const res = await fetch(`${base}/api/proposal`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ variant: "xiaoshan", mutation }),
+    });
+    expect(res.status).toBe(403);
+    expect(JSON.stringify(await res.json())).toMatch(/继承/);
+  });
+
+  it("apply 落盘并升版本，同时把审查记录退回未审", async () => {
+    // 先标一次已审
+    const r1 = await fetch(`${base}/api/review`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ variant: "xiaoshan", target: { type: "document", id: "xiaoshan-friends-4p" }, status: "reviewed" }),
+    });
+    expect(r1.status).toBe(200);
+    expect(((await r1.json()) as { summary: { document: string } }).summary.document).toBe("reviewed");
+
+    const res = await fetch(`${base}/api/apply`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ variant: "xiaoshan", mutations: [mutation], transaction_id: "TX-001", proposal_id: "DOC-P-001" }),
+    });
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as { ok: boolean; applied: number; documentVersionAfter: number; reviewInvalidated: number };
+    expect(body.ok, JSON.stringify(body)).toBe(true);
+    expect(body.applied).toBe(1);
+    expect(body.documentVersionAfter).toBe(4);
+    expect(body.reviewInvalidated).toBeGreaterThan(0);
+
+    const overrides = readFileSync(join(kb, "documents/xiaoshan/editorial-overrides.yaml"), "utf8");
+    expect(overrides).toContain("改写后的段落");
+
+    // 审查状态已退回
+    const rev = await fetch(`${base}/api/reviews/xiaoshan`);
+    expect(((await rev.json()) as { document: string }).document).toBe("unreviewed");
+  });
+
+  it("apply 空批次 → 400", async () => {
+    const res = await fetch(`${base}/api/apply`, { method: "POST", headers, body: JSON.stringify({ variant: "xiaoshan", mutations: [] }) });
+    expect(res.status).toBe(400);
+  });
+
+  it("审查记录 GET /api/reviews 汇总文档与章节状态", async () => {
+    await fetch(`${base}/api/review`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ variant: "xiaoshan", target: { type: "section", id: "opening" }, status: "reviewed" }),
+    });
+    const res = await fetch(`${base}/api/reviews/xiaoshan`);
+    const body = (await res.json()) as { document: string; sections: Record<string, string> };
+    expect(body.sections.opening).toBe("reviewed");
+    expect(body.document).toBe("unreviewed");
+  });
+
+  it("审查目标与状态非法 → 400", async () => {
+    for (const body of [
+      { variant: "xiaoshan", target: { type: "bogus", id: "x" }, status: "reviewed" },
+      { variant: "xiaoshan", target: { type: "section", id: "opening" }, status: "maybe" },
+    ]) {
+      const res = await fetch(`${base}/api/review`, { method: "POST", headers, body: JSON.stringify(body) });
+      expect(res.status).toBe(400);
+    }
+  });
+
+  it("未知写路径 → 404", async () => {
+    const res = await fetch(`${base}/api/nope`, { method: "POST", headers, body: JSON.stringify({ variant: "xiaoshan" }) });
+    expect(res.status).toBe(404);
   });
 });
