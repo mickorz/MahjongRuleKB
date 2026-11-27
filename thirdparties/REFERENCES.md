@@ -11,6 +11,7 @@
 | REF-004 | universal-spec-mcp | `https://github.com/ahmedelpannann/universal-spec-mcp`（submodule 跟踪分支 `main`） | `thirdparties/universal-spec-mcp` | `36c0eceb0a2c7e82fe7d2ea74f3596fcebf104f2`（2026-11-24 引入，与远端 `main` 一致） | MIT | 只读参考，复用方法论时可复制（MIT 允许），需保留版权声明 | MCP 形式的规格（spec）工作流工具；供 Rule Studio 的规格变更与校验流程设计参考 |
 | REF-005 | zenstory | `https://github.com/zenstory-ai/zenstory`（submodule 跟踪分支 `main`） | `thirdparties/zenstory` | `93f3654ede5230bb62d51d9a7fd0f6b7827cfc46`（2026-11-25 引入，与远端 `main` 一致） | AGPL-3.0 | 只读参考，**禁止复制任何代码**（AGPL 传染风险）；布局思路提炼后写入本项目自己的文档 | 对话式创作工作台的三栏布局实现：跨断点单树、可拖拽面板、常驻状态栏、侧栏 tab 化、Diff 审阅交互；供 Rule Studio 本地 Web 工作台的布局与冲突裁决 UI 参考。调研结论：`dev-docs/research/2026-11-25-zenstory UI布局调研与借鉴.md` |
 | REF-006 | docwriter | `https://github.com/docwriter-org/docwriter`（submodule 跟踪分支 `main`） | `thirdparties/docwriter` | `449f41cbe74d2bf5fd89f478b7e67951ce77746f`（2026-11-27 引入，与远端 `main` 一致） | MIT（Copyright 2026 DocWriter contributors） | 只读参考，复用方法论时可复制（MIT 允许），需保留版权声明 | 本地 Markdown 编辑器，写作者与 AI agent 共同评审修改；供 Rule Studio 本地 Web 工作台的编辑器与 AI 协作评审交互参考 |
+| REF-007 | PlotPilot | `https://github.com/shenminglinyi/PlotPilot`（submodule 跟踪分支 `master`） | `thirdparties/PlotPilot` | `fcd87ab81c9b977edb76669f4f652bbd2d2670b4`（2026-11-27 引入，与远端 `master` 一致，tag v4.8.1） | Apache 2.0 + Commons Clause v1.0 | 只读参考，禁止复制代码用于销售用途（Commons Clause 限制），保守处理为仅提炼方法论 | 【墨枢】作者的领航员（剧情写作 AI 导航工具）；供 Rule Studio 生成链路中的章节装配与文档导航思路参考 |
 
 ## Submodule 引入与登记流程
 

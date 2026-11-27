@@ -18,3 +18,7 @@
 	path = thirdparties/docwriter
 	url = https://github.com/docwriter-org/docwriter.git
 	branch = main
+[submodule "thirdparties/PlotPilot"]
+	path = thirdparties/PlotPilot
+	url = https://github.com/shenminglinyi/PlotPilot.git
+	branch = master
