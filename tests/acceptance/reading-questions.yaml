@@ -1,0 +1,116 @@
+# W1 阅读验收问题清单（杭州基座）
+# 位置说明：不放 tests/gold-set/，因为那里按算分用例 Schema 加载。
+# 用法：只读 documents/hangzhou/需求全文.md，不看规则卡，回答下列问题。
+# 判定：每题对/错由人工判定；答对 8/10 以上（不含依赖未决项的题）才算 W1 通过。
+# 维护：答案口径以规则卡为准；改规则卡后需复核本文件。
+
+- id: RQ-001
+  question: 一场好友房杭州麻将打几局？四家各拿几张牌？牌墙总共多少张？
+  expected_points:
+    - 8 局
+    - 庄家 14 张，其余三家各 13 张
+    - 共 136 张
+  section_hint: overview
+  rule_refs: [HJ-C-JUSHU, HJ-C-PAISHU, HJ-C-RENSHU]
+
+- id: RQ-002
+  question: 首局庄家怎么定？同一场里第二小局起，庄家按什么规则轮换？
+  expected_points:
+    - 首局从四名参战玩家中随机确定庄家
+    - 第二小局起按轮庄规则，庄家连庄或换庄
+    - 掷骰开始前庄家已确定，掷骰只是展示
+  section_hint: opening
+  rule_refs: [HJ-R-DINGZHUANG, HJ-R-LUNZHUANG]
+
+- id: RQ-003
+  question: 发牌的顺序与轮次是怎样的？发完之后牌墙还剩多少张？
+  expected_points:
+    - 以庄家为起点，逆时针依次给每人发 4 张，重复 3 轮，每人先得 12 张
+    - 再每人发 1 张，四家各 13 张
+    - 最后给庄家再发 1 张，共发 53 张，牌墙余 83 张
+  section_hint: opening
+  rule_refs: [HJ-T-FAIPAI]
+
+- id: RQ-004
+  question: 杭州的财神是哪张牌？财神能不能用来吃、碰、杠？如果手上摸到财神，可以主动打出去吗？
+  expected_points:
+    - 白板是财神
+    - 吃、碰、杠都只能用实际非财神牌张，财神本身及其替代牌面都不能用于这些操作
+    - 轮到自己且允许出牌时可以主动打出财神，不需要处于爆头状态
+    - 打出的财神按飘财限制处理
+  section_hint: gameplay
+  rule_refs: [HJ-R-CAISHEN, HJ-R-PIAOCAI-XIANZHI]
+
+- id: RQ-005
+  question: 吃禁手具体禁什么？吃成之后哪些牌不能打？请给出一个具体例子。
+  expected_points:
+    - 用两张间隔一点的同花色牌吃中间张时，只禁打被吃的牌
+    - 用两张相邻同花色牌吃一端时，禁打这两张牌能在两端接成顺子的牌
+    - 若吃成后剩余手牌全部属于禁打牌，该吃法会被过滤，甚至不显示【吃】
+  section_hint: gameplay
+  rule_refs: [HJ-R-CHI-JINSHOU, HJ-C-CHI-PENG-JINSHOU]
+
+- id: RQ-006
+  question: 同一张弃牌有多名玩家都能操作时，按什么顺序裁决？最多几人能胡？
+  expected_points:
+    - 按逆时针就近的优先级裁决
+    - 多人可胡时最多一人胡牌
+  section_hint: gameplay
+  rule_refs: [HJ-R-QIPAI-YOUXIANJI]
+
+- id: RQ-007
+  question: 三摊承包要满足什么条件才成立？两名闲家之间能不能成立承包？
+  expected_points:
+    - 只有庄家与闲家之间能成立承包
+    - 按取牌方向累计有效摊数达到 3 才成立
+    - A 对 B 与 B 对 A 的摊数互相独立，每小局重新累计
+    - 两名闲家之间最多累计 2 摊，不成立承包
+    - 碰、直杠、加杠、暗杠都不增加摊数
+  section_hint: contract
+  rule_refs: [HJ-R-CHENGBAO, HJ-C-SANTAN-CHENGBAO, HJ-N-TANSHU]
+
+- id: RQ-008
+  question: 庄闲倍率是多少？庄家自摸和闲家自摸，每笔赔付分别乘几倍？
+  expected_points:
+    - 赢家与赔付者之间有一方是庄家时这一笔 × 8，双方都是闲家时 × 1
+    - 本期笃三老庄，庄家倍率固定 8
+    - 庄家自摸：三个闲家每笔都 × 8
+    - 闲家自摸：庄家那笔 × 8，另两个闲家每笔 × 1
+  section_hint: scoring
+  rule_refs: [HJ-F-ZHUANGXIAN-BEILV, HJ-C-ZHUANGJIA-BEILV]
+
+- id: RQ-009
+  question: 平胡、七对、爆头分别是几倍？杠分怎么算，进不进番型倍率？
+  expected_points:
+    - 平胡 1 倍
+    - 七对按档位倍数
+    - 爆头按档位倍数
+    - 杠分按每组成立的杠计，自摸时每名赔付者每杠另付
+    - 杠分不进番型倍数
+  section_hint: patterns
+  rule_refs: [HJ-K-PINGHU, HJ-K-QIDUI, HJ-K-BAOTOU, HJ-F-YUANYING-PEIFEN]
+
+- id: RQ-010
+  question: 杠飘的倍率怎么查？连续 2 杠且飘 2 次是多少倍？
+  expected_points:
+    - 按"这一段连续杠的杠数"与"这一段杠后连续打出财神的次数"两个维度查表
+    - 连续 2 杠且飘 2 次 = 32 倍
+  section_hint: patterns
+  rule_refs: [HJ-K-GANGPIAO]
+
+- id: RQ-011
+  question: 什么情况下会流局（黄庄）？流局时还会不会算杠分？
+  expected_points:
+    - 牌墙剩余可摸牌数为 21 张时允许再摸 1 张，若无人胡牌且响应处理结束，在下一次应摸牌时判定流局
+    - 流局计 1 小局
+    - 流局杠分为 0
+  section_hint: settlement
+  rule_refs: [HJ-T-LIUJU-SHIJI, HJ-P-HUANGZHUANG, HJ-F-YUANYING-PEIFEN]
+
+- id: RQ-012
+  question: 抢杠胡在什么时候可以宣告？抢杠胡的分数什么时候入账？
+  expected_points:
+    - 其他玩家宣告加杠（补杠）时可以抢杠胡
+    - 服务端确认抢杠胡后，本局结算时一次性入账
+  section_hint: settlement
+  rule_refs: [HJ-R-QIANGGANG, HJ-P-QIANGGANG-RUZHANG]
