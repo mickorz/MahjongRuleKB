@@ -240,8 +240,14 @@ const readBody = (req: IncomingMessage): Promise<unknown> =>
     const chunks: Buffer[] = [];
     req.on("data", (c: Buffer) => chunks.push(c));
     req.on("end", () => {
+      const raw = Buffer.concat(chunks).toString("utf8");
+      // 非 UTF-8 请求体会被解成 U+FFFD，写进去就是永久乱码（Windows 控制台 curl 的典型坑）
+      if (raw.includes("\uFFFD")) {
+        reject(new Error("请求体不是合法 UTF-8，请以 UTF-8 编码发送"));
+        return;
+      }
       try {
-        resolve(JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}"));
+        resolve(JSON.parse(raw || "{}"));
       } catch (e) {
         reject(new Error(`请求体不是合法 JSON：${(e as Error).message}`));
       }

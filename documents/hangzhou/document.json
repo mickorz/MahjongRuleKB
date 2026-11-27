@@ -1,0 +1,1975 @@
+{
+  "ruleset_id": "hangzhou-friends-4p",
+  "target_variant": "hangzhou",
+  "template_version": "1.0.0",
+  "ruleset_version": "1.2.0",
+  "document_version": 0,
+  "blocks": [
+    {
+      "block_id": "DOC-HA-000001",
+      "logical_block_id": "LBL-OVERVIEW-01",
+      "section_id": "overview",
+      "type": "paragraph",
+      "document_version": 0,
+      "content": [
+        {
+          "segment_id": "SEG-000001",
+          "text": "人数：4",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-RENSHU"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000002",
+          "text": "局数：8",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-JUSHU"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000003",
+          "text": "牌数：136",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-PAISHU"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000004",
+          "text": "允许杠的最低余牌数：22",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-GANG-ZUIDI-YUPAI"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        }
+      ],
+      "references": {
+        "requirement_refs": [],
+        "rule_refs": [],
+        "config_refs": [
+          "HJ-C-RENSHU",
+          "HJ-C-JUSHU",
+          "HJ-C-PAISHU",
+          "HJ-C-GANG-ZUIDI-YUPAI"
+        ],
+        "source_evidence_refs": []
+      }
+    },
+    {
+      "block_id": "DOC-HA-000002",
+      "logical_block_id": "LBL-OPENING-01",
+      "section_id": "opening",
+      "type": "paragraph",
+      "document_version": 0,
+      "content": [
+        {
+          "segment_id": "SEG-000005",
+          "text": "定庄：触发：每场首小局开始，庄家尚未确定。；条件：四名参战玩家已在局内。；否则：不进入开局掷骰。；结果：- 首局从四名参战玩家中随机确定庄家。掷骰开始前已确定庄家及其牢数。 - 同一场内从第二个小局起，按 `HJ-R-LUNZHUANG` 确定庄家。 - 本期采用笃三老庄，首庄牢数为 3，倍率 8。；验收：- 首局开局前庄家已确定，掷骰只是展示。 - 第 2 局起不再随机，按轮庄规则。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-R-DINGZHUANG"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.2.3"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000006",
+          "text": "笃三老庄：触发：每小局确定庄家后。；条件：`HJ-C-LIANZHUANG-MOSHI` = 笃三老庄（本期固定）。；否则：无（本期无其他连庄模式）。；结果：- 首局庄家及每次换庄后的新庄家均从三牢开始，庄家倍率为 8 倍。 - 庄家胡牌或流局时继续坐庄，下一局保持三牢，倍率仍为 8 倍。 - 闲家胡牌时按 `HJ-R-LUNZHUANG` 由胡牌者接任庄家，新庄家在下一局按三牢、8 倍结算。 - 三牢为最高牢数。该选项下每局均按三牢的庄家倍率结算。；验收：- 首局庄家牢数 = 3，倍率 = 8。 - 连庄 3 次后牢数仍 = 3（不递增）。 - 闲家胡牌后新庄牢数 = 3（不从头开始）。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-R-DUSAN"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.2.6"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000007",
+          "text": "轮庄：触发：同一场内，当前小局结束且继续下一小局。；条件：当前小局有人胡牌。；否则：当前小局流局时，由当局庄家连庄。；结果：- 胡牌者担任下一小局庄家。当局庄家胡牌时视为连庄。 - 连庄后的牢数按 `HJ-N-ZHUANGJIA-LAOSHU` 和 `HJ-R-DUSAN` 处理：本期固定三牢，不递增。 - 每场首局的庄家按 `HJ-R-DINGZHUANG` 确定。；验收：- 第 1 局闲家 B 胡牌：第 2 局 B 坐庄，三牢 8 倍。 - 第 1 局庄家 A 胡牌：第 2 局 A 连庄，仍三牢 8 倍。 - 第 1 局流局：第 2 局 A 连庄，三牢 8 倍。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-R-LUNZHUANG"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.2.4"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000008",
+          "text": "发牌：起点：掷骰展示后开始发牌。庄标和白板指示牌持续显示。；步骤：1. 四人牌组 136 张。以庄家为起点，按逆时针依次从牌序头部给每人同时发 4 张，重复 3 轮，每人先得 12 张。 2. 再从庄家起按同一顺序给每人发 1 张，四家各有 13 张。 3. 最后从同一牌序给庄家再发 1 张。发完庄家 14 张，三名闲家各 13 张，共发 53 张，牌墙余 83 张。 4. 理牌。仅本家手牌播放倒下、理牌、立起；其他三家保持牌背。庄家独立位刷新为服务端单独下发的第 14 张。 5. 骰盘区域切换为庄家出牌倒计时。庄家可开始操作。；中断：无。；结束：理牌完成，庄家进入首轮行牌。若庄家独立位第 14 张满足 `HJ-R-ZIMO`，立即显示【自摸】【过】。",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-T-FAIPAI"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#4.4"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000009",
+          "text": "庄家牢数：键：本小局的庄家牢数（连庄档位）。；初值：每小局定庄后为 3（笃三老庄固定）。；加一：无。本期固定三牢，不递增。；重置：每小局按 `HJ-R-DINGZHUANG` / `HJ-R-LUNZHUANG` 重新确定为 3。本小局内不再改变。；读取：`HJ-R-ZHUANGXIAN-FANGCHONG`（庄闲放铳要求三牢）、`HJ-R-QIANGGANG`（抢杠胡要求三牢）、`HJ-F-ZHUANGXIAN-BEILV`（庄闲倍率 = 8）、界面庄标显示「庄×3」。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-N-ZHUANGJIA-LAOSHU"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.2 名词「牢庄」"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000010",
+          "text": "连庄模式：du_san_lao_zhuang",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-LIANZHUANG-MOSHI"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000011",
+          "text": "庄家牢数：3",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-ZHUANGJIA-LAOSHU"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000012",
+          "text": "发牌节奏：4x3+1+1",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-FAIPAI-JIEZOU"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        }
+      ],
+      "references": {
+        "requirement_refs": [],
+        "rule_refs": [
+          "HJ-R-DINGZHUANG",
+          "HJ-R-DUSAN",
+          "HJ-R-LUNZHUANG",
+          "HJ-T-FAIPAI",
+          "HJ-N-ZHUANGJIA-LAOSHU"
+        ],
+        "config_refs": [
+          "HJ-C-LIANZHUANG-MOSHI",
+          "HJ-C-ZHUANGJIA-LAOSHU",
+          "HJ-C-FAIPAI-JIEZOU"
+        ],
+        "source_evidence_refs": [
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.2.3",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.2.6",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.2.4",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#4.4",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.2 名词「牢庄」"
+        ]
+      }
+    },
+    {
+      "block_id": "DOC-HA-000003",
+      "logical_block_id": "LBL-GAMEPLAY-01",
+      "section_id": "gameplay",
+      "type": "paragraph",
+      "document_version": 0,
+      "content": [
+        {
+          "segment_id": "SEG-000013",
+          "text": "暗杠：触发：本人出牌阶段。；条件：- 手中有 4 张相同牌面的非财神牌。 - 吃或碰成功的当前回合也允许暗杠。 - 余牌满足 `HJ-R-GANG-BUPAI`。 - 受飘财限制时**仍可**暗杠。；否则：不能暗杠。；结果：- 暗杠成立后从手牌移出 4 张，组成 1 组杠牌放入碰杠区。 - 暗杠以 3 张背面、顶部 1 张正面的方式展示，其他玩家可通过正面牌识别该暗杠的牌面。 - 按 `HJ-R-GANG-BUPAI` 从牌墙尾部补牌。；验收：- 手中有 4 张二万：可暗杠。 - 手中有 3 张二万 + 1 张财神：不可暗杠（财神不能补成杠）。 - 受飘财限制时：仍可暗杠。 - 暗杠不提供抢杠胡响应。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-R-ANGANG"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.1.4"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000014",
+          "text": "白板财神：触发：胡牌组合判定，或玩家轮到自己出牌。；条件：`HJ-C-CAISHEN` = 白板（本期固定）。；否则：无。；结果：- 当局所有白板按财神规则使用，可替代顺子、刻子或对子所需的牌。 - 吃、碰、杠均使用实际非财神牌张。财神牌本身及其替代牌面均不能用于执行这些操作。例：上家打 2 筒，手中的 1 筒 + 财神不能当 1 筒、3 筒去吃；手中 1 张东 + 财神也不能碰他人打出的东。 - 玩家在轮到自己且允许出牌时，可以主动打出手中的财神，无需处于爆头状态。打出的财神按 `HJ-R-PIAOCAI-XIANZHI` 触发飘财。 - 白板财神打出后，牌河按普通白板牌面显示。其他玩家不能用该弃牌吃、碰、杠或点炮胡。 - 翻财神规则见附录 A，本期不生效。；验收：- 手持财神 + 2 筒、3 筒，摸 1 筒或 4 筒：财神可配对或顺子，胡牌成立。 - 手持财神 + 2 筒、3 筒，上家打 1 筒：不可吃。 - 轮到自己出牌，手中有财神：可直接打出，触发飘财。 - 打出财神后其他家：不可吃、碰、杠、点炮胡这张白板。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-R-CAISHEN"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.2.5"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000015",
+          "text": "吃禁手：触发：吃牌候选生成时，以及吃牌成立后。；条件：`HJ-C-CHI-PENG-JINSHOU` 启用（本期启用）。；否则：无禁手。；候选过滤：吃牌候选须先模拟吃成后的禁打名单。若移除参与吃牌的两张手牌后，剩余手牌全部属于禁打牌，则过滤该吃法，不出现在候选中。若所有吃法均被过滤，不显示【吃】，本家提示「吃禁手规则生效中」。即使吃后可杠，也不保留这种没有合法出牌的吃法。禁张不含财神，剩余财神仍可合法打出时不因本项被过滤。；禁打名单：吃牌成立后，只按最终选定的顺子写入禁打名单，同牌面的手牌全部受限。 - 用两张间隔一点的同花色牌吃中间张时，只禁打被吃的牌。例：用 1 条、3 条吃 2 条，禁打 2 条。 - 用两张相邻的同花色牌吃一端时，禁打这两张牌能在两端接成顺子的牌，只计算 1 至 9 范围内的牌面。例：用 2 条、3 条吃 1 条或 4 条，都禁打 1 条和 4 条。 - 用 1 条、2 条吃 3 条时，只禁打 3 条。；验收：- 手牌只剩 1 条、3 条，上家打 2 条：模拟吃后手牌为空，无合法出牌（除非有财神），该吃法被过滤。 - 用 7 条、8 条吃 9 条后手里还有一张 9 条：9 条禁打。 - 吃后同回合加杠或暗杠并补牌：补牌完成时立即解除本次吃碰禁手。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-R-CHI-JINSHOU"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.2.9"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000016",
+          "text": "吃：触发：上家刚打出 1 张牌。；条件：- 弃牌是非财神牌。 - 本家手中有 2 张非财神牌，与弃牌组成同花色、点数连续的顺子。1 与 9 不可首尾相连。 - 本家未受尚未解除的飘财限制。 - 存在多种合法组合时，选择其中 1 组。；否则：不能吃。包括：弃牌是财神、用财神替代、不是上家打的、受飘财限制、吃完后无合法出牌（见 `HJ-R-CHI-JINSHOU`）。；结果：- 吃是否执行按 `HJ-R-QIPAI-YOUXIANJI` 裁决，不能因先点击吃而越过点炮胡、碰或直杠。 - 吃成功后，弃牌与选定的 2 张手牌组成 1 组副露放入碰杠区，不进行常规摸牌，直接进入本人出牌阶段。 - 当前回合满足条件时即可加杠或暗杠；未选择杠时打出 1 张牌。；验收：- 上家打 2 筒，本家有 1 筒、3 筒：可吃，组成 1-2-3 筒。 - 上家打 2 筒，本家有 1 筒、财神：不可吃（财神不能用于吃）。 - 下家打 2 筒，本家有 1 筒、3 筒：不可吃（只能吃上家）。 - 上家打 1 条，本家有 2 条、3 条、也有 2 筒、3 筒：只有 2-3 条能吃，2-3 筒花色不同不成立。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-R-CHI"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.1.2"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000017",
+          "text": "杠牌通用逻辑与补牌：触发：任意一类杠（直杠、加杠、暗杠）成立。；条件：- 杠前剩余可摸牌数 ≥ 22（`HJ-C-GANG-ZUIDI-YUPAI`），且牌墙尾部有完整的两张可用墩。 - 杠牌用牌是非财神牌。 - 未受飘财限制（直杠和加杠）；暗杠不受飘财限制。 - 七对结构下仍可合法杠，但杠成立后不再按七对结算。；否则：剩 21 张时禁止杠，允许最后一次常规摸牌。余牌不足或手牌不满足时不生成该杠候选。；结果：- 每次杠成立后从牌墙尾部消耗一整墩：该墩上张补入杠牌者手牌，紧邻的下张退出可摸范围。下一次杠从向内的下一整墩按同样顺序处理。示例：尾部两墩从外向内为上 01 / 下 02、上 03 / 下 04 时，第一杠补 01、隔离 02，第二杠补 03、隔离 04。 - 每杠使剩余可摸牌数减 2。 - 余牌减至 20 张后，先完成当前回合及弃牌响应，在下一次常规摸牌前判定流局。 - 杠后补牌可按规则胡牌；未胡时可继续杠或打出 1 张牌。允许连续杠，每次均须重新检查余牌 ≥ 22 及对应杠牌条件。；验收：- 余 22 张时开杠：成立，补 1 张、隔离 1 张，余 20 张。 - 余 21 张时开杠：禁止，只允许最后一次常规摸牌。 - 余 30 张时开杠：余牌数显示变为 28。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-R-GANG-BUPAI"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.1.4"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000018",
+          "text": "加杠：触发：本人出牌阶段。；条件：- 碰杠区已有本家碰出的刻子。 - 手中有第 4 张相同牌面的非财神牌。 - 吃或碰成功的当前回合也允许加杠。 - 本家未受尚未解除的飘财限制。 - 余牌满足 `HJ-R-GANG-BUPAI`。；否则：不能加杠。；结果：- 先处理其他玩家的抢杠胡响应（见 `HJ-R-QIANGGANG`）。 - 有人抢杠胡时：不完成加杠，也不补牌。 - 无人胡牌后：完成加杠，从手牌移出 1 张补入已有的碰牌组，再按 `HJ-R-GANG-BUPAI` 补牌。；验收：- 碰过一万后摸到第 4 张一万，出牌阶段：可加杠。 - 加杠时三牢局内庄闲之间有人可用这张一万胡牌：先等抢杠响应，无人胡才完成加杠。 - 受飘财限制时：不可加杠。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-R-JIAGANG"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.1.4"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000019",
+          "text": "碰禁手：触发：碰牌成立后。；条件：`HJ-C-CHI-PENG-JINSHOU` 启用（本期启用）。；否则：无禁手。；结果：- 碰牌成立后，禁打与被碰牌同牌面的手牌。例：碰 2 筒后，手中若仍有一张 2 筒，该牌禁打。 - 吃、碰共用出牌反馈：本家进入出牌阶段时，禁打牌原位压暗，牌面可辨认。点按或横滑经过禁打牌时，牌保持原位。禁打牌不可提起，也不能通过拖动或双击打出。；解除：本家完成合法出牌后，清除本次禁手的压暗效果。若吃或碰后在同一回合加杠或暗杠，尾墩补牌算本家的下一次摸牌，补牌完成时立即解除本次吃碰禁手。；验收：- 手有 3 张 2 筒，碰他家的 2 筒：手里剩 1 张 2 筒禁打。 - 碰后同回合暗杠另一组牌并补牌：禁手解除，可打出任何牌。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-R-PENG-JINSHOU"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.2.9"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000020",
+          "text": "碰：触发：其他任意一名玩家刚打出 1 张牌。；条件：- 弃牌是非财神牌。 - 本家手中有至少 2 张相同牌面的非财神牌。即使手中有 3 张，也只用其中 2 张完成碰。 - 本家未受尚未解除的飘财限制。；否则：不能碰。包括：弃牌是财神、用财神替代、受飘财限制。；结果：- 碰是否执行按 `HJ-R-QIPAI-YOUXIANJI` 裁决，点炮胡优先于碰，碰优先于吃。 - 碰成功后，弃牌与 2 张手牌组成 1 组副露放入碰杠区，不进行常规摸牌，直接进入本人出牌阶段。 - 当前回合满足条件时即可加杠或暗杠；未选择杠时打出 1 张牌。；验收：- 任意一家打东风，本家有 2 张东风：可碰。 - 任意一家打东风，本家有 3 张东风：可碰（只用 2 张），也可直杠（按优先级，直杠 > 碰，但两者同级由玩家选择）。 - 任意一家打白板（财神）：不可碰。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-R-PENG"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.1.3"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000021",
+          "text": "飘财摸打限制：触发：玩家 A 在自己的出牌阶段打出一张财神（白板）。；条件：打出的确实是财神牌。；否则：打出普通牌，不触发限制，A 本人连续飘财次数清零。；结果：- A 对另外三家施加摸打限制。受限制的玩家：仍可按规则胡牌、暗杠；**禁止吃、碰、直杠、加杠**；出牌时只能打出本次常规摸入的牌。若已暗杠并补牌，则只能打最新补入的牌。 - 暗杠没用到原摸牌时，将原摸牌并回手牌排序，最新补牌占据分隔位。 - 每名发起者的限制独立记录。玩家只要仍受至少一名其他发起者的限制，就继续摸打。例：A 发起的限制未解除时 B 又飘，A 受 B 限制，B 仍受 A 限制。；解除：行牌回到 A 时，A 常规摸牌，或通过吃、碰、杠成立取得行牌权，即解除 A 对另外三家的限制。A 随后打出普通牌，另外三家可按当时牌局条件操作。其他发起者尚未解除的限制继续生效。A 若再次打出财神，则开启新一轮限制。 - 连续打出财神的次数按 `HJ-N-LIANXU-PIAOCAI` 累计，用于查番型档；杠飘记录按 `HJ-K-GANGPIAO` 处理。；验收：- A 打财神，B 受限：B 可胡牌、可暗杠，不可碰、不可直杠、不可加杠、不可吃。 - B 受限时只能打本次摸入的牌，即使原手牌有同牌面。 - A 打财神后，B 也打财神：A 和 B 互相受限，C 和 D 同时受两人限制。 - A 再次摸牌后打出普通牌：A 对三家的限制解除，B 的限制若仍在则继续。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-R-PIAOCAI-XIANZHI"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.2 名词「飘」"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000022",
+          "text": "抢杠胡：触发：其他玩家宣告加杠。；条件：- `HJ-C-QIANGGANGHU` 启用（本期启用）。 - 本期为三牢局。只有三牢局内的庄家与闲家之间可以抢杠胡。 - 被加杠的第 4 张牌能使响应者合法胡牌（牌型满足且胡牌资格有效）。；否则：不提供抢杠胡响应，加杠直接完成。；结果：- 多人可胡时按已确认的逆时针就近顺序处理，只允许一人胡。 - 原赔付由被抢杠的加杠者支付，金额为胡牌者按普通自摸原应向三家收取的合计 R。底分 1、三牢、平胡时，庄家抢杠原赔付为 24 分，闲家抢杠原赔付为 10 分。 - 胡牌者参与的庄闲承包、倒承包按 `HJ-P-CHENGBAO-RUZHANG` 另行叠加，原抢杠赔付不被替换。 - 加杠者同时承担承包或倒承包时，两笔均须支付。 - 加杠不完成，不补牌。；验收：- 三牢局，闲家加杠一万，庄家听一万：庄家可抢杠胡，原赔付 10 分。 - 三牢局，庄家加杠一万，闲家听一万：闲家可抢杠胡，原赔付 24 分。 - 二人局或非三牢局（本期不出现）：不可抢杠胡。 - 加杠的牌不能让任何庄闲一方成牌：加杠直接完成。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-R-QIANGGANG"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.1.4"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000023",
+          "text": "弃牌响应优先级：触发：对他人打出的同一张弃牌，多名玩家可执行操作。；条件：先按本局规则判定各玩家可执行的操作，再按优先级裁决：点炮胡 > 碰 / 明杠（直杠）> 吃。碰与直杠同级。；否则：低优先级操作先被选择时，等待所有更高优先级的玩家手动放弃后才执行。倒计时归零后继续等待手动响应，不自动裁决。；结果：- 更高优先级的操作一旦执行，同一弃牌的其余响应取消。 - 多人可胡同一张弃牌时，从出牌者起按逆时针顺序，最近的一名可胡玩家优先；该玩家放弃后顺延至下一名可胡玩家。每张弃牌只允许一人胡，不允许一炮多响。 - 吃牌仅能使用自己上家打出的牌。；验收：- 上家打五万，下家可吃三四五万、另一家可碰五万、第三家可直杠五万：直杠成立，吃和碰取消。 - 庄家打九筒，闲家 A 和闲家 B 都可点炮：从庄家起逆时针就近的 A 先响应，A 点【过】后 B 可胡。 - 吃牌者先提交吃，碰牌者尚未操作：吃牌者本端进入等待，碰成立则吃取消，碰放弃则吃成立。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-R-QIPAI-YOUXIANJI"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.1.1"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000024",
+          "text": "直杠：触发：其他玩家刚打出 1 张牌。；条件：- 弃牌是非财神牌。 - 本家手中有 3 张相同牌面的非财神牌，可与弃牌组成杠子。 - 本家未受尚未解除的飘财限制。；否则：不能直杠。；结果：- 直杠与碰同级，按 `HJ-R-QIPAI-YOUXIANJI` 裁决（点炮胡 > 碰 / 直杠 > 吃）。 - 直杠成立后从手牌移出 3 张，与被杠的弃牌组成 1 组杠牌放入碰杠区。 - 按 `HJ-R-GANG-BUPAI` 从牌墙尾部补牌。；验收：- 任意一家打一万，本家有 3 张一万：可直杠。 - 任意一家打白板（财神），本家有 3 张白板：不可直杠。 - 受飘财限制时：不可直杠，仍可暗杠。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-R-ZHIGANG"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.1.4"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000025",
+          "text": "流局时机：起点：牌墙剩余可摸牌数为 21 张。；步骤：1. 允许当前玩家再摸 1 张，使剩余可摸牌数变为 20。 2. 先处理该次摸牌（本人自摸判定）、出牌，以及其他玩家对弃牌的响应。 3. 若无人胡牌且响应处理结束，在下一次应摸牌时停止摸牌，判定流局（黄庄）。；中断：若有人胡牌，按胡牌流程结算，不流局。；结束：确认黄庄后停止行牌，流局计 1 小局。四家亮牌，桌面中央显示橙色「黄庄」，余牌数保留显示 20。",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-T-LIUJU-SHIJI"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.2 名词「流局」/ 5.1"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000026",
+          "text": "一小局流程：起点：本小局开始。首局由房主在四人准备后点【开始游戏】；后续小局四人准备后自动开始。；步骤：1. 首局播放「对局开始」动画（仅首局，约 865 毫秒）。后续小局直接进入掷骰。 2. 定庄（`HJ-R-DINGZHUANG` / `HJ-R-LUNZHUANG`）。掷骰前已确定庄家和牢数。 3. 掷骰展示。骰盘左侧显示白板财神指示牌，庄家头像旁显示庄标「庄×3」。 4. 发牌（`HJ-T-FAIPAI`）。136 → 余 83。 5. 行牌（`HJ-T-XINGPAI`）。庄家用起手 14 张直接进入首轮行牌，不额外摸牌。 6. 胡牌或流局（`HJ-T-LIUJU-SHIJI`）。 7. 结算（`HJ-T-XIAOJU-JIESUAN`）。每小局只结算一次。流局也计 1 局。 8. 小结算。未满 8 局显示【继续游戏】，第 8 局显示【返回大厅】。；中断：菜单退出解散房间。先确认解散时进行中的小局结束，不计分不计局；先确认胡牌时照常计分计局。；结束：满 8 局后本场结束。或任一玩家解散房间。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-T-XIAOJU-LIUCHENG"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#4.1-5.1 / 2.3.2.1"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000027",
+          "text": "行牌回合：起点：上一张弃牌完成响应裁决且对局可继续摸牌；或吃、碰、杠成立后操作者接手行牌。；步骤：1. 常规摸牌。按行牌顺序轮到的玩家从牌墙头部取 1 张，放入右侧分隔位。刷新各视角牌墙与余牌数。 2. 判定本人操作：自摸、暗杠、加杠、出牌。有【自摸】或新摸牌能组成杠时须先点【过】才能出牌。 3. 出牌。双击或滑动。出牌后理牌，分隔位牌并回主体。 4. 弃牌响应。有资格的玩家收到按钮，按 `HJ-R-QIPAI-YOUXIANJI` 裁决。无人响应则下家摸牌；有人吃碰杠则操作者接手行牌。；中断：- 杠成立后补牌，补牌后重新判定操作。 - 飘财限制期间只能打摸入的那张（`HJ-R-PIAOCAI-XIANZHI`）。 - 胡牌成立进入结算。；结束：余牌按 `HJ-T-LIUJU-SHIJI` 触发流局，或胡牌成立。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-T-XINGPAI"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#4.5 / 4.6"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000028",
+          "text": "飘财摸打限制记录：键：发起者座位。每名发起者一条，作用于另外三家。；写入：该玩家合法打出财神时，写入一条「发起者 → 另外三家」的限制记录。；生效：被限制的玩家按 `HJ-R-PIAOCAI-XIANZHI` 行牌。一名发起者解除后，其他发起者的记录继续生效。；清除：该发起者常规摸牌，或吃、碰、杠成立并接回行牌时，只清除这一名发起者对其他三家的限制。；小局开始：清空全部记录。",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-M-PIAOCAI-JILU"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.2 名词「飘」"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000029",
+          "text": "连续飘财次数：键：玩家座位。每名玩家独立计数。；初值：每小局从 0 次。；加一：该玩家在自己的出牌阶段打出财神时 +1。；重置：打出普通牌时清零。胡牌结算时按当前次数查番型档，结算后随小局结束清零。；读取：`HJ-K-CAIPIAO`（财飘 / 双财飘 / 三财飘按 1 / 2 / 3 次定档）、`HJ-K-GANGPIAO`、`HJ-K-PIAOGANG`。打出第 4 张财神时手里已无可配对的财神，不成立以爆头为前提的财飘。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-N-LIANXU-PIAOCAI"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.2 名词「飘」"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000030",
+          "text": "财神：white_dragon",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-CAISHEN"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000031",
+          "text": "吃碰禁手：enabled",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-CHI-PENG-JINSHOU"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000032",
+          "text": "抢杠胡：enabled",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-QIANGGANGHU"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000033",
+          "text": "流局留底张数：20",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-LIUJU-LIUDI-ZHANGSHU"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000034",
+          "text": "托管：none",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-TUOGUAN"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        }
+      ],
+      "references": {
+        "requirement_refs": [],
+        "rule_refs": [
+          "HJ-R-ANGANG",
+          "HJ-R-CAISHEN",
+          "HJ-R-CHI-JINSHOU",
+          "HJ-R-CHI",
+          "HJ-R-GANG-BUPAI",
+          "HJ-R-JIAGANG",
+          "HJ-R-PENG-JINSHOU",
+          "HJ-R-PENG",
+          "HJ-R-PIAOCAI-XIANZHI",
+          "HJ-R-QIANGGANG",
+          "HJ-R-QIPAI-YOUXIANJI",
+          "HJ-R-ZHIGANG",
+          "HJ-T-LIUJU-SHIJI",
+          "HJ-T-XIAOJU-LIUCHENG",
+          "HJ-T-XINGPAI",
+          "HJ-M-PIAOCAI-JILU",
+          "HJ-N-LIANXU-PIAOCAI"
+        ],
+        "config_refs": [
+          "HJ-C-CAISHEN",
+          "HJ-C-CHI-PENG-JINSHOU",
+          "HJ-C-QIANGGANGHU",
+          "HJ-C-LIUJU-LIUDI-ZHANGSHU",
+          "HJ-C-TUOGUAN"
+        ],
+        "source_evidence_refs": [
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.1.4",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.2.5",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.2.9",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.1.2",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.1.3",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.2 名词「飘」",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.1.1",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.2 名词「流局」/ 5.1",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#4.1-5.1 / 2.3.2.1",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#4.5 / 4.6"
+        ]
+      }
+    },
+    {
+      "block_id": "DOC-HA-000004",
+      "logical_block_id": "LBL-CONTRACT-01",
+      "section_id": "contract",
+      "type": "paragraph",
+      "document_version": 0,
+      "content": [
+        {
+          "segment_id": "SEG-000035",
+          "text": "三摊承包成立：触发：玩家 A 成功吃取玩家 B 的弃牌。；条件：- `HJ-C-SANTAN-CHENGBAO` 启用（本期启用）。 - 只有庄家与闲家之间能成立承包关系。 - 按取牌方向（取牌玩家 → 供牌玩家）累计有效摊数达到 3。A 对 B 的摊数与 B 对 A 的摊数互相独立。 - 不因 B 正受 A 发起的飘财摸打限制而免计。即使供牌者正受限制，本次吃牌也正常计摊，不延后到第 4 次。；否则：- 碰、直杠、加杠、暗杠均不增加摊数（`HJ-C-PENG-SUAN-TAN` 关闭）。 - 两名闲家之间按取牌方向最多累计 2 摊，不成立承包。闲家 A 已对闲家 B 累计 2 摊时，B 再打牌，A 不可吃该牌，客户端不显示该牌的【吃】入口。；结果：- 第 3 个有效摊立即成立承包关系 A → B。 - 成立时四端在桌面中央方位盘下方显示金色「三摊落地」。 - 承包关系的赔付效果见 `HJ-P-CHENGBAO-RUZHANG`。 - 下一小局摊数重新累计。；验收：- 庄家 A 吃闲家 B 的牌 3 次：A → B 承包成立。 - 闲家 A 吃闲家 B 的牌 2 次：第 3 次不显示【吃】入口，A 不可吃。 - B 受 A 的飘财限制被迫打牌、A 吃到：正常计摊。 - A 碰 B 的牌 3 次：不成立承包。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-R-CHENGBAO"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.2.8"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000036",
+          "text": "三摊承包入账：入账时点：服务端确认胡牌后，本局结算时一次性入账。；分配顺序：先按常规自摸分别算出三名对手的原应赔分并求和为 S，再按承包关系改写付款方。；一笔怎么分：S 始终取该次赢家原本应收的三笔合计。A 对 B 已成立承包关系（A 吃了 B 三次）时：；承包：A 自摸，由 B 付 S。其余未参与赔付的玩家为 0 分。；反承包（倒承包）：B 自摸，由 A 付 2 × S。界面称「反承包」。；链式承包：A 对 B 成立承包、C 对 A 也成立承包，A 自摸时，B 付 S，C 再付 2 × S，A 实收 3 × S，第四家为 0。；点炮胡：始终只有放铳者一人付款。仅当放铳者本人是赢家对应的承包或倒承包对方时生效：以原点炮分 P 为基数，承包按 1 倍、倒承包按 2 倍整体改写，不再另加原 P。其他玩家与赢家的承包关系不参与。；抢杠胡：保留加杠者原赔付 R，赢家参与的每项承包按 R 的 1 倍、倒承包按 R 的 2 倍独立计算后叠加。；余额用尽：无封顶，不截断。；展示用哪一份数：小结算按实际赔付显示标识。三摊承包时赢家牌组上方显示黄色「承包」，赔付者得分右侧显示蓝底「三摊承包」。反承包时显示「反承包」。链式承包时赢家行同时显示「承包」和「反承包」。；例子：- 庄家 A 平胡自摸，A 对闲家 B 承包成立：S = 24，B 赔 24，另两家 0，A +24。 - 庄家 A 对闲家 B 承包成立，B 平胡自摸：常规三家应赔 8、1、1 共 S = 10，A 按 2 × 10 = 20 赔，B +20。 - 庄家 A 平胡自摸，A 对 B 承包、C 对 A 承包：S = 24，B 赔 24，C 赔 48，A +72，D 为 0。 - 庄家平胡抢杠，加杠闲家同时承担倒承包：付 24 + 24 × 2 = 72。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-P-CHENGBAO-RUZHANG"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.3 / 2.3.2.8"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000037",
+          "text": "摊数：键：取牌玩家 → 供牌玩家的有向对。A 每次成功吃 B 的牌，记 A 对 B 一摊。A 对 B 与 B 对 A 互相独立。；初值：每小局从 0 起。；加一：吃牌裁决成立时 +1。碰、直杠、加杠、暗杠均不加。；重置：下一小局全部清零。；读取：`HJ-R-CHENGBAO`。庄闲之间达到 3 成立承包；闲闲之间达到 2 后不再显示【吃】入口。",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-N-TANSHU"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.2 名词「摊」"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000038",
+          "text": "三摊承包：enabled",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-SANTAN-CHENGBAO"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000039",
+          "text": "碰算摊：disabled",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-PENG-SUAN-TAN"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        }
+      ],
+      "references": {
+        "requirement_refs": [],
+        "rule_refs": [
+          "HJ-R-CHENGBAO",
+          "HJ-P-CHENGBAO-RUZHANG",
+          "HJ-N-TANSHU"
+        ],
+        "config_refs": [
+          "HJ-C-SANTAN-CHENGBAO",
+          "HJ-C-PENG-SUAN-TAN"
+        ],
+        "source_evidence_refs": [
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.2.8",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.3 / 2.3.2.8",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.2 名词「摊」"
+        ]
+      }
+    },
+    {
+      "block_id": "DOC-HA-000005",
+      "logical_block_id": "LBL-SCORING-01",
+      "section_id": "scoring",
+      "type": "paragraph",
+      "document_version": 0,
+      "content": [
+        {
+          "segment_id": "SEG-000040",
+          "text": "每笔原应赔分：输入：底分、胡牌番型倍数、该笔适用的庄闲倍数。；公式：原应赔分 = 底分 × 胡牌番型倍数 × 该笔的庄闲倍数。先按本局实际胡牌番型确定倍数（见 `HJ-K-FANXING-HUCHI`），再逐一判断赢家和各赔付者的身份（见 `HJ-F-ZHUANGXIAN-BEILV`）。；不计入：承包改写、杠分、拖底等后续处理不在此公式内，见对应入账分配卡。；例子：- 番型 2 倍、庄闲倍数 8 倍：这笔原应赔 1 × 2 × 8 = 16 分。 - 闲家 2 倍番型自摸：庄家付 1 × 2 × 8 = 16，两名闲家各付 1 × 2 × 1 = 2。 - 本期无封顶。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-F-YUANYING-PEIFEN"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.3 / 2.3.2.10"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000041",
+          "text": "庄闲倍率：输入：赢家身份（庄 / 闲）、赔付者身份（庄 / 闲）。；公式：赢家与赔付者之间有一方是庄家时，这一笔 × 8；双方都是闲家时，这一笔 × 1。本期笃三老庄，庄家倍率固定 8。；不计入：不进入番型倍数的计算，只乘在每笔原应赔分上。；例子：- 庄家自摸：三个闲家每笔都 × 8。 - 闲家自摸：庄家那笔 × 8，另两个闲家每笔 × 1。 - 闲家之间点炮（本期不开放）：若开放则 × 1。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-F-ZHUANGXIAN-BEILV"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.3"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000042",
+          "text": "底分：1",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-DIFEN"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000043",
+          "text": "封顶：none",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-FENGDING"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000044",
+          "text": "庄家倍率：8",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-ZHUANGJIA-BEILV"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000045",
+          "text": "庄闲放铳：enabled",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-ZHUANGXIAN-FANGCHONG"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000087",
+          "text": "庄家自摸时每笔庄闲倍率：8",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        }
+      ],
+      "references": {
+        "requirement_refs": [],
+        "rule_refs": [
+          "HJ-F-YUANYING-PEIFEN",
+          "HJ-F-ZHUANGXIAN-BEILV"
+        ],
+        "config_refs": [
+          "HJ-C-DIFEN",
+          "HJ-C-FENGDING",
+          "HJ-C-ZHUANGJIA-BEILV",
+          "HJ-C-ZHUANGXIAN-FANGCHONG"
+        ],
+        "source_evidence_refs": [
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.3 / 2.3.2.10",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.3"
+        ]
+      }
+    },
+    {
+      "block_id": "DOC-HA-000006",
+      "logical_block_id": "LBL-PATTERNS-01",
+      "section_id": "patterns",
+      "type": "paragraph",
+      "document_version": 0,
+      "content": [
+        {
+          "segment_id": "SEG-000046",
+          "text": "爆头：取档键：摸牌前手牌结构。；表里没有的档：七对爆头按 `HJ-K-QIKE` 查档；补牌爆头按 `HJ-K-GANGBAO` 查档。；多档同时：同一手牌同时满足普通爆头和七客时，按七客结算（见 `HJ-K-FANXING-HUCHI`）。",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-K-BAOTOU"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 2 项"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000047",
+          "text": "财飘 / 双财飘 / 三财飘：取档键：本人连续打出财神的实际次数（`HJ-N-LIANXU-PIAOCAI`）。；表里没有的档：打出第 4 张财神时手里已无可配对的财神，不成立以爆头为前提的财飘。杠后飘财按 `HJ-K-GANGPIAO`，先飘后杠按 `HJ-K-PIAOGANG`。；多档同时：胡牌结算时再判断该档番型是否成立。例：连续两个出牌回合各打出一张财神，随后下一摸爆头自摸，按双财飘 8 倍。",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-K-CAIPIAO"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 3-5 项"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000048",
+          "text": "番型互斥与优先级：取档键：一次胡牌中同时成立的番型集合。；表里没有的档：无。；多档同时：- 组合档已包含各组成项的倍数，算分直接使用最终选中的档位。 - 例：单杠配飘 1 次为 1 × 2 × 4 = 8 倍。二连杠配双财飘为 1 × 4 × 8 = 32 倍。先杠后飘为杠飘，先飘后杠为飘杠，同档使用相同倍数。三连杠补牌爆头为 1 × 8 × 2 = 16 倍。豪华七对配双财飘为 4 × 1 × 8 = 32 倍。 - 例：先飘 1 次、连杠 2 次后补牌爆头为 16 倍。先飘 2 次、连杠 3 次后补牌爆头为 64 倍。第一例若补牌仅满足普通自摸，按二连杠 4 倍。 - 例：自摸后一万到七万各两张，同时满足平胡 1 倍和清七对 4 倍，按清七对 4 倍结算。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-K-FANXING-HUCHI"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 番型互斥与优先级"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000049",
+          "text": "杠爆：取档键：此前连续完成的杠数。；表里没有的档：先飘财后杠的情况按 `HJ-K-PIAOGANG`。；多档同时：手牌符合七对结构时仍可合法杠，但杠成立后不再按七对结算，因此不成立七对杠爆。",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-K-GANGBAO"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 18-21 项 / 2.3.1.4"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000050",
+          "text": "杠上开花 / 二连杠 / 三连杠 / 四连杠：取档键：同一个行牌回合内连续完成的杠数。；表里没有的档：补牌爆头自摸时按 `HJ-K-GANGBAO` 或 `HJ-K-PIAOGANG` 查档。补牌未胡并打出财神后，旧杠记录只可用于 `HJ-K-GANGPIAO`。；多档同时：每一杠补牌后直接进入下一杠才算「连续」。与本次胡牌不相连的更早的杠不计入。",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-K-GANGKAI"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 6-9 项"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000051",
+          "text": "杠飘：取档键：这一段连续杠的杠数（行）× 这一段杠后连续打出财神的次数（列）。；表里没有的档：飘财第 4 次不成立（手里已无财神）。；多档同时：先杠后飘为杠飘，先飘后杠为飘杠（`HJ-K-PIAOGANG`），同档使用相同倍数。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-K-GANGPIAO"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 22-33 项 / 2.3.1.4 杠飘"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000052",
+          "text": "飘杠：取档键：这段新连杠次数（行）× 开杠前的连续飘财次数（列）。；表：查 `HJ-K-GANGPIAO` 的同档倍数表（8–256 倍）。；表里没有的档：无。；多档同时：- 本人先打出 1 张或连续多张财神，在最后一次打出财神后的下一次摸牌回合内开杠，完成 1 杠或连续多杠后，用最后一次补牌爆头自摸，判定为飘杠。 - 最后一次补牌仅满足普通自摸时，按杠上开花或对应的连杠档（`HJ-K-GANGKAI`）。 - 例：先飘 1 次、连杠 2 次后补牌爆头，为 16 倍。先飘 2 次、连杠 3 次后补牌爆头，为 64 倍。 - 例：杠 1 次，飘 1 次，下一次摸牌再杠 1 次后补牌爆头，为 8 倍。旧杠记录清除，按已飘的 1 次和新杠的 1 次定档。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-K-PIAOGANG"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 34 项 / 2.3.4.2 番型互斥"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000053",
+          "text": "平胡：取档键：胡牌结构。四组完整面子加一组对子。；表里没有的档：无。；多档同时：先验证牌型，再验证该次自摸、点炮胡或抢杠胡资格。与其他番型同时成立时按 `HJ-K-FANXING-HUCHI` 互斥与优先级处理。例：自摸后一万到七万各两张，同时满足平胡 1 倍和清七对 4 倍，按清七对结算。",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-K-PINGHU"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 1 项"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000054",
+          "text": "七对及豪华七对：取档键：七组对子中的豪华组数（每种非财神牌面有 4 张实际同牌计 1 组豪华）。；表里没有的档：没有财神时按 `HJ-K-QINGQIDUI`。；多档同时：财神可用于组成对子。四张白板财神不计豪华，也不能用财神补足豪华所需的四张。",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-K-QIDUI"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 10-13 项"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000055",
+          "text": "七客（七对爆头）及飘财各档：取档键：飘财次数（行）× 七对的豪华组数（列）。；表里没有的档：无。；多档同时：- 没有已完成的吃、碰或任何杠牌组。摸牌前有 6 组对子 + 1 张财神，摸入任意牌与财神组成第 7 对并自摸，即七对爆头（七客）。 - 只有 4 张实际同牌的非财神牌才能计 1 组豪华。 - 与普通爆头重叠时按七客结算（见 `HJ-K-FANXING-HUCHI`）。 - 例：豪华七对 + 双财飘，取「双财飘」行「豪华」列，为 32 倍。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-K-QIKE"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 35-50 项"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000056",
+          "text": "清七对及豪华清七对：取档键：七组对子中的豪华组数。；表里没有的档：有财神时按 `HJ-K-QIDUI`。；多档同时：每种牌面有 4 张实际同牌计 1 组豪华。例：14 张均为非财神，其中两种牌面各有 4 张，按双豪华清七对 16 倍。",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-K-QINGQIDUI"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 14-17 项"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000057",
+          "text": "十风：取档键：本人连续打出的字牌张数 N（东、南、西、北、中、发、白，白板财神同时按飘财处理）。；表里没有的档：N < 10 不成立。；多档同时：- 仅自摸。连续打出至少 10 张字牌且资格仍有效，从本人下一次常规摸牌开始，每次摸入任意牌都可按十风自摸，无需凑成面子加对子或七对。点炮和抢杠胡不可用十风。 - 十风成立时单独结算。即使同一张进张也能组成平胡、七对或财神番型，仍只取十风，不与其他番型连乘。；计数规则：每小局按座位独立记录。从本局自己第一张成功打出的牌开始计。首张打出非字牌，或之后打出非字牌，或本人吃、碰、直杠、加杠、暗杠成立，立即清零并失去本小局十风资格。其他家的操作不影响本人计数。被其他家取走的弃牌仍计入原出牌者已打出的字牌。 - 第 10 张出牌时更新计数，这张弃牌仍照常开放响应。凑满后本人若开杠，先清除资格，再按补牌及杠类规则判胡。 - 例：A 从第一张起连续打出 10 张字牌。下一摸可按十风 2 倍自摸，也可先点【过】再继续出牌。若又打出第 11 张字牌，再下一摸可按十风 4 倍自摸。若改打数牌，本局十风资格终止。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-K-SHIFENG"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 十风"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000058",
+          "text": "放铳（点炮胡）：触发：玩家打出的牌被另一名玩家用于合法胡牌。出牌者称为放铳，胡牌者称为点炮胡（吃胡）。；条件：- 弃牌不是白板财神。白板财神弃牌不得用于点炮胡。 - `HJ-C-ZHUANGXIAN-FANGCHONG` 启用（本期启用「庄闲放铳（庄三）」）：当局为三牢庄，且出牌者与胡牌者一方为庄家、另一方为闲家时，才可点炮胡。 - 牌型及其他胡牌条件均满足。；否则：不提供点炮胡。未开启该选项时仅允许自摸。；结果：- 同一张弃牌有多人符合胡牌条件时，从出牌者起按逆时针就近顺序裁决，优先者放弃后顺延，最多一人胡牌。 - 按放铳方式结算时，仅由放铳者按 `HJ-P-DIANPAO-RUZHANG` 支付。；验收：- 三牢局，庄家打九筒，闲家听九筒：闲家可点炮胡。 - 三牢局，闲家 A 打九筒，闲家 B 听九筒：不可点炮胡（闲家之间不开放）。 - 三牢局，闲家打白板（财神），庄家听白板：不可点炮胡。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-R-FANGCHONG"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.1.6"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000059",
+          "text": "庄闲放铳（庄三）：触发：三牢局中有玩家打出弃牌。；条件：- `HJ-C-ZHUANGXIAN-FANGCHONG` 启用（本期固定启用，从首局起生效）。 - 当局为三牢庄。 - 出牌者和胡牌者一方为庄家、另一方为闲家。 - 胡牌者牌型及其他胡牌条件均满足。；否则：不提供点炮胡。闲家之间不开放点炮。；结果：- 庄家出牌时，符合条件的闲家可点炮胡。 - 闲家出牌时，仅庄家可按条件点炮胡。 - 多人可胡同一张弃牌时按 `HJ-R-QIPAI-YOUXIANJI` 裁决，最多一人胡牌。结算按 `HJ-R-FANGCHONG` 处理。；验收：- 庄家打牌，闲家 A 和闲家 B 都听：逆时针就近者先响应，最多一人胡。 - 闲家 A 打牌，闲家 B 听：不可点炮胡。 - 闲家打牌，庄家听：庄家可点炮胡。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-R-ZHUANGXIAN-FANGCHONG"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.2.7"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000060",
+          "text": "十风：enabled",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-SHIFENG"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000061",
+          "text": "有财必拷响：disabled",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-YOUCAI-BI-KAO-XIANG"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        }
+      ],
+      "references": {
+        "requirement_refs": [],
+        "rule_refs": [
+          "HJ-K-BAOTOU",
+          "HJ-K-CAIPIAO",
+          "HJ-K-FANXING-HUCHI",
+          "HJ-K-GANGBAO",
+          "HJ-K-GANGKAI",
+          "HJ-K-GANGPIAO",
+          "HJ-K-PIAOGANG",
+          "HJ-K-PINGHU",
+          "HJ-K-QIDUI",
+          "HJ-K-QIKE",
+          "HJ-K-QINGQIDUI",
+          "HJ-K-SHIFENG",
+          "HJ-R-FANGCHONG",
+          "HJ-R-ZHUANGXIAN-FANGCHONG"
+        ],
+        "config_refs": [
+          "HJ-C-SHIFENG",
+          "HJ-C-YOUCAI-BI-KAO-XIANG"
+        ],
+        "source_evidence_refs": [
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 2 项",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 3-5 项",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 番型互斥与优先级",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 18-21 项 / 2.3.1.4",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 6-9 项",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 22-33 项 / 2.3.1.4 杠飘",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 34 项 / 2.3.4.2 番型互斥",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 1 项",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 10-13 项",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 35-50 项",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 第 14-17 项",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.4.2 十风",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.1.6",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.2.7"
+        ]
+      }
+    },
+    {
+      "block_id": "DOC-HA-000007",
+      "logical_block_id": "LBL-SETTLEMENT-01",
+      "section_id": "settlement",
+      "type": "paragraph",
+      "document_version": 0,
+      "content": [
+        {
+          "segment_id": "SEG-000062",
+          "text": "自摸：触发：本人通过常规摸牌、杠后补牌、或庄家起手第 14 张取得胡牌所需的牌，且在本次出牌前。；条件：- 满足本局合法牌型之一：常规胡牌结构（4 组完整面子 + 1 组对子）、七对、爆头结构、或十风独立条件。 - 已完成的副露和暗杠计入面子，每组杠计 1 组。 - 本期 `HJ-C-YOUCAI-BI-KAO-XIANG` 关闭：持有财神时仍按本期合法牌型判定，不强制爆头。 - 庄家起手第 14 张视为本次胡入牌。发牌理牌完成、庄家进入首轮行牌时若已满足，立即显示【自摸】。以其余 13 张为摸牌前结构判定爆头或七客。 - 十风作为独立自摸条件，满足 `HJ-K-SHIFENG` 的资格和字牌张数时，常规摸牌后可直接自摸，无需验证常规手牌结构。；否则：不能自摸。；结果：- 按实际成立的番型查表结算（见 `HJ-K-FANXING-HUCHI` 的互斥与优先级）。 - 杠后补牌自摸、杠后飘财再自摸、先飘财再开杠自摸，统一按 `HJ-K-GANGKAI`、`HJ-K-GANGPIAO`、`HJ-K-PIAOGANG` 的相应分支定番。；验收：- 4 组面子 + 1 对子，摸第 14 张成牌：可自摸，平胡。 - 手持 1 张财神 + 4 组面子，摸任意牌配对：可自摸，爆头。 - 手持财神但已组成 4 面子 + 1 对子：可自摸，平胡（本期不强制爆头）。 - 庄家起手 14 张即成牌：立即显示【自摸】，按对应番型结算。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-R-ZIMO"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.1.5"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000063",
+          "text": "点炮胡入账：入账时点：服务端确认点炮胡后，本局结算时一次性入账。；分配顺序：先算原点炮分 P，再判断承包改写。；一笔怎么分：点炮胡只由放铳者支付一笔原点炮分 P = 底分 × 番型倍数 × 庄闲倍数。另两家这笔胡牌分得失为 0。 - 仅当该放铳者本人是赢家的承包或倒承包对方时，分别以 P 或 2 × P 整体改写该笔，不再叠加原 P。 - 其他玩家与赢家的承包关系不参与。未命中则保留 P。；余额用尽：无封顶，不截断。；展示用哪一份数：小结算放铳者行显示「点炮」，赢家行显示「点炮胡」。；例子：- 1 倍平胡庄闲点炮：赢家 +8，放铳者 −8，另两家 0。 - 放铳者是赢家的承包方（放铳者曾吃赢家 3 次，赢家 → 放铳者承包成立）：赢家 +8，放铳者 −8（1 倍 P，和原点炮分相同）。 - 放铳者是赢家的倒承包方（赢家曾吃放铳者 3 次，放铳者 → 赢家承包成立）：赢家 +16，放铳者 −16（2 倍 P）。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-P-DIANPAO-RUZHANG"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.3"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000064",
+          "text": "黄庄与累计分：入账时点：黄庄确认后 / 每小局结算后。；分配顺序：本局净得分先确定，再加到累计分上。；一笔怎么分：- 黄庄时四名玩家本局得分均为 0。 - 胡牌时赢家加实际收到的合计，赔付者扣各自实际支付额。 - 累计积分 = 上一小局累计 + 本局净得分。；余额用尽：无封顶，累计分可为负，无下限。；展示用哪一份数：小结算显示每人本局净得分（黄庄四行均金色「0」）；头像下方显示累计分。积分按绝对值判断位数：五位以内直接显示完整整数，达到六位换算成「万」保留 3 位小数（如 −100000 显示「−10.000万」）。；例子：- 黄庄：四家本局均 0，累计分不变。 - 庄家自摸平胡：庄家 +24，累计分从 0 变 24；闲家各 −8。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-P-HUANGZHUANG"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.3"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000065",
+          "text": "抢杠胡入账：入账时点：服务端确认抢杠胡后，本局结算时一次性入账。；分配顺序：先算原抢杠赔付 R，再叠加承包。；一笔怎么分：抢杠胡先由加杠者支付原抢杠赔付 R。R = 赢家按普通自摸原应收的三笔合计： - 庄家抢杠：R = 底分 × 番型倍数 × 8 × 3。平胡时 R = 24。 - 闲家抢杠：R = 底分 × 番型倍数 × (8 + 1 + 1)。平胡时 R = 10。 - 赢家参与的各项庄闲承包、倒承包另以同一个 R 为基数，分别按 R、2 × R 叠加。 - 加杠者若也是该关系的付款方，支付原抢杠赔付 + 该项承包赔付。其他实际付款方按对应关系支付。；余额用尽：无封顶，不截断。；展示用哪一份数：赢家行显示「抢杠胡」，加杠者行显示「点炮」。；例子：- 庄家平胡抢闲家的杠，无承包：庄家 +24，加杠闲家 −24。 - 闲家平胡抢庄家的杠，无承包：闲家 +10，加杠庄家 −10。 - 庄家平胡抢杠，加杠闲家同时是庄家的倒承包方（闲家吃过庄家 3 次）：加杠闲家付 24 + 24 × 2 = 72。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-P-QIANGGANG-RUZHANG"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.3 / 2.3.1.4"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000066",
+          "text": "自摸入账：入账时点：服务端确认自摸后，本局结算时一次性入账。；分配顺序：先按 `HJ-F-YUANYING-PEIFEN` 分别算出三名对手各自的原应赔分，再按 `HJ-P-CHENGBAO-RUZHANG` 处理承包改写。；一笔怎么分：三名对手各算一笔原应赔分。庄家自摸时三笔都 × 8；闲家自摸时庄家那笔 × 8，另两个闲家各 × 1。无承包关系时各人支付自己的原应赔分，赢家收取三笔合计。；余额用尽：无封顶，不截断。；展示用哪一份数：局末飘分显示每人本局净得分，小结算四行显示同一份数。；例子：- 庄家平胡自摸，无承包：三个闲家各 −8，庄家 +24。 - 闲家 2 倍番型自摸，无承包：庄家 −16，两闲家各 −2，赢家 +20。 - 庄家平胡自摸，庄家 A 对闲家 B 已成立承包：B 赔 24，另两家 0，A +24（见 `HJ-P-CHENGBAO-RUZHANG`）。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-P-ZIMO-RUZHANG"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.3"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000067",
+          "text": "小局结算流程：起点：服务端确认自摸、点炮、抢杠胡或黄庄。；步骤：1. **胡牌场景**：停止行牌。操作按钮、胡牌预览、听牌提示、放大弃牌退场，方位盘停止倒计时。 2. 各端亮出四家手牌，桌面中央显示橙金色「对局结束」。胡牌张单独摆在赢家手牌尾端。点炮和抢杠在放铳者方位显示「点炮」。 3. 在胡牌者方位播放番型字效（颜色随番型变化）。 4. 番型字效退场后，刷新头像旁累计积分，在本局得分非 0 的玩家座位内侧显示飘分。正分金黄色，负分浅蓝灰色带减号。 5. 飘分淡出后展示小结算面板。 6. **流局场景**：各端亮牌，显示橙色「黄庄」。跳过飘分。小结算标题蓝色「黄庄」，四家均显示金色「0」。 7. **下一局**：非末局显示【继续游戏】，点击后本端回到准备状态，清除上一局桌面，保留累计分。四人准备后自动开始。末局显示【返回大厅】。；中断：无。；结束：小结算面板展示。以服务端下发的本局结算分数为准。",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-T-XIAOJU-JIESUAN"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#5.1 / 6.1.1"
+            ]
+          },
+          "machine_check_status": "passed"
+        }
+      ],
+      "references": {
+        "requirement_refs": [],
+        "rule_refs": [
+          "HJ-R-ZIMO",
+          "HJ-P-DIANPAO-RUZHANG",
+          "HJ-P-HUANGZHUANG",
+          "HJ-P-QIANGGANG-RUZHANG",
+          "HJ-P-ZIMO-RUZHANG",
+          "HJ-T-XIAOJU-JIESUAN"
+        ],
+        "config_refs": [],
+        "source_evidence_refs": [
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.1.5",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.3",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#2.3.3 / 2.3.1.4",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#5.1 / 6.1.1"
+        ]
+      }
+    },
+    {
+      "block_id": "DOC-HA-000008",
+      "logical_block_id": "LBL-UI-01",
+      "section_id": "ui",
+      "type": "paragraph",
+      "document_version": 0,
+      "content": [
+        {
+          "segment_id": "SEG-000068",
+          "text": "对局开始动画：起播：仅在开房后的首次开局。房主点击【开始游戏】并开局成功后，四端直接播放。常驻玩家信息区开始隐藏记为 T=0。；位置：单个客户端游戏可视区。上/左/右/下四色块（青蓝/蓝/蓝/金黄），介绍卡锚点依次 (50%,15%)、(17%,50%)、(83%,50%)、(50%,85%)。中央字样横排居中，宽约画面宽 20%。；画面：金白色粗斜字「对局开始」配橙金外发光，背后半透明金色横向光带。四张绑定座位的玩家介绍卡（头像、显示分、昵称）。；顺序：- T=0～130ms：隐藏常驻信息区。约 35ms 四色块从屏幕外侧滑入。约 65ms 中央字样淡入。 - T+130～570ms：介绍卡从画面外进入滑到锚点。字样显亮时中心闪蓝白亮光、左右扫光、青白圆环扩张、光粒闪现。约 230ms 起光效逐步变淡。 - T+570～700ms：介绍卡淡出，色块退回。约 670ms 骰子开始滚动。约 700ms 常驻信息区按局内布局恢复。 - T+700～865ms：中央字样与光带淡出，与摇骰短暂重叠。约 865ms 结束。；结束：约 865ms 字样和光带完全消失。桌面、常驻信息区、正在播放的摇骰继续显示。；播完进入：摇骰、定财神、发牌。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-A-DUIJU-KAISHI"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#4.1"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000069",
+          "text": "胡牌番型字效与黄庄演出：起播：服务端确认胡牌（自摸 / 点炮 / 抢杠）或黄庄。；位置：桌面中央字样；番型字效在胡牌者方位；「点炮」在放铳者方位。；画面：- 胡牌：橙金色「对局结束」。番型字效颜色随番型变化（金色「财飘」、绿色「平胡」等）。点炮和抢杠在放铳者方位显示「点炮」。胡牌张单独摆在赢家手牌尾端，带浅绿描边和来源标记（本家手掌、上家←、对家↑、下家→）。十风专属字效。 - 黄庄：橙色「黄庄」。不播番型字效。；顺序：亮出四家手牌 + 显示「对局结束」→ 在胡牌者方位播番型字效。；结束：番型字效退场。；播完进入：`HJ-A-JUMO-PIAOFEN` 飘分。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-A-HUPAI-ZIXIAO"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#4.6 自摸 / 5.1"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000070",
+          "text": "局末飘分：起播：番型字效退场后。黄庄局跳过飘分。；位置：各玩家座位内侧。；画面：本次胡牌结算分。正分金黄色纯数字（如 96），负分浅蓝灰色带减号（如 −32）。只在本局得分非 0 的玩家座位显示。；顺序：先刷新头像旁的累计积分，再显示飘分。飘分逐渐淡出。；结束：飘分淡出后短暂保留终局牌桌。；播完进入：小结算面板。胡牌局按本端本局净得分切换主题（正分和 0 分金色「恭喜获胜」，负分蓝色「遗憾失败」）。黄庄统一蓝色「黄庄」。",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-A-JUMO-PIAOFEN"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#5.1"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000071",
+          "text": "三摊落地提示：起播：第 3 个有效摊使承包关系成立时。飘财期间合法吃到上家因摸打限制被迫打出的牌也正常计摊，达到第 3 摊立即播放，不延后。；位置：四个客户端都在桌面中央、方位盘下方。；画面：金色书法字「三摊落地」，字样底部带蓝色横向光效。；顺序：以较大尺寸入场，迅速缩小到常态尺寸，短暂停留后在原位淡出。可以与吃牌者座位的金色「吃」字同时播放。；结束：短暂停留后淡出。；播完进入：提示播放期间获权玩家可以继续提牌、出牌，不阻塞行牌。小结算的「三摊承包」「反承包」标识按本局实际赔付结果显示。",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-A-SANTAN-LUODI"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#4.8"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000072",
+          "text": "吃碰杠胡操作按钮：触发：弃牌触发响应 / 本人行牌阶段有可执行操作。；控件：本家手牌右上方按钮。弃牌响应从左到右【吃】【碰】【杠】【胡】【过】，蓝色【过】固定最右。本人行牌时【自摸】【过】或【杠】【过】。；碰：显示【碰】【过】。两张可碰牌保持亮度，其余压暗。同次可胡时整手正常亮度。；吃（单组）：点【吃】直接提交。；吃（多组）：点【吃】展开可选顺子面板，每组三张正面牌，右侧【取消】。点【取消】放弃本家对这张弃牌的全部可选操作（含【胡】）。；杠（单组）：点【杠】直接提交。；杠（多组）：点【杠】横排显示候选牌（每组建 1 张正面牌），暗杠与加杠混排按花色点数升序，右侧【取消】。；自摸：只有本家看到【自摸】【过】。左侧显示可胡牌和预览倍数。预览 = 番型倍数 × 单笔庄闲倍率，自摸取三笔中最高一笔。；吃胡 / 抢杠胡：【胡】【过】，左侧卡片显示胡牌张和预览倍数。；禁止：倒计时归零后按钮仍可点击，系统继续等待手动操作。；同次其余操作：- 低优先级先提交时进入等待，更高优先级成立则取消；更高优先级都放弃则裁决低优先级请求。 - 点共用【过】放弃同一事件下本家的全部待响应操作。 - 放弃杠后本次操作机会内不再显示【杠】。；反馈文案：碰成立播金色「碰」字；吃成立播「吃」字；杠成立播「杠」字；胡牌后显示「对局结束」、番型字效、「点炮」字样。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-I-CAOZUO-ANNIU"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#4.6"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000073",
+          "text": "长按查看牌桌：触发：小结算打开后，在可长按区域（底部栏扣除中央主按钮后的区域）连续按住 500 毫秒。；控件：小结算底部栏 + 右侧手指图标 +「长按查看牌桌」文字。；允许：按住期间仅本端暂时收起小结算和遮罩，按本家视角查看四家终局手牌、副露、牌河、财神指示牌和余牌数。预览只读。；禁止：达到 500 毫秒前松手、滑出可按区域或触发取消则本次长按结束，保持小结算。；同次其余操作：中央主按钮按自身逻辑响应点击，不受长按影响。；反馈文案：无。预览打开后松手、滑出或取消均恢复同一张小结算页。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-I-CHANGAN-CHAKAN"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#5.2 / 6.1.2 第 11 项"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000074",
+          "text": "出牌交互：触发：轮到本家且目标牌可打。；控件：手牌。；允许：- 双击出牌（默认）：第一次点击提起，第二次点击同一张提交。 - 滑动出牌（默认开）：按住拖动，高于提牌高度线显示半透明虚影，松手提交。 - 提牌时显示听牌标签（若有）。；禁止：- 禁打牌（吃碰禁手）原位压暗，不可提起，双击和滑动均不能打出。 - 受飘财限制时只能打出本次刚摸到的那张，原有手牌压暗。 - 【自摸】待处理或新摸牌能组成杠且未点【过】时，双击或滑动被拦截。 - 等待他家响应裁决、正在选择杠牌组合、杠后尚未补牌、小局已结束时不可提交。；同次其余操作：有【自摸】【过】或【杠】【过】时须先点【过】才能出牌。；反馈文案：被拦截时仅本端显示「点\"过\"才能出牌」。白字单行，半透明深色横条，方位盘附近横向居中。连续触发时已有提示上移一行，各条分别计时淡出。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-I-CHUPAI"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#4.5"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000075",
+          "text": "同一玩家多项操作：触发：同一玩家对同一事件有多项可执行操作。；控件：操作按钮横排 + 选组面板。；允许：- 可多杠：补牌后重新判定，仍有多组时先显示【杠】，点击后展开最新候选。 - 可多吃：多组吃的选组面板。 - 同一玩家可多项操作（如上家打牌，本家同时可吃、碰、胡）：按本次可选操作显示按钮。能胡时整手保持正常亮度。；禁止：无。；同次其余操作：- 点某项开始对应操作，有多组合法组合时先展开候选，选定后才提交。 - 多组选择面板点【取消】，作用范围与共用【过】一致：放弃本次行牌机会中的全部可选操作，包括同次可自摸的【自摸】。 - 放弃胡或碰后，另一玩家新打出同牌时按新弃牌重新判定资格。；反馈文案：无。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-I-DUOXIANG-CAOZUO"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#4.7"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000076",
+          "text": "方位盘与倒计时：出现条件：进入开局过场后显示方位盘底座。分配风位后四侧显示风位字。；位置：桌面中央。；文案格式：- 风位：每小局庄家为东，从庄家起逆时针依次为东、南、西、北。每个玩家界面以自己为下、上家为左、对家为上、下家为右。 - 操作指示：当前可操作玩家对应边循环闪烁高亮。底边红、左边绿、顶边蓝、右边黄，按当前屏幕位置分配。每个视角同一时刻最多高亮一边。 - 弃牌响应：本家有响应按钮时临时亮底边红色。无按钮的视角仍亮原出牌者对应边。 - 倒计时：中央两位数字显示剩余秒数。出牌阶段和响应阶段分别 10 秒。普通数字蓝青色，03、02、01、00 为黄色。归零后保持 00 继续等待。；不出现：房间准备阶段沿用准备界面，不显示方位盘。；保持到：小局结束。收到小局结束结果时结束倒计时及方向高亮。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-V-FANGWEIPAN"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#3.2.1"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000077",
+          "text": "牌河：出现条件：对局中常驻，每名玩家一条独立牌河。；位置：贴近中央方位盘，按相对座位映射。本家和对家的牌面正向显示；左侧顺时针旋转 90°，右侧逆时针旋转 90°。；文案格式：- 弃牌正面朝上，按实际留在牌河内的顺序摆放。 - 四人局：本家每排 8 张从左到右，对家每排 8 张从右到左，左侧每列 7 张从上到下，右侧每列 7 张从下到上。 - 溢出：本家、对家放满两排后第 17 张叠在第一排第一格。左右两侧放满两列后向外新增第三列，第三列满后从该侧首格开始叠放。；最近弃牌浮标：同一视角最多一个。最新弃牌落稳后在其上方显示橙黄色倒三角浮标，原地上下浮动。下一张弃牌飞出时清除旧浮标。当前弃牌被吃、碰、明杠或点炮胡拿走时清除。；同牌面提醒：本端新摸牌或提牌时，以该牌面查找各家牌河和碰杠区中牌面可见的牌，所有匹配牌叠加青绿色高亮。仅本端可见。出牌确认或取消提牌时清除。；不出现：无。；保持到：本小局结束。小结算「长按查看牌桌」时保留终局牌河。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-V-PAIHE"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#3.2.4"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000078",
+          "text": "手牌展示与听牌标签：出现条件：对局中常驻。听牌标签在本家出牌前模拟计算。；位置：本家手牌在底部。碰杠区在手牌左侧。新摸牌在右侧分隔位。；牌面：本家手牌正面，其他家牌背。本家白板财神粉色牌面。；排序：白板财神优先排最左。其余按万、条、筒、东、南、西、北、中、发、白，同花色数牌 1 至 9 升序。；庄家起手：13 张主体 + 右侧独立位 1 张（服务端单独下发的第 14 张）。；碰杠区：吃、碰、直杠、暗杠按操作成立顺序从左往右追加。加杠补入已有碰牌组。碰组三张正面，中间一张叠来源箭头（上家←、对家↑、下家→）。暗杠三张背面 + 顶部一张正面，叠手掌标记。；听牌标签：候选牌上方显示「优」「大」「多」或箭头。杭麻特殊标签：可爆头金色「爆」，可财飘红色「飘」，同时符合显示「飘」。优先级「飘」>「爆」>「优」>「大」>「多」>箭头。；听牌详情面板：提起候选牌时打开。牌桌中下部、手牌上方居中。每格「N 倍 M 张」，白板财神固定第一格，其余按倍数降序再按花色。每行最多 4 项。；任意牌可胡：固定单行面板，「爆头2番」「摸任意一张可胡」。十风成立时上行改「十风 N 倍」。；不出现：其他家看不到本家的听牌标签和详情。；保持到：取消提牌、改选非候选牌、确认出牌或结束本家可出牌阶段时收起。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-V-SHOUPAI-TINGPAI"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#3.2.5"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000079",
+          "text": "玩家头像区：出现条件：开局后常驻。；位置：本家头像在桌面左下方。其他三家按相对座位显示在左侧、上方、右侧。；文案格式：- 头像下方依次显示当前积分、昵称。本期头像不可点击。；庄家标签：当前庄家头像角上蓝底白字「庄×N」。三牢显示「庄×3」。头像在画面右侧时标签镜像到左上角。；房主标记：房主头像下角橙色「房」字。与庄标各用各的角位。；积分：五位以内显示完整整数，达到六位换算成「万」保留 3 位小数。负分保留负号。；昵称：中文每字 2 个显示字符，英文数字符号各 1 个。超过 10 个从末尾截断加「..」。；操作状态：当前操作者头像外沿播放金色流光。；离线状态：离线玩家头像上显示深色覆盖层、白色断链图标、黄色「分:秒」离线时长。 - 本期无托管，不显示「托管中」。；不出现：等待阶段显示准备信息而非头像区。；保持到：本场结束。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-V-TOUXIANG-QU"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#3.2.3"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000080",
+          "text": "小结算界面：出现条件：胡牌局在飘分退出后；黄庄局在黄庄字样退场后。；位置：覆盖在终局牌桌上，底层桌面透过暗色遮罩仍可见。；标题：顶部居中。胡牌局按本端本局得分：≥ 0 金色「恭喜获胜」（本家行橙金高亮），< 0 蓝色「遗憾失败」（本家行蓝色高亮）。黄庄四端均蓝色「黄庄」。右侧显示房号和日期时间。；四行：按本家、下家、对家、上家从上到下固定排列。每行左侧座位标签 + 头像 + 昵称，中间手牌，右侧得分及标记。庄家所在行显示蓝色「庄」徽及「庄×3」。；手牌摆布：已吃碰杠的牌组放行首，杠的第 4 张垒在上方，暗杠顶牌正面。其余手牌按实际组合分组。十风赢家行以字牌序列替代手牌，上方显示「十风」。；得分：正分金黄色带加号「+8」，0 分金色「0」，负分浅蓝灰色带减号「−8」。；承包标识：赢家牌组上方黄色「承包」/「反承包」。赔付者得分右侧蓝底「三摊承包」/「反承包」。链式承包时赢家行同时显示两者。；番型文字：赢家牌组上方黄色，仅番型名及复合次数。复合番型次数写在括号内，如「杠爆（三连杠）」「杠飘（二连杠）」。；胡牌方式：赢家行最右侧金色「自摸」/「点炮胡」/「抢杠胡」。放铳者行蓝色「点炮」。；胡牌标识：胡入牌在其所属组合内显示，牌面右下叠绿色「胡」字。；财神牌：左下角单独展示本小局财神正面牌，左侧红底竖排「财神牌」。；主按钮：底部中央绿色。非末局【继续游戏】，末局【返回大厅】。；不出现：本期无「剩余牌」「底栏辅助入口」功能。；保持到：点击主按钮离开。末局【返回大厅】仅本端离房，其他玩家可留在自己的小结算页，全部离开后服务端回收房间。",
+          "editable": false,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-V-XIAO-JIESUAN"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#6.1.2"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000081",
+          "text": "余牌数与财神指示：出现条件：骰盘显示后。；位置：余牌数在中央骰盘右侧。财神指示牌在骰盘左侧。；余牌数：开局显示 136。首批起手牌背出现时一次更新为 83。常规摸 1 张减 1。开杠补 1 张、隔离 1 张，共减 2（如 30 → 28）。出牌、吃、碰不扣减。显示的余牌数包含尾部保留的 20 张。；财神指示：每小局掷骰动画开始时，在中央骰盘左侧显示竖向小牌，粉色牌面绘制白板边框。以最终尺寸出现。；不出现：无。；保持到：本小局结束。发牌、理牌、行牌期间持续显示。",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [
+              "HJ-V-YUPAI-CAISHEN"
+            ],
+            "config_refs": [],
+            "source_evidence_refs": [
+              "rulebook/sources/hangzhou/hangzhou-core-flow.md#3.2.2"
+            ]
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000082",
+          "text": "出牌与响应倒计时：10",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-UI-DAOJISHI"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000083",
+          "text": "长按查看牌桌阈值：500",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-UI-CHANGAN-YUZHI"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000084",
+          "text": "对局开始动画总时长：865",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-UI-KAISHI-DONGHUA"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000085",
+          "text": "积分换算万位阈值：100000",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-UI-JIFEN-WANWEI"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        },
+        {
+          "segment_id": "SEG-000086",
+          "text": "昵称最大显示字符数：10",
+          "editable": true,
+          "lineage": "base",
+          "decision_status": "confirmed",
+          "diff_status": "not_applicable",
+          "release_blocker_refs": [],
+          "references": {
+            "requirement_refs": [],
+            "rule_refs": [],
+            "config_refs": [
+              "HJ-C-UI-NICHENG-ZISHU"
+            ],
+            "source_evidence_refs": []
+          },
+          "machine_check_status": "passed"
+        }
+      ],
+      "references": {
+        "requirement_refs": [],
+        "rule_refs": [
+          "HJ-A-DUIJU-KAISHI",
+          "HJ-A-HUPAI-ZIXIAO",
+          "HJ-A-JUMO-PIAOFEN",
+          "HJ-A-SANTAN-LUODI",
+          "HJ-I-CAOZUO-ANNIU",
+          "HJ-I-CHANGAN-CHAKAN",
+          "HJ-I-CHUPAI",
+          "HJ-I-DUOXIANG-CAOZUO",
+          "HJ-V-FANGWEIPAN",
+          "HJ-V-PAIHE",
+          "HJ-V-SHOUPAI-TINGPAI",
+          "HJ-V-TOUXIANG-QU",
+          "HJ-V-XIAO-JIESUAN",
+          "HJ-V-YUPAI-CAISHEN"
+        ],
+        "config_refs": [
+          "HJ-C-UI-DAOJISHI",
+          "HJ-C-UI-CHANGAN-YUZHI",
+          "HJ-C-UI-KAISHI-DONGHUA",
+          "HJ-C-UI-JIFEN-WANWEI",
+          "HJ-C-UI-NICHENG-ZISHU"
+        ],
+        "source_evidence_refs": [
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#4.1",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#4.6 自摸 / 5.1",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#5.1",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#4.8",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#4.6",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#5.2 / 6.1.2 第 11 项",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#4.5",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#4.7",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#3.2.1",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#3.2.4",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#3.2.5",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#3.2.3",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#6.1.2",
+          "rulebook/sources/hangzhou/hangzhou-core-flow.md#3.2.2"
+        ]
+      }
+    }
+  ],
+  "segment_lineage": []
+}

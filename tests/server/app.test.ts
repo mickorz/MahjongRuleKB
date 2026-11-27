@@ -311,6 +311,21 @@ describe("W3-4 写接口", () => {
     expect(((await rev.json()) as { document: string }).document).toBe("unreviewed");
   });
 
+  it("请求体含 U+FFFD（非 UTF-8）→ 400，不写盘", async () => {
+    const before = readFileSync(join(kb, "documents/xiaoshan/editorial-overrides.yaml"), "utf8");
+    const res = await fetch(`${base}/api/apply`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        variant: "xiaoshan",
+        mutations: [{ segment_id: "SEG-000105", op: "replace-text", text: "��乱码" }],
+      }),
+    });
+    expect(res.status).toBe(400);
+    expect(((await res.json()) as { error: string }).error).toBe("bad_body");
+    expect(readFileSync(join(kb, "documents/xiaoshan/editorial-overrides.yaml"), "utf8")).toBe(before);
+  });
+
   it("apply 空批次 → 400", async () => {
     const res = await fetch(`${base}/api/apply`, { method: "POST", headers, body: JSON.stringify({ variant: "xiaoshan", mutations: [] }) });
     expect(res.status).toBe(400);
