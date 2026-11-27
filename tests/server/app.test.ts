@@ -116,7 +116,13 @@ describe("W3-1 HTTP 行为", () => {
     const res = await fetch(`${base}/`);
     expect(res.status).toBe(200);
     const html = await res.text();
-    expect(html).toContain("Rule Studio 需求文档工作台");
+    // S1：界面文案全中文，不出现拼音与 ruleset_id
+    expect(html).toContain("策划工作台");
+    expect(html).toContain("杭州");
+    expect(html).toContain("萧山");
+    expect(html).not.toContain(">Rule Studio<");
+    expect(html).toContain('id="steps"');
+    expect(html).toContain('id="variants"');
     // S1/S2：外壳不滚 + 可拖拽分栏 + 状态栏
     expect(html).toContain('data-layout="three-pane"');
     expect(html).toContain('class="splitter"');
