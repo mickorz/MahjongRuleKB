@@ -87,6 +87,7 @@ const SYSTEM_PROMPT = [
   "6. 给定的每一张规则卡都必须至少被一条 claim 引用，不得遗漏。",
   "7. 引用数值时，必须同时引用含该数值的那张规则卡或配置项。",
   "8. 给定的每一个配置项也必须被引用一次。",
+  "9. 规则卡里的「公式」「表」「入账时点」「结果」等槽位内容，必须把具体数值、条件和分支写进正文，不能概括为「按规则结算」。",
 ].join("\n");
 
 /** 构造用户提示；规则卡正文按上限截断，保证 prompt 有界 */
@@ -111,6 +112,9 @@ export function buildUserPrompt(request: ChapterRequest, maxRuleBodyChars = 1200
     "可用配置项（只能引用这些 ID）：",
     configs || "（本章没有配置项）",
     "",
+    request.beats && request.beats.length > 0
+      ? `本章必须逐项交代这些要素：${request.beats.join("、")}。每个要素的具体数值、条件、分支都要写进正文，不能只提一句「见某规则卡」。`
+      : "",
     `请输出该章节的 JSON。section_id 必须是 "${request.section_id}"。`,
   ]
     .filter((line) => line !== "")

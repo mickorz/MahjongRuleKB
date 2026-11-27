@@ -19,6 +19,8 @@ export interface ChapterRequest {
   rules: ReadonlyArray<Pick<RuleSummary, "id" | "name" | "body">>;
   configs: ReadonlyArray<ConfigSummary>;
   prompt_version: string;
+  /** 本章必须交代的要素（来自章节规划的 beats），生成时逐项落实 */
+  beats?: string[];
   /** 上一章结尾摘要，供跨章衔接；可为空 */
   previous_summary?: string;
 }

@@ -3,6 +3,9 @@
 # 用法：只读 documents/hangzhou/需求全文.md，不看规则卡，回答下列问题。
 # 判定：每题对/错由人工判定；答对 8/10 以上（不含依赖未决项的题）才算 W1 通过。
 # 维护：答案口径以规则卡为准；改规则卡后需复核本文件。
+# 出题约束：每个 expected_point 必须能在一张杭州规则卡或配置项里找到依据。
+# 反例：曾把「流局杠分 = 0」写进 RQ-011，但该概念只存在于萧山（XS-F-HUPAI-GANGFEN），
+#       杭州卡里没有，导致把出题错误误判成文档缺陷。
 
 - id: RQ-001
   question: 一场好友房杭州麻将打几局？四家各拿几张牌？牌墙总共多少张？
@@ -80,15 +83,14 @@
   rule_refs: [HJ-F-ZHUANGXIAN-BEILV, HJ-C-ZHUANGJIA-BEILV]
 
 - id: RQ-009
-  question: 平胡、七对、爆头分别是几倍？杠分怎么算，进不进番型倍率？
+  question: 平胡、爆头分别是几倍？七对按什么档位取倍数？
   expected_points:
     - 平胡 1 倍
-    - 七对按档位倍数
-    - 爆头按档位倍数
-    - 杠分按每组成立的杠计，自摸时每名赔付者每杠另付
-    - 杠分不进番型倍数
+    - 爆头 2 倍
+    - 七对按档位倍数表取（不是固定值）
+    - 每组杠计 1 个面子，参与平胡结构
   section_hint: patterns
-  rule_refs: [HJ-K-PINGHU, HJ-K-QIDUI, HJ-K-BAOTOU, HJ-F-YUANYING-PEIFEN]
+  rule_refs: [HJ-K-PINGHU, HJ-K-QIDUI, HJ-K-BAOTOU]
 
 - id: RQ-010
   question: 杠飘的倍率怎么查？连续 2 杠且飘 2 次是多少倍？
@@ -101,11 +103,11 @@
 - id: RQ-011
   question: 什么情况下会流局（黄庄）？流局时还会不会算杠分？
   expected_points:
-    - 牌墙剩余可摸牌数为 21 张时允许再摸 1 张，若无人胡牌且响应处理结束，在下一次应摸牌时判定流局
-    - 流局计 1 小局
-    - 流局杠分为 0
+    - 牌墙剩余可摸牌数为 21 张时允许再摸 1 张，使余牌变 20
+    - 若无人胡牌且响应处理结束，在下一次应摸牌时判定流局
+    - 流局计 1 小局，余牌数保留显示 20
   section_hint: settlement
-  rule_refs: [HJ-T-LIUJU-SHIJI, HJ-P-HUANGZHUANG, HJ-F-YUANYING-PEIFEN]
+  rule_refs: [HJ-T-LIUJU-SHIJI, HJ-P-HUANGZHUANG]
 
 - id: RQ-012
   question: 抢杠胡在什么时候可以宣告？抢杠胡的分数什么时候入账？

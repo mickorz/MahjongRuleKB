@@ -106,6 +106,7 @@ export async function generateDocumentWithProvider(
         .map((id) => ruleset.configs.find((c) => c.id === id))
         .filter((c): c is NonNullable<typeof c> => Boolean(c)),
       prompt_version: "assemble-1",
+      beats: plan.beats,
     };
     options.onChapter?.({ section_id: plan.section_id, phase: "request", detail: request });
 
