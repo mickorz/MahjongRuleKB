@@ -1,0 +1,337 @@
+<html lang="zh-CN" data-theme="light" data-site="cn" class="lf-tx" data-portal-bridge="ready" style="--assistant-dock-width: 0px;"><head>
+<script src="/site-context.js?v=20261126_df44"></script>
+<script src="random-uuid-fallback.js?v=20261126_df44"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>笔枢 · 创作控制台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&amp;family=Noto+Serif+SC:wght@400;500;600;700&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&amp;display=swap" rel="stylesheet">
+<link rel="stylesheet" href="vendor/mobile-kit.css?v=20261126_df44">
+<link rel="stylesheet" href="outline-status-card.css?v=20261126_df44">
+<link rel="stylesheet" href="console.css?v=20261126_df44">
+<link rel="stylesheet" href="prose-draw-selection.css?v=20261126_df44">
+<link rel="stylesheet" href="prose-generation.css?v=20261126_df44">
+<link rel="stylesheet" href="custom-settings.css?v=20261126_df44">
+<link rel="stylesheet" href="card-reader.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-overview.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-activity.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-paying.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-analysis.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-token-tracking.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-rates.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-performance.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-seo.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-tools.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-public-api.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-prose-draw.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-model-routing.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-assistant-settings.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-assistant-analysis.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-other-settings.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-reporting-keys.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-messages.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-users.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-output-budgets.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-user-limits.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-credit-ledger.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-data-table.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-chart.css?v=20261126_df44">
+<link rel="stylesheet" href="partnerships.css?v=20261126_df44">
+<link rel="stylesheet" href="inbox.css?v=20261126_df44">
+<link rel="stylesheet" href="../site/public-announcement.css?v=20261126_df44">
+<style>
+  html,body{height:100%;margin:0}
+  #root{height:100vh}
+</style>
+<script>
+  // set theme early to avoid flash
+  try{document.documentElement.setAttribute('data-theme',localStorage.getItem('lf_theme')||'light');}catch(e){}
+</script>
+<script src="../site/page-transition.js?v=20261126_df44"></script><style id="lf-tx-style">html.lf-tx{background:var(--paper,#FEFCF8)}html.lf-tx body{transition:opacity 520ms cubic-bezier(.22,.7,.2,1)}html.lf-tx.lf-hide body{opacity:0}html.lf-noanim body{transition:none!important}#lf-veil{position:fixed;inset:0;z-index:2147483600;background:var(--paper,#FEFCF8);opacity:0;pointer-events:none;will-change:opacity;transition:opacity 360ms cubic-bezier(.22,.7,.2,1)}#lf-veil.show{opacity:1;pointer-events:auto}#lf-veil.lf-cover{opacity:1;pointer-events:auto;transition:none}#lf-load{position:fixed;inset:0;z-index:2147483601;display:grid;place-items:center;opacity:0;pointer-events:none;transition:opacity .45s cubic-bezier(.22,.7,.2,1)}html.lf-leaving #lf-load{opacity:1;transition-delay:0s}html.lf-tx.lf-hide #lf-load{opacity:1;transition-delay:.28s}html.lf-noanim #lf-load{transition:none!important}.lf-seal{position:relative;width:72px;height:72px}.lf-ring{position:absolute;inset:0;border-radius:50%;background:conic-gradient(from 90deg,transparent 0 18%,var(--gold-deep,#A77B2E) 94%,transparent);-webkit-mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));mask:radial-gradient(farthest-side,transparent calc(100% - 3px),#000 calc(100% - 3px));animation:lf-spin .9s linear infinite}.lf-char{position:absolute;inset:0;display:grid;place-items:center;font-family:var(--serif,'Noto Serif SC',serif);font-weight:600;font-size:30px;color:var(--ink,#221D16);animation:lf-breathe 1.6s ease-in-out infinite}.lf-cap{margin-top:20px;font-family:var(--latin,Georgia,serif);font-style:italic;letter-spacing:.34em;text-indent:.34em;text-transform:uppercase;font-size:11px;color:var(--ink-3,#938979)}@keyframes lf-spin{to{transform:rotate(360deg)}}@keyframes lf-breathe{0%,100%{opacity:.4}50%{opacity:1}}@media (prefers-reduced-motion: reduce){html.lf-tx body{transition:none!important}#lf-veil{transition:none!important}.lf-ring,.lf-char{animation:none!important}}</style>
+<link rel="stylesheet" href="assistant-personalization.css?v=20261126_df44">
+  <link rel="stylesheet" href="assistant-personalization-layout.css?v=20261126_df44">
+<link rel="stylesheet" href="assistant-workspace.css?v=20261126_df44">
+<link rel="stylesheet" href="assistant-reference-library.css?v=20261126_df44">
+<link rel="stylesheet" href="assistant-settings.css?v=20261126_df44">
+<link rel="stylesheet" href="assistant-usage-layout.css?v=20261126_df44">
+<link rel="stylesheet" href="assistant-interaction.css?v=20261126_df44">
+<link rel="stylesheet" href="/site/rewrite-invitation.css?v=20261126_df44">
+<meta name="robots" content="noindex, nofollow"><style id="c-writer-toggle-css">
+.c-writer-toggle{position:relative;display:inline-flex;align-items:center;gap:6px;cursor:pointer;user-select:none;-webkit-user-select:none}
+.c-writer-toggle .wt-label{font-size:11.5px;font-weight:500;color:var(--ink-3);transition:color .3s,opacity .3s;opacity:.55}
+.c-writer-toggle .wt-label.on{color:var(--gold-deep);opacity:1}
+.c-writer-toggle .wt-track{position:relative;width:52px;height:28px;border-radius:14px;background:var(--line-2);border:1px solid var(--line);transition:background .35s,border-color .35s,box-shadow .35s;flex:none}
+.c-writer-toggle.active .wt-track{background:linear-gradient(135deg,var(--gold),var(--gold-deep));border-color:var(--gold);box-shadow:0 0 12px oklch(0.70 0.125 70/.35),0 0 28px oklch(0.70 0.125 70/.15)}
+.c-writer-toggle .wt-knob{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.18);transition:transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .3s}
+.c-writer-toggle.active .wt-knob{transform:translateX(24px);box-shadow:0 1px 4px rgba(0,0,0,.18),0 0 8px oklch(0.70 0.125 70/.5)}
+.c-writer-toggle .wt-icon{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none}
+.c-writer-toggle .wt-icon svg{width:12px;height:12px;transition:color .3s}
+.c-writer-toggle .wt-icon svg{color:var(--ink-3)}
+.c-writer-toggle.active .wt-icon svg{color:var(--gold-deep)}
+
+/* energy ring pulse when active */
+.c-writer-toggle .wt-ring{position:absolute;inset:-4px;border-radius:18px;border:2px solid var(--gold);opacity:0;pointer-events:none}
+.c-writer-toggle.active .wt-ring{animation:wt-ring-pulse 2s ease-out infinite}
+@keyframes wt-ring-pulse{0%{opacity:.6;transform:scale(.92)}50%{opacity:0;transform:scale(1.18)}100%{opacity:0;transform:scale(1.18)}}
+
+/* golden glow aura */
+.c-writer-toggle .wt-glow{position:absolute;inset:-6px;border-radius:20px;background:radial-gradient(ellipse at center,oklch(0.70 0.125 70/.2),transparent 70%);opacity:0;pointer-events:none;transition:opacity .4s}
+.c-writer-toggle.active .wt-glow{opacity:1;animation:wt-glow-breathe 3s ease-in-out infinite}
+@keyframes wt-glow-breathe{0%,100%{opacity:.5;transform:scale(1)}50%{opacity:.9;transform:scale(1.04)}}
+
+/* spark particles */
+.c-writer-toggle .wt-sparks{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.c-writer-toggle .wt-spark{position:absolute;width:3px;height:3px;border-radius:50%;background:var(--gold);opacity:0}
+.c-writer-toggle.active .wt-spark{animation:wt-spark-fly var(--dur) var(--delay) ease-out infinite}
+@keyframes wt-spark-fly{
+  0%{opacity:0;transform:translate(var(--sx),var(--sy)) scale(0)}
+  15%{opacity:1;transform:translate(calc(var(--sx)*.5),calc(var(--sy)*.5)) scale(1)}
+  100%{opacity:0;transform:translate(var(--ex),var(--ey)) scale(0)}
+}
+
+/* lightning flash on knob when active */
+.c-writer-toggle .wt-flash{position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle,#fff 0%,oklch(0.70 0.125 70/.6) 40%,transparent 70%);opacity:0;pointer-events:none;transition:none}
+.c-writer-toggle.active .wt-flash{animation:wt-flash-pop .6s ease-out}
+@keyframes wt-flash-pop{0%{opacity:1;transform:scale(.5)}100%{opacity:0;transform:scale(2.5)}}
+
+/* label text slide */
+.c-writer-toggle .wt-name{font-size:11.5px;font-weight:600;color:var(--ink-3);transition:color .3s;white-space:nowrap}
+.c-writer-toggle.active .wt-name{color:var(--gold-deep)}
+
+/* reduced motion */
+@media(prefers-reduced-motion:reduce){
+  .c-writer-toggle .wt-ring,.c-writer-toggle .wt-glow,.c-writer-toggle .wt-spark,.c-writer-toggle .wt-flash{animation:none!important}
+  .c-writer-toggle .wt-track,.c-writer-toggle .wt-knob{transition-duration:.01ms!important}
+}
+</style><style id="c-wrintro-css">
+.wrin-inline{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;background:oklch(0.22 0.03 60/.42);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:lfFadeOnly .25s ease both}
+.wrin-card{width:100%;max-width:640px;max-height:calc(100dvh - 40px);overflow-y:auto;background:var(--card);border:1px solid var(--gold-soft);border-radius:10px;box-shadow:0 24px 64px -20px oklch(0.56 0.125 58/.22);padding:24px 22px 20px;position:relative;animation:rgPop .5s var(--ease-out) both}
+@media(max-width:560px){.wrin-inline{padding:12px}.wrin-card{max-height:calc(100dvh - 24px);padding:20px 16px 16px}}
+.wrin-card::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,oklch(0.70 0.125 70/.06),transparent 50%);pointer-events:none}
+.wrin-title{font-family:var(--serif);font-size:21px;font-weight:600;text-align:center;margin-bottom:4px;position:relative;z-index:1}
+.wrin-highlight{color:var(--gold-deep)}
+.wrin-sub{text-align:center;font-size:13.5px;color:var(--ink-2);margin-bottom:18px;line-height:1.6;position:relative;z-index:1}
+/* benefit cards */
+.wrin-benefits{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;position:relative;z-index:1}
+@media(max-width:560px){.wrin-benefits{grid-template-columns:1fr}}
+.wrin-benefit{background:color-mix(in srgb,var(--paper-2) 60%,var(--gold-wash));border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start}
+.wrin-benefit .wb-ic{width:30px;height:30px;border-radius:7px;flex:none;display:grid;place-items:center;background:var(--gold-wash);border:1px solid var(--gold-soft);color:var(--gold-deep)}
+.wrin-benefit .wb-d{font-size:13px;color:var(--ink-2);line-height:1.5}
+.wrin-benefit .wb-d b{color:var(--ink);font-weight:600}
+/* cost comparison bar */
+.wrin-costbar{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);background:var(--paper-2);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-bottom:16px;position:relative;z-index:1}
+.wrin-costbar .cost-item{display:flex;align-items:center;gap:6px}
+.wrin-costbar .cost-label{font-weight:500}
+.wrin-costbar .cost-val{font-weight:600;color:var(--ink);font-family:var(--latin)}
+.wrin-costbar .cost-val.gold{color:var(--gold-deep)}
+.wrin-costbar .cost-divider{width:1px;height:18px;background:var(--line)}
+.wrin-costbar .cost-note{font-size:12px;color:var(--ink-3);font-weight:500}
+/* footer */
+.wrin-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:relative;z-index:1}
+.wrin-footer .wrin-note{font-size:12px;color:var(--ink-3);display:flex;align-items:center;gap:6px}
+.wrin-footer .wrin-note svg{color:var(--ink-3)}
+</style></head>
+<body>
+<div id="root"><div class="runtime-admission-shell" data-assistant-launcher="visible" style="--assistant-dock-width: 0px;"><div class="runtime-admission-content"><div class="cr-shell"><div class="cr-top"><div class="cr-brand"><span class="logo" title="返回首页" style="cursor: pointer;">笔</span><span class="cr-brandt">铸造一个世界</span></div><div class="cr-phone-steps"><span class="cr-phone-steps-label">2 / 6 · 世界观</span><span class="cr-phone-steps-bar" aria-hidden="true"><i class="on"></i><i class="on"></i><i class=""></i><i class=""></i><i class=""></i><i class=""></i></span></div><div class="cr-steps"><div class="cr-stepi done"><span class="cs-no">✓</span><span class="cs-t">立意</span><span class="cs-bar"></span></div><div class="cr-stepi on"><span class="cs-no">2</span><span class="cs-t">世界观</span><span class="cs-bar"></span></div><div class="cr-stepi"><span class="cs-no">3</span><span class="cs-t">角色表</span><span class="cs-bar"></span></div><div class="cr-stepi"><span class="cs-no">4</span><span class="cs-t">故事规划</span><span class="cs-bar"></span></div><div class="cr-stepi"><span class="cs-no">5</span><span class="cs-t">卷大纲</span><span class="cs-bar"></span></div><div class="cr-stepi"><span class="cs-no">6</span><span class="cs-t">世界就位</span></div></div><div class="cr-topr"><div class="lang-seg" title="中文 / English" aria-label="界面语言"><button type="button" aria-pressed="true" class="on">中</button><button type="button" aria-pressed="false" class="">EN</button></div><button type="button" class="c-ic" aria-label="关闭新建书籍" style="width: 32px; height: 32px;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"></path></svg></button></div></div><div class="cr-bodyw"><div class="cr-scene"><div class="cr-gen"><div class="cr-gennav"><div class="cr-bandmini"><div class="cr-bandmini-top"><svg viewBox="0 0 120 104" style="width: 84px; height: auto; flex: 0 0 auto;"><line x1="60" y1="52" x2="60" y2="14" class="cr-sedge"></line><line x1="60" y1="52" x2="92.90896534380866" y2="33" class="cr-sedge"></line><line x1="60" y1="52" x2="92.90896534380867" y2="71" class="cr-sedge"></line><line x1="60" y1="52" x2="60" y2="90" class="cr-sedge"></line><line x1="60" y1="52" x2="27.09103465619134" y2="71.00000000000001" class="cr-sedge"></line><line x1="60" y1="52" x2="27.091034656191333" y2="33" class="cr-sedge live"></line><circle cx="60" cy="52" r="16" class="cr-score"></circle><circle cx="60" cy="52" r="4.5" class="cr-spulse"></circle><text x="60" y="55" text-anchor="middle" class="cr-stext" font-size="9" font-weight="600">世界</text><g class="cr-snode"><circle cx="60" cy="14" r="9" class="cr-ssat"></circle></g><g class="cr-snode"><circle cx="92.90896534380866" cy="33" r="9" class="cr-ssat"></circle></g><g class="cr-snode"><circle cx="92.90896534380867" cy="71" r="9" class="cr-ssat"></circle></g><g class="cr-snode"><circle cx="60" cy="90" r="9" class="cr-ssat"></circle></g><g class="cr-snode"><circle cx="27.09103465619134" cy="71.00000000000001" r="9" class="cr-ssat"></circle></g><g class="cr-snode"><circle cx="27.091034656191333" cy="33" r="9" class="cr-ssat"></circle></g></svg><div class="cr-bandmini-info"><div class="c-serif cr-bandmini-t">世界已铸成</div><div class="cr-band-sub c-latin">6 / 6</div><button class="c-btn sm cr-reroll"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L4 14h7l-1 8 9-12h-7z"></path></svg>重新抽卡</button></div></div></div><div class="cr-phasebar"><span class="pbi on">世界观</span><span class="pbi">角色表</span><span class="pbi">故事规划</span></div><div class="cr-seqnote">世界观逐维生成，后一维会读取已生成的全部维度——非并行抽卡。</div><div class="cr-itemlist"><div class="cr-itemrow filled"><span class="c-dot done"></span><div class="cr-itemmid"><div class="cr-itemnm">核心法则<span class="cr-itemsub c-latin"> ×4</span></div><div class="cr-itemag">世界观架构师</div></div></div><div class="cr-itemrow filled"><span class="c-dot done"></span><div class="cr-itemmid"><div class="cr-itemnm">时空地理<span class="cr-itemsub c-latin"> ×5</span></div><div class="cr-itemag">地理志官</div></div></div><div class="cr-itemrow filled"><span class="c-dot done"></span><div class="cr-itemmid"><div class="cr-itemnm">社会权力<span class="cr-itemsub c-latin"> ×6</span></div><div class="cr-itemag">设定考据员</div></div></div><div class="cr-itemrow filled"><span class="c-dot done"></span><div class="cr-itemmid"><div class="cr-itemnm">历史文化<span class="cr-itemsub c-latin"> ×5</span></div><div class="cr-itemag">设定考据员</div></div></div><div class="cr-itemrow filled"><span class="c-dot done"></span><div class="cr-itemmid"><div class="cr-itemnm">存在基础<span class="cr-itemsub c-latin"> ×4</span></div><div class="cr-itemag">世界观架构师</div></div></div><div class="cr-itemrow filled sel"><span class="c-dot done"></span><div class="cr-itemmid"><div class="cr-itemnm">信息传播<span class="cr-itemsub c-latin"> ×4</span></div><div class="cr-itemag">信息志官</div></div></div></div><div class="cr-pause"><span class="c-badge gold">待审阅</span>已暂停 · 审阅后继续</div></div><div class="cr-gendetail"><div class="cr-dp wide"><div class="cr-dp-head"><div class="cr-dp-htext"><div class="cr-dp-title c-serif">信息传播</div><div class="cr-dp-meta"><span class="c-badge gold">信息志官</span><span class="cr-seqtag">承接前 5 维</span><span class="cr-dp-cnt c-latin">4 个字段</span></div></div><button type="button" class="c-content-action utility cr-history-trigger"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 7v5l3 2"></path></svg> 修订记录</button></div><div class="c-lead-text cr-wbe c-editable-surface c-editable-outset lead-reading self-editable"><div class="cr-dp-lead">杀气即静默，信号随热浪断裂，天枢网只传账单不传真相。</div><button type="button" title="编辑本区块" class="c-content-action edit cr-wbe-edit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9 M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg> 编辑</button></div><div class="cr-wbe-list"><div class="cr-wbe-tip"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9 M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg>在区块内原地编辑 · 完成后保存<span class="cr-wbe-state"></span><span class="cr-dpe-ver c-latin">v1</span></div><div class="cr-wbe c-editable-surface text-reading"><div class="dbk-wrap"><div class="dbk"><section class="c-titled-text c-content-panel c-content-toolbar-owner"><header class="c-content-toolbar"><div class="c-content-toolbar-title"><div class="dbk-h"><span class="dbk-d"></span><span class="dbk-k">信息速度</span></div></div><div class="c-content-toolbar-actions"><button type="button" title="编辑本区块" class="c-content-action edit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9 M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg> 编辑</button></div></header><div class="c-titled-text-body"><div class="dbk-clamp" style="-webkit-line-clamp: 6;">数字信息在天枢区光纤网络中近乎实时传输，但在缓冲区与荒弃带，因武者战斗引发的电磁干扰与物理破坏，消息传递严重滞后。重大武道事件（如宗师陨落）首先通过“杀气显化”导致的局部通讯中断被感知，随后经由地下黑市的口耳相传或加密短波在数小时内扩散至全城。跨区域消息若需穿越不同财阀领地，往往需要数天时间进行人工中转与验证，以防虚假战报引发市场动荡。</div></div></section></div></div></div><div class="cr-wbe c-editable-surface text-reading"><div class="dbk-wrap"><div class="dbk"><section class="c-titled-text c-content-panel c-content-toolbar-owner"><header class="c-content-toolbar"><div class="c-content-toolbar-title"><div class="dbk-h"><span class="dbk-d"></span><span class="dbk-k">信息壁垒</span></div></div><div class="c-content-toolbar-actions"><button type="button" title="编辑本区块" class="c-content-action edit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9 M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg> 编辑</button></div></header><div class="c-titled-text-body"><div class="dbk-clamp" style="-webkit-line-clamp: 6;">武道联盟是最高信息垄断者，通过“肃清者”算法实时监控全网关键词，任何涉及“基因锁破解”、“大宗师弱点”或“寿命贷内幕”的信息会被瞬间屏蔽并溯源定位。封锁手段包括物理切断区域光纤、释放广域电磁脉冲干扰非法通讯，以及对知情者实施“社会性死亡”或肉体抹杀。铁骨会则控制着底层信息流，通过散布真假难辨的黑市情报操纵异兽肉价格，并利用巷道迷宫阻断执法队的追踪信号。猎命者同盟利用第零号禁区的辐射干扰天然屏障，建立独立的模拟信号电台网络，传播反抗言论与禁忌实验数据。</div></div></section></div></div></div><div class="cr-wbe c-editable-surface text-reading"><div class="dbk-wrap"><div class="dbk"><section class="c-titled-text c-content-panel c-content-toolbar-owner"><header class="c-content-toolbar"><div class="c-content-toolbar-title"><div class="dbk-h"><span class="dbk-d"></span><span class="dbk-k">流言与真相</span></div></div><div class="c-content-toolbar-actions"><button type="button" title="编辑本区块" class="c-content-action edit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9 M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg> 编辑</button></div></header><div class="c-titled-text-body"><div class="dbk-clamp" style="-webkit-line-clamp: 6;">信息失真主要源于“杀气干扰”与“利益操纵”。当强者交战时，周边电子设备失灵，目击者只能凭借模糊的感官记忆描述战况，导致谣言滋生，如将某位宗师的战术撤退渲染为重伤逃窜。常见误解包括认为“合成营养液可完全替代异兽肉”（实为慢性毒药，加速经脉硬化），以及相信“长生教能永生”（实则通过吞噬他人精气延寿）。财阀利用这些误解，故意泄露虚假的“平价灵药”消息诱导底层武者透支购买劣质产品，从而回收其剩余价值。真相往往隐藏在尸体风化的速度与方向中，只有经验丰富的老猎手能从中解读出真实的死因与凶手境界。</div></div></section></div></div></div><div class="cr-wbe c-editable-surface text-reading"><div class="dbk-wrap"><div class="dbk"><section class="c-titled-text c-content-panel c-content-toolbar-owner"><header class="c-content-toolbar"><div class="c-content-toolbar-title"><div class="dbk-h"><span class="dbk-d"></span><span class="dbk-k">知识载体</span></div></div><div class="c-content-toolbar-actions"><button type="button" title="编辑本区块" class="c-content-action edit"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9 M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"></path></svg> 编辑</button></div></header><div class="c-titled-text-body"><div class="dbk-clamp" style="-webkit-line-clamp: 6;">知识载体呈现极端二元化。高阶功法、灵药配方及血脉解锁技术存储在武道联盟的“天枢云”中，采用生物密钥（DNA+内息波动）多重加密，仅限理事会成员访问，物理备份存放于长生塔深层金库。中低阶武技以全息投影教程或神经植入芯片形式在黑市流通，但常夹带精神污染陷阱。普通人接触的知识仅限于《私斗公约》解读、基础锻体操以及由财阀控制的媒体发布的 sanitized 新闻。历史真相被重构，大枯竭前的文明细节被视为禁忌，相关纸质书籍已被焚毁，仅存于猎命者同盟的口述记忆中。</div></div></section></div></div></div></div></div></div></div></div></div><div class="cr-nav"><button class="c-btn"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg>上一步</button><div class="cr-navmid"><span class="cr-modetag">第 1/3 段</span></div><button class="c-btn gold" style="">通过，下一步<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3l14 9-14 9z"></path></svg></button></div></div></div><button type="button" class="asst-launch" aria-label="创作助手" title="创作助手"><svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z M19 14l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"></path></svg></button></div></div>
+<script src="vendor/react.production.min.js"></script>
+<script src="vendor/react-dom.production.min.js"></script>
+<script src="vendor/admin-components.js?v=20261126_df44"></script>
+<script src="vendor/mobile-kit.js?v=20261126_df44"></script>
+<script src="admin-ui-primitives.js?v=20261126_df44"></script>
+<script src="admin-data-table.js?v=20261126_df44"></script>
+<script src="admin-chart.js?v=20261126_df44"></script>
+<script src="data-console.js?v=20261126_df44"></script>
+<script src="portal-cache-core.js?v=20261126_df44"></script>
+<script src="portal-resource-refresh-core.js?v=20261126_df44"></script>
+<script src="book-data-volume-core.js?v=20261126_df44"></script>
+<script src="custom-settings-bridge.js?v=20261126_df44"></script>
+<script src="api-bridge.js?v=20261126_df44"></script>
+<script src="creation-analytics.js?v=20261126_df44"></script>
+<script src="lf-error-dialog.js?v=20261126_df44"></script>
+<script src="lf-avatar.js?v=20261126_df44"></script>
+<script>
+  (function () {
+    try {
+      var tokens = JSON.parse(localStorage.getItem("lf_tokens") || "null");
+      if (!tokens || !(tokens.access_token || tokens.accessToken)) {
+        window.location.replace("/login.html");
+      }
+    } catch (e) {
+      window.location.replace("/login.html");
+    }
+  })();
+</script>
+<script src="creation-layout.js?v=20261126_df44"></script>
+<script src="detail-tools.js?v=20261126_df44"></script>
+<script src="screens-shared.js?v=20261126_df44"></script>
+<script src="book-data-volume.js?v=20261126_df44"></script>
+<script src="relationship-map.js?v=20261126_df44"></script>
+<script src="character-depth.js?v=20261126_df44"></script>
+<script src="character-voice.js?v=20261126_df44"></script>
+<script src="rewrite-diff-core.js?v=20261126_df44"></script>
+<script src="rewrite-undo-core.js?v=20261126_df44"></script>
+<script src="field-capabilities-core.js?v=20261126_df44"></script>
+<script src="chapter-intent-core.js?v=20261126_df44"></script>
+<script src="chapter-guide-state-core.js?v=20261126_df44"></script>
+<script src="rewrite-diff.js?v=20261126_df44"></script>
+<script src="editable.js?v=20261126_df44"></script>
+<script src="screens-api-keys.js?v=20261126_df44"></script>
+<script src="screens-settings-notifications.js?v=20261126_df44"></script>
+<script src="credit-ledger-core.js?v=20261126_df44"></script>
+<script src="personal-credit-ledger.js?v=20261126_df44"></script>
+<script src="screens-settings.js?v=20261126_df44"></script>
+<script src="screens-admin-overview.js?v=20261126_df44"></script>
+<script src="screens-admin-activity.js?v=20261126_df44"></script>
+<script src="screens-admin-paying.js?v=20261126_df44"></script>
+<script src="screens-admin-analysis.js?v=20261126_df44"></script>
+<script src="admin-assistant-analysis-core.js?v=20261126_df44"></script>
+<script src="admin-assistant-drawer.js?v=20261126_df44"></script>
+<script src="admin-assistant-overview.js?v=20261126_df44"></script>
+<script src="admin-assistant-audit.js?v=20261126_df44"></script>
+<script src="screens-admin-assistant-analysis.js?v=20261126_df44"></script>
+<script src="screens-admin-token-tracking.js?v=20261126_df44"></script>
+<script src="screens-admin-rates.js?v=20261126_df44"></script>
+<script src="screens-admin-performance.js?v=20261126_df44"></script>
+<script src="screens-admin-seo.js?v=20261126_df44"></script>
+<script src="screens-admin-tools.js?v=20261126_df44"></script>
+<script src="screens-admin-public-api-announcements.js?v=20261126_df44"></script>
+<script src="screens-admin-public-api.js?v=20261126_df44"></script>
+<script src="admin-model-controls.js?v=20261126_df44"></script>
+<script src="admin-output-budgets-core.js?v=20261126_df44"></script>
+<script src="screens-admin-output-budgets.js?v=20261126_df44"></script>
+<script src="admin-memory-models.js?v=20261126_df44"></script>
+<script src="screens-admin-model-routing.js?v=20261126_df44"></script>
+<script src="admin-prose-draw-core.js?v=20261126_df44"></script>
+<script src="admin-prose-draw-shared.js?v=20261126_df44"></script>
+<script src="admin-prose-draw-analysis.js?v=20261126_df44"></script>
+<script src="admin-prose-draw-tasks.js?v=20261126_df44"></script>
+<script src="admin-prose-draw-schemes.js?v=20261126_df44"></script>
+<script src="screens-admin-prose-draw.js?v=20261126_df44"></script>
+<script src="screens-admin-assistant-settings.js?v=20261126_df44"></script>
+<script src="screens-admin-reporting-keys.js?v=20261126_df44"></script>
+<script src="screens-admin-other-settings.js?v=20261126_df44"></script>
+<script src="screens-admin-messages.js?v=20261126_df44"></script>
+<script src="admin-order-refund.js?v=20261126_df44"></script>
+<script src="screens-admin-users.js?v=20261126_df44"></script>
+<script src="admin-user-limits-core.js?v=20261126_df44"></script>
+<script src="screens-admin-user-limits.js?v=20261126_df44"></script>
+<script src="screens-admin-credit-ledger.js?v=20261126_df44"></script>
+<link rel="stylesheet" href="admin-rewrite-preview.css?v=20261126_df44">
+<link rel="stylesheet" href="admin-coupons.css?v=20261126_df44">
+<script src="admin-coupons-core.js?v=20261126_df44"></script>
+<script src="admin-coupons-form.js?v=20261126_df44"></script>
+<script src="screens-admin-rewrite-preview.js?v=20261126_df44"></script>
+<script src="screens-admin-coupons.js?v=20261126_df44"></script>
+<link rel="stylesheet" href="admin-credit-packs.css?v=20261126_df44">
+<link rel="stylesheet" href="mobile.css?v=20261126_df44">
+<script src="admin-credit-packs-core.js?v=20261126_df44"></script>
+<script src="admin-credit-packs-form.js?v=20261126_df44"></script>
+<script src="admin-credit-packs-access.js?v=20261126_df44"></script>
+<script src="screens-admin-credit-packs.js?v=20261126_df44"></script>
+<script src="screens-admin.js?v=20261126_df44"></script>
+<script src="screens-partnerships.js?v=20261126_df44"></script>
+<script src="create.js?v=20261126_df44"></script>
+<script src="workbench-rail.js?v=20261126_df44"></script>
+<script src="outline-status-card.js?v=20261126_df44"></script>
+<script src="generation-controls.js?v=20261126_df44"></script>
+<script src="prose-generation-summary.js?v=20261126_df44"></script>
+<script src="prose-draw-flow-core.js?v=20261126_df44"></script>
+<script src="prose-draw-flow.js?v=20261126_df44"></script>
+<script src="screens-prose-confirm.js?v=20261126_df44"></script>
+<script src="screens-edit.js?v=20261126_df44"></script>
+<script src="prose-draw-progress-core.js?v=20261126_df44"></script>
+<script src="prose-stage-core.js?v=20261126_df44"></script>
+<script src="screens-prose-run.js?v=20261126_df44"></script>
+<script src="screens-world.js?v=20261126_df44"></script>
+<script src="screens-cruise.js?v=20261126_df44"></script>
+<script src="screens-inbox.js?v=20261126_df44"></script>
+<script src="../site/vendor/markdown-it.min.js?v=20261126_df44"></script>
+<script src="assistant-markdown-core.js?v=20261126_df44"></script>
+<script src="assistant-markdown.js?v=20261126_df44"></script>
+<script src="assistant-navigation.js?v=20261126_df44"></script>
+  <script src="assistant-navigation-client.js?v=20261126_df44"></script>
+<script src="assistant-presentation-core.js?v=20261126_df44"></script>
+<script src="assistant-stream-core.js?v=20261126_df44"></script>
+<script src="assistant-checkpoint-core.js?v=20261126_df44"></script>
+<script src="assistant-composer-core.js?v=20261126_df44"></script>
+<script src="assistant-cite-core.js?v=20261126_df44"></script>
+<script src="assistant-body-review-core.js?v=20261126_df44"></script>
+<script src="assistant-field-review-core.js?v=20261126_df44"></script>
+<script src="assistant-custom-settings-core.js?v=20261126_df44"></script>
+<script src="assistant-creation-core.js?v=20261126_df44"></script>
+<script src="assistant-action-core.js?v=20261126_df44"></script>
+<script src="assistant-session-page-core.js?v=20261126_df44"></script>
+<script src="assistant-task-progress-core.js?v=20261126_df44"></script>
+<script src="assistant-receipt-core.js?v=20261126_df44"></script>
+<script src="assistant-field-group-core.js?v=20261126_df44"></script>
+<script src="assistant-examples-core.js?v=20261126_df44"></script>
+<script src="assistant-session-ops.js?v=20261126_df44"></script>
+<script src="assistant-checkpoint-ops.js?v=20261126_df44"></script>
+<script src="assistant-task-events-core.js?v=20261126_df44"></script>
+<script src="assistant-stream.js?v=20261126_df44"></script>
+<script src="assistant-interaction-ui.js?v=20261126_df44"></script>
+<script src="assistant-body-review.js?v=20261126_df44"></script>
+<script src="assistant-field-review.js?v=20261126_df44"></script>
+<script src="assistant-custom-settings-review.js?v=20261126_df44"></script>
+<script src="custom-settings-core.js?v=20261126_df44"></script>
+<script src="custom-settings-editor-core.js?v=20261126_df44"></script>
+<script src="custom-settings-editor.js?v=20261126_df44"></script>
+<script src="custom-settings-parts.js?v=20261126_df44"></script>
+<script src="custom-settings-history.js?v=20261126_df44"></script>
+<script src="screens-custom-settings.js?v=20261126_df44"></script>
+<script src="assistant-action-card.js?v=20261126_df44"></script>
+<script src="assistant-field-group-card.js?v=20261126_df44"></script>
+<script src="assistant-examples.js?v=20261126_df44"></script>
+<script src="assistant-task-progress.js?v=20261126_df44"></script>
+<script src="assistant-thread.js?v=20261126_df44"></script>
+<script src="assistant-checkpoint-control.js?v=20261126_df44"></script>
+<script src="assistant-compose-panel.js?v=20261126_df44"></script>
+<script src="assistant-draft-target.js?v=20261126_df44"></script>
+<script src="assistant-memory-control.js?v=20261126_df44"></script>
+<script src="assistant-memory-status.js?v=20261126_df44"></script>
+<script src="assistant-window.js?v=20261126_df44"></script>
+<script src="assistant-scroll.js?v=20261126_df44"></script>
+<script src="assistant-personalization-core.js?v=20261126_df44"></script>
+<script src="assistant-personalization-sync.js?v=20261126_df44"></script>
+<script src="screens-assistant.js?v=20261126_df44"></script>
+<script src="assistant-personalization.js?v=20261126_df44"></script>
+<script src="assistant-memory-graph-core.js?v=20261126_df44"></script>
+<script src="assistant-memory-text-core.js?v=20261126_df44"></script>
+<script src="assistant-memory-editor.js?v=20261126_df44"></script>
+<script src="assistant-memory-graph.js?v=20261126_df44"></script>
+<script src="assistant-workspace-delivery.js?v=20261126_df44"></script>
+<script src="assistant-workspace-core.js?v=20261126_df44"></script>
+<script src="assistant-upload-core.js?v=20261126_df44"></script>
+<script src="assistant-upload.js?v=20261126_df44"></script>
+<script src="assistant-inline-core.js?v=20261126_df44"></script>
+<script src="assistant-inline-editor.js?v=20261126_df44"></script>
+<script src="assistant-reference-core.js?v=20261126_df44"></script>
+<script src="assistant-reference-window.js?v=20261126_df44"></script>
+<script src="assistant-reference-library.js?v=20261126_df44"></script>
+<script src="assistant-workspace-preview-core.js?v=20261126_df44"></script>
+<script src="assistant-workspace-preview.js?v=20261126_df44"></script>
+<script src="assistant-workspace.js?v=20261126_df44"></script>
+<script src="assistant-usage-settings-core.js?v=20261126_df44"></script>
+<script src="assistant-usage-settings.js?v=20261126_df44"></script>
+<script src="screens-assistant-settings.js?v=20261126_df44"></script>
+<script src="screens-export.js?v=20261126_df44"></script>
+<script src="prose-draw-selection-core.js?v=20261126_df44"></script>
+<script src="screens-prose-draw-reader.js?v=20261126_df44"></script>
+<script src="prose-draw-selection.js?v=20261126_df44"></script>
+<script src="mobile-layout-core.js?v=20261126_df44"></script>
+<script src="mobile-chrome.js?v=20261126_df44"></script>
+<script src="mobile-pages.js?v=20261126_df44"></script>
+<script src="mobile-book.js?v=20261126_df44"></script>
+<script src="mobile-outline-core.js?v=20261126_df44"></script>
+<script src="mobile-field-sheet.js?v=20261126_df44"></script>
+<script src="mobile-outline.js?v=20261126_df44"></script>
+<script src="mobile-create.js?v=20261126_df44"></script>
+<script src="mobile-console.js?v=20261126_df44"></script>
+<script src="app.js?v=20261126_df44"></script>
+<script src="../site/public-announcement.js?v=20261126_df44"></script>
+<script src="/site/rewrite-invitation.js?v=20261126_df44"></script>
+
+
+
+<div id="lf-veil" aria-hidden="true" class=""></div><div id="lf-load" aria-hidden="true"><div style="display:flex;flex-direction:column;align-items:center"><div class="lf-seal"><span class="lf-ring"></span><span class="lf-char">笔</span></div><div class="lf-cap">Novelbuilt</div></div></div></body></html>
