@@ -24,3 +24,9 @@ node_modules/.vite/
 # dev-examples 运行产物（日志、PiBot 开发数据目录）
 dev-examples/*/data*/
 dev-examples/*/*.log
+
+# 回放工程：敏感凭据与可重装依赖不入库
+dev-examples/bishuxiezuo-workspace/auth.json
+dev-examples/bishuxiezuo-workspace/credentials.json
+dev-examples/bishuxiezuo-workspace/node_modules/
+dev-examples/bishuxiezuo-workspace/*.log
