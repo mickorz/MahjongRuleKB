@@ -112,7 +112,7 @@ export async function generateDocumentWithProvider(
     let draft: ChapterDraft;
     try {
       const response = await generateChapterOrThrow(generator, request, { maxRetries: options.maxRetries ?? 2 });
-      options.onChapter?.({ section_id: plan.section_id, phase: "response", detail: { retries: response.retries } });
+      options.onChapter?.({ section_id: plan.section_id, phase: "response", detail: { retries: response.retries, raw: response.raw, draft: response.draft } });
       const issues = validateDraftReferences(response.draft!, { knownRuleIds, knownConfigIds }, plan.section_id);
       if (issues.length > 0) {
         options.onChapter?.({ section_id: plan.section_id, phase: "rejected", detail: issues });
