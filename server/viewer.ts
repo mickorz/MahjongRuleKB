@@ -53,8 +53,8 @@ export function viewerHtml(): string {
   .app { height: 100dvh; display: flex; flex-direction: column; }
 
   .app-head {
-    flex: 0 0 auto; height: 44px; display: flex; align-items: center; gap: 14px;
-    padding: 0 16px; background: var(--paper); border-bottom: 1px solid var(--line);
+    flex: 0 0 auto; height: 52px; display: flex; align-items: center; gap: 18px;
+    padding: 0 22px; background: var(--paper); border-bottom: 1px solid var(--line);
   }
   .brand { font-weight: 600; font-size: 13px; letter-spacing: .02em; white-space: nowrap; }
 
@@ -76,17 +76,17 @@ export function viewerHtml(): string {
   .step-sep { width: 10px; height: 1px; background: var(--line); flex: 0 0 auto; }
 
   .head-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-  .seg {
+  .vseg {
     display: inline-flex; padding: 2px; gap: 2px; border-radius: 999px;
     background: var(--paper-2); border: 1px solid var(--line);
   }
-  .seg button {
+  .vseg button {
     border: none; background: none; cursor: pointer; font: inherit; font-size: 12px;
     color: var(--ink); padding: 3px 12px; border-radius: 999px; opacity: .72;
     transition: opacity .15s var(--ease), color .15s var(--ease);
   }
-  .seg button:hover { opacity: 1; color: var(--gold-deep); }
-  .seg button.on { background: var(--card); color: var(--ink); opacity: 1; box-shadow: 0 1px 2px var(--shadow); }
+  .vseg button:hover { opacity: 1; color: var(--gold-deep); }
+  .vseg button.on { background: var(--card); color: var(--ink); opacity: 1; box-shadow: 0 1px 2px var(--shadow); }
   .doc-name { font-size: 12px; color: var(--ink-2); white-space: nowrap; }
   .doc-ver {
     font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums;
@@ -106,11 +106,13 @@ export function viewerHtml(): string {
 
   /* ===== 底栏（S1 先保持信息，S4 再改操作条）===== */
   .app-foot {
-    flex: 0 0 auto; height: 40px; display: flex; align-items: center; gap: 16px;
-    padding: 0 16px; background: var(--paper); border-top: 1px solid var(--line);
+    flex: 0 0 auto; height: 56px; display: flex; align-items: center; gap: 16px;
+    padding: 0 22px; background: var(--paper); border-top: 1px solid var(--line);
     font-size: 11.5px; color: var(--ink-3);
   }
   .app-foot b { color: var(--ink-2); font-weight: 600; font-variant-numeric: tabular-nums; }
+  .foot-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .foot-actions[hidden] { display: none; }
   .app-foot .warn { color: var(--gold-deep); }
   .app-foot .danger { color: var(--terra); }
 
@@ -130,9 +132,15 @@ export function viewerHtml(): string {
 
   /* 左栏章节列表（S2 会换成 rail-item 卡片） */
   .toc { display: flex; flex-direction: column; gap: 1px; }
-  .toc-row { display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 7px; }
-  .toc-row:hover { background: var(--card); }
-  .toc-row.on { background: var(--gold-wash); box-shadow: inset 2px 0 0 var(--gold); }
+  .toc { gap: 4px; }
+  .toc-row {
+    display: flex; align-items: center; gap: 9px; padding: 9px 11px;
+    border: 1px solid var(--line-2); border-radius: 7px; background: var(--card);
+    transition: border-color .16s var(--ease), box-shadow .16s var(--ease);
+  }
+  .toc-row:hover { border-color: var(--gold-soft); }
+  .toc-row.on { border-color: var(--gold-deep); box-shadow: 0 0 0 2px var(--gold-soft); }
+  .toc-row.reviewed .dot { background: var(--sage); }
   .dot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; background: var(--line); }
   .dot.reviewed { background: var(--sage); }
   .dot.current { background: var(--gold); }
@@ -150,7 +158,27 @@ export function viewerHtml(): string {
   }
   .toc-row:hover .mini-action, .toc-row:focus-within .mini-action { opacity: 1; }
 
-  /* 片段卡片（S3 会细化为两列卡/规则卡） */
+  /* 配置卡：label / value 两列（参考站 .cc-row） */
+  .cfgcard {
+    margin: 8px 0; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--card);
+  }
+  .cc-row { display: flex; align-items: center; gap: 11px; font-size: 12.5px; min-height: 26px; }
+  .cc-row .cl { color: var(--ink-2); flex: none; min-width: 120px; }
+  .cc-row .cv { font-size: 12.5px; font-weight: 600; color: var(--ink); margin-left: auto; text-align: right; }
+  .cc-row .cv-note { font-size: 11.5px; color: var(--ink-3); }
+  .cc-row + .cc-row { border-top: 1px dashed var(--line-2); }
+
+  /* 规则卡：头部（徽章）+ 正文（serif） */
+  .seg-head { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-bottom: 6px; font-family: var(--sans); }
+  .seg-body { display: block; }
+  .seg-body code, .cc-row .cv code {
+    font-family: ui-monospace, "JetBrains Mono", Consolas, monospace;
+    font-size: .92em; background: var(--paper-2); border: 1px solid var(--line-2);
+    border-radius: 4px; padding: 0 4px;
+  }
+
+  /* 片段卡片（S3 已细化为两列卡 / 规则卡） */
   .seg {
     margin: 8px 0; padding: 10px 14px; border-radius: 8px;
     border: 1px solid var(--line); border-left: 3px solid var(--line);
@@ -171,8 +199,14 @@ export function viewerHtml(): string {
   .muted { color: var(--ink-3); font-size: 12px; }
   .warn { color: var(--terra); }
 
-  .editable { outline: 1px dashed var(--gold-soft); outline-offset: 3px; border-radius: 4px; }
-  .editable:focus { outline: 2px solid var(--gold); background: var(--gold-wash); }
+  .editable {
+    outline: 1px dashed var(--gold); outline-offset: 4px; border-radius: 4px;
+    cursor: text; transition: background .15s var(--ease);
+  }
+  .editable:hover { background: var(--gold-wash); }
+  .editable:focus { outline: 2px solid var(--gold-deep); background: var(--gold-wash); }
+  .badge.editable-flag { color: var(--gold-deep); border-color: var(--gold-soft); background: var(--gold-wash); }
+  .seg-head .spacer { flex: 1 1 auto; }
 
   /* 编辑工具条（S4 移到页脚） */
   .toolbar {
@@ -226,7 +260,7 @@ export function viewerHtml(): string {
     <span class="brand">策划工作台</span>
     <div class="steps" id="steps" role="tablist" aria-label="章节进度"></div>
     <div class="head-right">
-      <div class="seg" id="variants" role="tablist" aria-label="玩法"></div>
+      <div class="vseg" id="variants" role="tablist" aria-label="玩法"></div>
       <span class="doc-name" id="doc-name"></span>
       <span class="doc-ver" id="doc-ver"></span>
     </div>
@@ -408,10 +442,29 @@ function markCurrentStep() {
   });
   const active = [...document.querySelectorAll(".step")].find((s) => s.dataset.section === secId);
   if (active && active.dataset.state !== "reviewed") active.dataset.state = "current";
+  // 同步左栏选中态
+  document.querySelectorAll(".toc-row").forEach((row) => {
+    row.classList.toggle("on", row.dataset.section === secId);
+  });
   el("st-section").textContent = secId ? (idx + 1) + " / " + currentDoc.blocks.length : "—";
 }
 
 /* ---------- 文档渲染 ---------- */
+/** 把反引号包裹的片段渲染成行内代码，其余保持纯文本 */
+function renderRich(container, text) {
+  const parts = String(text).split(/\`([^\`]+)\`/g);
+  for (let i = 0; i < parts.length; i += 1) {
+    if (!parts[i]) continue;
+    if (i % 2 === 1) {
+      const code = document.createElement("code");
+      code.textContent = parts[i];
+      container.appendChild(code);
+    } else {
+      container.appendChild(document.createTextNode(parts[i]));
+    }
+  }
+}
+
 function badge(text) {
   const span = document.createElement("span");
   span.className = "badge";
@@ -471,38 +524,92 @@ async function loadDoc(variant) {
 
     for (const seg of block.segments) {
       segCount += 1;
+      const isConfig = seg.references.config_refs.length > 0 && seg.references.rule_refs.length === 0;
       const div = document.createElement("div");
-      div.className = "seg" + (seg.editable ? "" : " locked");
       div.dataset.lineage = seg.lineage;
-      if (seg.lineage === "modified") div.appendChild(badge("修改"));
-      if (seg.lineage === "added") div.appendChild(badge("新增"));
-      if (seg.lineage.endsWith("inherited")) div.appendChild(badge("继承"));
-      if (seg.diff_status === "candidate") div.appendChild(badge("差异待确认"));
-      if (seg.release_blocker_refs && seg.release_blocker_refs.length) div.appendChild(badge("待裁决 " + seg.release_blocker_refs.join("、")));
+
+      // 徽章集合（两种卡共用）
+      const badges = [];
+      if (seg.lineage === "modified") badges.push("修改");
+      if (seg.lineage === "added") badges.push("新增");
+      if (seg.lineage.endsWith("inherited")) badges.push("继承");
+      if (seg.diff_status === "candidate") badges.push("差异待确认");
+      if (seg.release_blocker_refs && seg.release_blocker_refs.length) badges.push("待裁决 " + seg.release_blocker_refs.join("、"));
       const isVariantOwn = seg.lineage === "modified" || seg.lineage === "added";
       if (!isVariantOwn) {
-        if (!seg.editable) div.appendChild(badge("数值不可改写"));
-        div.appendChild(badge("只读"));
+        if (!seg.editable) badges.push("数值不可改写");
+        badges.push("只读");
       } else if (!seg.editable) {
-        // 变体自有内容里，公式/纯数值片段同样不可编辑
-        div.appendChild(badge("数值不可改写"));
+        badges.push("数值不可改写");
       }
 
-      const p = document.createElement("span");
-      p.textContent = " " + seg.text;
-      const editableNow = seg.editable && (seg.lineage === "modified" || seg.lineage === "added");
-      if (editableNow) {
+      let p;
+      if (isConfig) {
+        // 配置：拆成 label / value 两列
+        div.className = "cfgcard";
+        const row = document.createElement("div");
+        row.className = "cc-row";
+        const raw = seg.text.replace(/^s+/, "");
+        const idx = raw.search(/[：:]/);
+        const label = idx > 0 ? raw.slice(0, idx) : raw;
+        const value = idx > 0 ? raw.slice(idx + 1).trim() : "";
+        const cl = document.createElement("span");
+        cl.className = "cl";
+        cl.textContent = label;
+        row.appendChild(cl);
+        if (badges.length) {
+          const note = document.createElement("span");
+          note.className = "cv-note";
+          note.textContent = badges.join(" · ");
+          row.appendChild(note);
+        }
+        const cv = document.createElement("span");
+        cv.className = "cv";
+        renderRich(cv, value);
+        row.appendChild(cv);
+        div.appendChild(row);
+        // 配置卡不再单独挂 body：p 置为 null，后续逻辑跳过
+        p = null;
+      } else {
+        div.className = "seg" + (seg.editable ? "" : " locked");
+        if (badges.length) {
+          const head = document.createElement("div");
+          head.className = "seg-head";
+          for (const b of badges) head.appendChild(badge(b));
+          div.appendChild(head);
+        }
+        p = document.createElement("span");
+        p.className = "seg-body";
+        renderRich(p, seg.text);
+      }
+      const editableNow = !isConfig && seg.editable && (seg.lineage === "modified" || seg.lineage === "added");
+      if (p && editableNow) {
         p.contentEditable = "true";
         p.className = "editable";
+        p.title = "点击即可直接修改这段文字";
         p.spellcheck = false;
+        // 头部追加「可编辑」徽章，解决"看不出哪里能改"
+        const head = div.querySelector(".seg-head");
+        if (head) {
+          const flag = badge("可编辑");
+          flag.classList.add("editable-flag");
+          head.appendChild(flag);
+        } else {
+          const headNew = document.createElement("div");
+          headNew.className = "seg-head";
+          const flag = badge("可编辑");
+          flag.classList.add("editable-flag");
+          headNew.appendChild(flag);
+          div.insertBefore(headNew, div.firstChild);
+        }
         p.onblur = () => {
           const next = p.textContent.replace(/^\\s+/, "");
           if (next !== seg.text) markEdited(seg.segment_id, next);
         };
       }
-      div.appendChild(p);
+      if (p) div.appendChild(p);
       div.onclick = (ev) => {
-        if (ev.target === p && editableNow) return;
+        if (p && ev.target === p && editableNow) return;
         showSources(variant, seg.segment_id);
       };
       body.appendChild(div);
