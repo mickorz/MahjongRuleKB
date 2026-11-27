@@ -1,0 +1,27 @@
+
+.wrin-inline{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px;background:oklch(0.22 0.03 60/.42);backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);animation:lfFadeOnly .25s ease both}
+.wrin-card{width:100%;max-width:640px;max-height:calc(100dvh - 40px);overflow-y:auto;background:var(--card);border:1px solid var(--gold-soft);border-radius:10px;box-shadow:0 24px 64px -20px oklch(0.56 0.125 58/.22);padding:24px 22px 20px;position:relative;animation:rgPop .5s var(--ease-out) both}
+@media(max-width:560px){.wrin-inline{padding:12px}.wrin-card{max-height:calc(100dvh - 24px);padding:20px 16px 16px}}
+.wrin-card::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,oklch(0.70 0.125 70/.06),transparent 50%);pointer-events:none}
+.wrin-title{font-family:var(--serif);font-size:21px;font-weight:600;text-align:center;margin-bottom:4px;position:relative;z-index:1}
+.wrin-highlight{color:var(--gold-deep)}
+.wrin-sub{text-align:center;font-size:13.5px;color:var(--ink-2);margin-bottom:18px;line-height:1.6;position:relative;z-index:1}
+/* benefit cards */
+.wrin-benefits{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;position:relative;z-index:1}
+@media(max-width:560px){.wrin-benefits{grid-template-columns:1fr}}
+.wrin-benefit{background:color-mix(in srgb,var(--paper-2) 60%,var(--gold-wash));border:1px solid var(--line);border-radius:8px;padding:12px 14px;display:flex;gap:10px;align-items:flex-start}
+.wrin-benefit .wb-ic{width:30px;height:30px;border-radius:7px;flex:none;display:grid;place-items:center;background:var(--gold-wash);border:1px solid var(--gold-soft);color:var(--gold-deep)}
+.wrin-benefit .wb-d{font-size:13px;color:var(--ink-2);line-height:1.5}
+.wrin-benefit .wb-d b{color:var(--ink);font-weight:600}
+/* cost comparison bar */
+.wrin-costbar{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--ink-2);background:var(--paper-2);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-bottom:16px;position:relative;z-index:1}
+.wrin-costbar .cost-item{display:flex;align-items:center;gap:6px}
+.wrin-costbar .cost-label{font-weight:500}
+.wrin-costbar .cost-val{font-weight:600;color:var(--ink);font-family:var(--latin)}
+.wrin-costbar .cost-val.gold{color:var(--gold-deep)}
+.wrin-costbar .cost-divider{width:1px;height:18px;background:var(--line)}
+.wrin-costbar .cost-note{font-size:12px;color:var(--ink-3);font-weight:500}
+/* footer */
+.wrin-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;position:relative;z-index:1}
+.wrin-footer .wrin-note{font-size:12px;color:var(--ink-3);display:flex;align-items:center;gap:6px}
+.wrin-footer .wrin-note svg{color:var(--ink-3)}
