@@ -14,3 +14,7 @@
 	path = thirdparties/zenstory
 	url = https://github.com/zenstory-ai/zenstory.git
 	branch = main
+[submodule "thirdparties/docwriter"]
+	path = thirdparties/docwriter
+	url = https://github.com/docwriter-org/docwriter.git
+	branch = main
