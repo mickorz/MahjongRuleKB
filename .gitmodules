@@ -22,3 +22,7 @@
 	path = thirdparties/PlotPilot
 	url = https://github.com/shenminglinyi/PlotPilot.git
 	branch = master
+[submodule "thirdparties/markra"]
+	path = thirdparties/markra
+	url = https://github.com/markrahq/markra.git
+	branch = v2
