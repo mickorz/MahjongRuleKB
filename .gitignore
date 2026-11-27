@@ -23,12 +23,10 @@ documents/
 # 测试缓存
 node_modules/.vite/
 
+# 外部参考站工作区：Windows junction 指向 E:\WorkProjects\webbuild-kb\workspace
+# （含登录凭据与 node_modules，整目录不入库）
+dev-examples/bishuxiezuo-workspace
+
 # dev-examples 运行产物（日志、PiBot 开发数据目录）
 dev-examples/*/data*/
 dev-examples/*/*.log
-
-# 回放工程：敏感凭据与可重装依赖不入库
-dev-examples/bishuxiezuo-workspace/auth.json
-dev-examples/bishuxiezuo-workspace/credentials.json
-dev-examples/bishuxiezuo-workspace/node_modules/
-dev-examples/bishuxiezuo-workspace/*.log
