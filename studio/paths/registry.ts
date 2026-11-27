@@ -209,7 +209,7 @@ const MATRIX: Record<Actor, Partial<Record<WriteIntent, Rule>>> = {
   stage: {
     // Stage 生成产物；表达层与审查记录不在其列
     generate: {
-      prefixes: [`${ROOT_DOCUMENTS}/`, `${ROOT_RUNTIME}/workflow/`],
+      prefixes: [`${ROOT_DOCUMENTS}/`, `${ROOT_RUNTIME}/workflow/`, `${ROOT_RUNTIME}/drafts/`],
     },
   },
   server: {
