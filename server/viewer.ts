@@ -9,6 +9,9 @@ export function viewerHtml(): string {
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta http-equiv="cache-control" content="no-store" />
 <title>策划工作台</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&display=swap" />
 <style>
   :root {
     color-scheme: light;
@@ -29,9 +32,10 @@ export function viewerHtml(): string {
     --line: rgba(34,29,22,.10);
     --line-2: rgba(34,29,22,.055);
     --shadow: rgba(34,29,22,.16);
-    --sans: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
-    --serif: "Noto Serif SC", "Songti SC", STSong, Georgia, serif;
+    --sans: "Noto Sans SC", "PingFang SC", system-ui, sans-serif;
+    --serif: "Noto Serif SC", "Songti SC", serif;
     --latin: "Newsreader", Georgia, serif;
+    --mono: ui-monospace, "SF Mono", monospace;
     --ease: cubic-bezier(.2,.7,.2,1);
     --nav-w: 250px;
   }
@@ -79,7 +83,7 @@ export function viewerHtml(): string {
   .pane-main { flex: 1 1 auto; padding: 0; min-width: 0; background: var(--paper); scrollbar-gutter: stable both-edges; }
   /* 参考站 .c-doc：阅读栏 680px 居中 */
   /* 参考站实测：.c-titled-text-body 在 2048 视口下 1003px 宽、13px/1.8、圆角 6、左 3px 语义条 */
-  .doc-col { max-width: 1080px; margin: 0 auto; width: 100%; padding: 26px 32px 56px; }
+  .doc-col { max-width: 1200px; margin: 0 auto; width: 100%; padding: 30px 40px 56px; }
 
   /* 分隔条：1px 视觉 + 8px 命中区 */
   .splitter { position: relative; flex: 0 0 1px; background: var(--line); cursor: col-resize; touch-action: none; }
@@ -104,15 +108,19 @@ export function viewerHtml(): string {
   .app-foot .danger { color: var(--terra); }
 
   /* ===== 通用排版 ===== */
+  /* 分组标签（原站 .c-label） */
   .group-label {
-    font-size: 10.5px; letter-spacing: .14em; color: var(--ink-3);
-    margin: 4px 0 8px; font-weight: 600;
+    font: 600 11px/1.4 var(--latin); letter-spacing: .08em; text-transform: uppercase;
+    color: var(--ink-3); margin: 4px 0 12px;
   }
-  h1 { font-family: var(--serif); font-size: 20px; margin: 0 0 14px; color: var(--ink); }
+  /* 文档大标题（原站 .cr-vol-nm：34px / 600 / 1.1） */
+  h1 { font-family: var(--serif); font-size: 34px; font-weight: 600; line-height: 1.1; margin: 3px 0 18px; color: var(--ink); }
+  /* 章节标题（衬线小节 + 2px 金线，参考 .cr-vol-paneh） */
   h2 {
-    font-size: 11.5px; letter-spacing: .12em; color: var(--ink-2); font-weight: 600;
-    margin: 26px 0 10px; padding-bottom: 7px; border-bottom: 1px solid var(--line);
-    position: sticky; top: -20px; background: var(--paper); z-index: 2;
+    font-family: var(--serif); font-size: 16px; font-weight: 600; line-height: 1.5;
+    color: var(--ink); margin: 30px 0 12px; padding-bottom: 11px;
+    border-bottom: 2px solid var(--gold-soft);
+    position: sticky; top: -26px; background: var(--paper); z-index: 2;
   }
   h2:first-of-type { margin-top: 2px; }
   #doc-body { width: 100%; }
@@ -135,7 +143,7 @@ export function viewerHtml(): string {
   .toc-row.on .link { font-weight: 600; color: var(--ink); }
   .toc-mid { flex: 1 1 auto; min-width: 0; }
   .toc-nm {
-    display: block; font-size: 13.5px; font-weight: 600; color: var(--ink);
+    display: block; font-size: 13.5px; font-weight: 600; color: inherit;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .toc-sub { font-size: 11.5px; color: var(--ink-3); font-weight: 400; margin-top: 2px; }
@@ -161,10 +169,11 @@ export function viewerHtml(): string {
   /* 配置卡：宽屏两列（参考站 .cr-optgrid 的两栏思路） */
   #doc-body { display: flex; flex-direction: column; }
   .cfgcard {
-    margin: 6px 0; padding: 11px 14px; border: 1px solid var(--line); border-radius: 6px;
-    background: var(--card);
+    margin: 0; padding: 14px 16px; border: 1px solid var(--line); border-radius: 9px;
+    background: var(--card); display: flex; flex-direction: column; gap: 12px;
   }
-  .cfg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 8px 12px; margin: 8px 0; }
+  .cfg-grid { display: grid; grid-template-columns: 1.3fr 1fr; gap: 22px; align-items: start; margin: 10px 0 14px; }
+  @media (max-width: 900px) { .cfg-grid { grid-template-columns: 1fr; } }
   .cfg-grid .cfgcard { margin: 0; }
   .cc-row { display: flex; align-items: center; gap: 11px; font-size: 12.5px; min-height: 26px; }
   .cc-row .cl { color: var(--ink-2); flex: none; min-width: 120px; }
@@ -194,7 +203,7 @@ export function viewerHtml(): string {
   .seg-head { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-bottom: 6px; font-family: var(--sans); }
   .seg-body { display: block; }
   .seg-body code, .cc-row .cv code {
-    font-family: ui-monospace, "JetBrains Mono", Consolas, monospace;
+    font-family: var(--mono);
     font-size: .92em; background: var(--paper-2); border: 1px solid var(--line-2);
     border-radius: 4px; padding: 0 4px;
   }
@@ -202,9 +211,10 @@ export function viewerHtml(): string {
   /* 片段卡片（S3 已细化为两列卡 / 规则卡） */
   .seg {
     margin: 8px 0; padding: 12px 14px; border-radius: 6px;
-    border: 1px solid var(--line); border-left: 3px solid var(--line);
+    border: 1px solid var(--line); border-left: 3px solid var(--gold-soft);
     background: var(--card);
     font-family: var(--serif); font-size: 13px; line-height: 1.8; color: var(--ink);
+    text-wrap: pretty;
   }
   .seg[data-lineage="modified"] { border-left-color: var(--gold); background: var(--gold-wash); }
   .seg[data-lineage="added"] { border-left-color: var(--sage); background: var(--sage-wash); }
@@ -264,42 +274,55 @@ export function viewerHtml(): string {
   }
   .finding-code { font-family: var(--latin); font-size: 10px; color: var(--gold-deep); margin-right: 6px; }
 
-  /* 修订记录浮层（S5） */
-  .revpop {
-    position: fixed; z-index: 100000; width: 348px; padding: 15px 16px 14px;
+  /* 操作按钮（原站 .c-content-action） */
+  .c-content-action {
+    display: inline-flex; min-height: 30px; align-items: center; justify-content: center; gap: 4px;
+    padding: 4px 10px; border: 1px solid var(--line); border-radius: 5px; background: var(--card);
+    color: var(--ink-2); font: 11.5px var(--sans); line-height: 1.35; white-space: nowrap; cursor: pointer;
+    transition: border-color .15s var(--ease), background .15s var(--ease), color .15s var(--ease);
+  }
+  .c-content-action:hover { border-color: var(--gold-soft); background: var(--gold-wash); color: var(--gold-deep); }
+  .c-content-action:disabled { color: var(--ink-3); cursor: default; background: var(--card); border-color: var(--line); }
+  .c-content-action svg { flex: none; }
+  .cr-history-trigger { margin-left: auto; white-space: nowrap; }
+
+  /* 修订记录浮层：尺寸/内距/箭头/行样式取自原站 .c-revpop */
+  .c-revpop {
+    position: fixed; z-index: 100000; width: 348px;
     background: var(--card); border: 1px solid var(--gold-soft); border-radius: 8px;
-    box-shadow: 0 24px 56px -18px var(--shadow);
+    box-shadow: 0 24px 56px -18px var(--shadow); padding: 15px 16px 16px;
   }
-  .revpop[hidden] { display: none; }
-  /* 浮层在卡片侧边，箭头朝左 */
-  .revpop .rv-arrow {
-    position: absolute; left: -7px; top: 26px; width: 12px; height: 12px; background: var(--card);
-    border-left: 1px solid var(--gold-soft); border-bottom: 1px solid var(--gold-soft);
-    transform: rotate(45deg);
+  .c-revpop[hidden] { display: none; }
+  .c-revpop .rv-arrow {
+    position: absolute; top: -7px; left: 40px; width: 12px; height: 12px; background: var(--card);
+    border-left: 1px solid var(--gold-soft); border-top: 1px solid var(--gold-soft); transform: rotate(45deg);
   }
-  .revpop .rv-head { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; margin-bottom: 12px; }
-  .revpop .rv-ad {
+  .c-revpop .rv-head { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; margin-bottom: 12px; }
+  .c-revpop .rv-ad {
     width: 20px; height: 20px; border-radius: 4px; background: var(--gold-deep); color: #fff;
     display: grid; place-items: center; font-family: var(--serif); font-size: 11px; flex: none;
   }
-  .revpop .rv-row { display: flex; gap: 9px; font-size: 12.5px; line-height: 1.6; padding: 9px 11px; border-radius: 6px; }
-  .revpop .rv-row.old { background: var(--paper-2); }
-  .revpop .rv-row.new { background: var(--gold-wash); border: 1px solid var(--gold-soft); }
-  .revpop .rv-k { flex: none; width: 30px; font-size: 10.5px; color: var(--ink-3); font-family: var(--latin); font-style: italic; padding-top: 2px; }
-  .revpop .rv-orig { color: var(--ink-3); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--terra) 70%, transparent); }
-  .revpop .rv-new { color: var(--ink); font-weight: 500; }
-  .revpop .rv-diff { display: flex; flex-direction: column; margin-bottom: 11px; }
-  .revpop .rv-conn { display: flex; justify-content: center; align-items: center; color: var(--gold-deep); height: 15px; }
-  .revpop .rv-conn svg { transform: rotate(90deg); }
-  .revpop .rv-why .rv-k { font-style: normal; font-family: var(--sans); padding-top: 1px; }
-  .revpop .rv-why { display: flex; gap: 8px; font-size: 11.5px; color: var(--ink-2); background: var(--paper-2); border-radius: 6px; padding: 9px 11px; margin: 10px 0 12px; }
-  .revpop .rv-acts { display: flex; justify-content: flex-end; gap: 8px; }
-  .seg-head .rev-btn {
-    margin-left: auto; border: 1px solid var(--line-2); background: var(--paper-2);
-    color: var(--ink-3); border-radius: 999px; padding: 0 8px; font-size: 10.5px; cursor: pointer;
-    font-family: var(--sans);
+  .c-revpop .rv-diff { display: flex; flex-direction: column; margin-bottom: 11px; }
+  .c-revpop .rv-row {
+    display: flex; gap: 9px; font-size: 12.5px; line-height: 1.55; align-items: flex-start;
+    border-radius: 6px; padding: 9px 11px;
   }
-  .seg-head .rev-btn:hover { color: var(--gold-deep); border-color: var(--gold-soft); }
+  .c-revpop .rv-row.old { background: var(--paper-2); }
+  .c-revpop .rv-row.new { background: var(--gold-wash); border: 1px solid var(--gold-soft); }
+  .c-revpop .rv-k {
+    flex: none; width: 30px; font-size: 10.5px; color: var(--ink-3); padding-top: 2px;
+    font-family: var(--latin); font-style: italic;
+  }
+  .c-revpop .rv-orig { color: var(--ink-3); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--terra) 70%, transparent); }
+  .c-revpop .rv-new { color: var(--ink); font-weight: 500; }
+  .c-revpop .rv-conn { display: flex; justify-content: center; align-items: center; color: var(--gold-deep); height: 15px; }
+  .c-revpop .rv-conn svg { transform: rotate(90deg); }
+  .c-revpop .rv-why {
+    display: flex; gap: 8px; font-size: 11.5px; color: var(--ink-2); background: var(--paper-2);
+    border-radius: 6px; padding: 9px 11px; margin-bottom: 13px; line-height: 1.55;
+  }
+  .c-revpop .rv-why .rv-k { font-style: normal; font-family: var(--sans); padding-top: 1px; }
+  .c-revpop .rv-acts { display: flex; justify-content: flex-end; gap: 8px; }
 
   @media (max-width: 960px) {
     .splitter:last-of-type { display: none; }
@@ -356,20 +379,32 @@ export function viewerHtml(): string {
   </footer>
 </div>
 
-<div class="revpop" id="revpop" hidden role="dialog" aria-label="修订记录">
+<div class="c-revpop" id="revpop" hidden role="dialog" aria-label="修订记录">
   <div class="rv-arrow" id="rv-arrow"></div>
-  <div class="rv-head"><span class="rv-ad" id="rv-ad">段</span><span id="rv-title">修订记录</span></div>
+  <div class="rv-head">
+    <span class="rv-ad" id="rv-ad">段</span>
+    <span id="rv-title">修订记录</span>
+  </div>
   <div class="rv-diff">
-    <div class="rv-row old"><span class="rv-k">原</span><span class="rv-orig" id="rv-before"></span></div>
+    <div class="rv-row old">
+      <span class="rv-k">原</span>
+      <span class="rv-orig" id="rv-before"></span>
+    </div>
     <div class="rv-conn">
       <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6h6M5 3l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
     </div>
-    <div class="rv-row new"><span class="rv-k">新</span><span class="rv-new" id="rv-after"></span></div>
+    <div class="rv-row new">
+      <span class="rv-k">新</span>
+      <span class="rv-new" id="rv-after"></span>
+    </div>
   </div>
-  <div class="rv-why"><span class="rv-k">为什么</span><span id="rv-why"></span></div>
+  <div class="rv-why">
+    <span class="rv-k">为什么</span>
+    <span id="rv-why"></span>
+  </div>
   <div class="rv-acts">
-    <button class="c-btn" id="rv-restore">恢复此版本</button>
-    <button class="c-btn" id="rv-close">关闭</button>
+    <button class="c-content-action" id="rv-restore">恢复此版本</button>
+    <button class="c-content-action" id="rv-close">关闭</button>
   </div>
 </div>
 
@@ -492,10 +527,16 @@ function scrollToSection(sectionId) {
 /* ---------- 文档渲染 ---------- */
 let revAnchor = null;
 
+/** 原站 RevisionHistoryButton 用的 clock 图标 */
+function clockIcon() {
+  return '<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"></circle><path d="M8 4.6V8l2.4 1.6"></path></svg>';
+}
+
 function closeRevpop() {
   const pop = el("revpop");
   if (!pop || pop.hidden) return;
   pop.hidden = true;
+  if (revAnchor) revAnchor.setAttribute("aria-expanded", "false");
   revAnchor = null;
 }
 
@@ -513,37 +554,43 @@ function openRevpop(anchor, seg) {
   el("rv-title").textContent = "修订记录 · " + topic;
   el("rv-ad").textContent = seg.references.config_refs.length > 0 ? "配" : "规";
   const diffLabel = { candidate: "待确认", confirmed: "已确认", not_applicable: "不适用" }[seg.diff_status] || seg.diff_status;
+  const locked = !seg.editable;
   const why = entry
     ? "人工改写草稿，尚未应用。依据：" + (refsLabel(seg.references.rule_refs) || "本段引用")
-    : "尚无改动，当前显示文档原文。本段依据：" + (refsLabel(seg.references.rule_refs) || "本段引用");
+    : locked
+      ? "本段" + (seg.lineage.endsWith("inherited") ? "由基座继承，基座不可人工改写" : "含数值或公式，禁止手改")
+        + "。依据：" + (refsLabel(seg.references.rule_refs) || "本段引用")
+      : "尚无改动，当前显示文档原文。本段依据：" + (refsLabel(seg.references.rule_refs) || "本段引用");
   el("rv-why").textContent = why;
   el("rv-restore").disabled = !entry;
-  el("rv-restore").textContent = entry ? "恢复此版本" : "无改动可恢复";
+  el("rv-restore").textContent = entry ? "恢复此版本" : (locked ? "本段只读" : "无改动可恢复");
 
+  pop.dataset.segId = seg.segment_id;
+  placeRevpop(anchor);
+  pop.hidden = false;
+  anchor.setAttribute("aria-expanded", "true");
+  revAnchor = anchor;
+}
+
+/** 定位：优先卡片右侧空白，右侧放不下翻到左侧；垂直对齐卡片顶部并留边 */
+function placeRevpop(anchor) {
+  const pop = el("revpop");
   const card = anchor.closest(".seg") || anchor;
   const cardRect = card.getBoundingClientRect();
-  const w = 348;
-  const gap = 12;
-  const margin = 16;
+  const w = 348, gap = 12, margin = 16;
   const popH = pop.offsetHeight || 260;
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
+  const vw = window.innerWidth, vh = window.innerHeight;
 
-  // 优先放在卡片右侧空余处，不遮住正在看的段落；右侧不够就反过来放左侧
   let left = cardRect.right + gap;
   if (left + w > vw - margin) left = cardRect.left - gap - w;
   if (left < margin) left = Math.max(margin, Math.min(cardRect.left, vw - w - margin));
-
-  // 垂直对齐卡片顶部，超底则上提；始终留边
-  let top = Math.min(Math.max(margin, cardRect.top), vh - popH - margin);
+  const top = Math.min(Math.max(margin, cardRect.top), vh - popH - margin);
 
   pop.style.left = Math.round(left) + "px";
   pop.style.top = Math.round(top) + "px";
   el("rv-arrow").style.top = Math.round(Math.min(popH - 24, Math.max(14, cardRect.top + 22 - top))) + "px";
-  pop.dataset.segId = seg.segment_id;
-  pop.hidden = false;
-  revAnchor = anchor;
 }
+
 
 /** 把反引号包裹的片段渲染成行内代码，其余保持纯文本 */
 function renderRich(container, text) {
@@ -697,7 +744,6 @@ async function loadDoc(variant) {
         p.className = "editable";
         p.title = "点击即可直接修改这段文字";
         p.spellcheck = false;
-        // 头部追加「可编辑」徽章 + 「✎ 修订」按钮
         let head = div.querySelector(".seg-head");
         if (!head) {
           head = document.createElement("div");
@@ -707,18 +753,35 @@ async function loadDoc(variant) {
         const flag = badge("可编辑");
         flag.classList.add("editable-flag");
         head.appendChild(flag);
-        const revBtn = document.createElement("button");
-        revBtn.className = "rev-btn";
-        revBtn.textContent = "修订记录";
-        revBtn.onclick = (ev) => { ev.stopPropagation(); openRevpop(revBtn, seg); };
-        head.appendChild(revBtn);
         div.dataset.segId = seg.segment_id;
         p.onblur = () => {
-          const next = p.textContent.replace(/^\\s+/, "");
+          const next = p.textContent.replace(/^\s+/, "");
           if (next !== seg.text) markEdited(seg.segment_id, next, seg.text);
         };
       }
       if (p) div.appendChild(p);
+
+      // 「修订记录」每张规则卡都有（原站每个字段都有），只读卡点开说明为什么不能改
+      if (!isConfig) {
+        let head = div.querySelector(".seg-head");
+        if (!head) {
+          head = document.createElement("div");
+          head.className = "seg-head";
+          div.insertBefore(head, div.firstChild);
+        }
+        const revBtn = document.createElement("button");
+        revBtn.type = "button";
+        revBtn.className = "c-content-action cr-history-trigger";
+        revBtn.setAttribute("aria-expanded", "false");
+        revBtn.innerHTML = clockIcon() + "修订记录";
+        revBtn.onclick = (ev) => {
+          ev.stopPropagation();
+          if (!el("revpop").hidden && revAnchor === revBtn) { closeRevpop(); return; }
+          openRevpop(revBtn, seg);
+        };
+        head.appendChild(revBtn);
+        div.dataset.segId = seg.segment_id;
+      }
 
       // 来源脚注：规则 / 配置 / 原文证据，默认收起
       const refs = seg.references || {};
@@ -938,6 +1001,9 @@ document.addEventListener("click", (e) => {
   closeRevpop();
 });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeRevpop(); });
+const replaceRevpop = () => { if (revAnchor && !el("revpop").hidden) placeRevpop(revAnchor); };
+window.addEventListener("resize", replaceRevpop);
+document.getElementById("pane-main").addEventListener("scroll", replaceRevpop, { passive: true });
 el("rv-close").onclick = closeRevpop;
 el("rv-restore").onclick = () => {
   const id = el("revpop").dataset.segId;
