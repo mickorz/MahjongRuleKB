@@ -58,17 +58,16 @@ export function viewerHtml(): string {
   .brand { font-weight: 600; font-size: 13px; letter-spacing: .02em; white-space: nowrap; }
 
   .head-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-  .vseg {
-    display: inline-flex; padding: 2px; gap: 2px; border-radius: 999px;
-    background: var(--paper-2); border: 1px solid var(--line);
-  }
+  /* 玩法 tab：参考站 .c-tabs{display:flex;gap:4px} / .c-tab{13px;padding:7px 14px;radius:5px}
+     active 为墨色实底 + 纸色字（.c-tab.on{background:var(--ink);color:var(--paper)}） */
+  .vseg { display: flex; gap: 4px; }
   .vseg button {
-    border: none; background: none; cursor: pointer; font: inherit; font-size: 12px;
-    color: var(--ink); padding: 3px 12px; border-radius: 999px; opacity: .72;
-    transition: opacity .15s var(--ease), color .15s var(--ease);
+    border: none; background: none; cursor: pointer; font: inherit;
+    font-size: 13px; padding: 7px 14px; border-radius: 5px; color: var(--ink-2);
+    transition: background .18s var(--ease), color .18s var(--ease);
   }
-  .vseg button:hover { opacity: 1; color: var(--gold-deep); }
-  .vseg button.on { background: var(--card); color: var(--ink); opacity: 1; box-shadow: 0 1px 2px var(--shadow); }
+  .vseg button:hover:not(.on) { background: var(--paper-2); color: var(--ink); }
+  .vseg button.on { background: var(--ink); color: var(--paper); font-weight: 500; }
   .doc-name { font-size: 12px; color: var(--ink-2); white-space: nowrap; }
   .doc-ver {
     font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums;
@@ -79,7 +78,8 @@ export function viewerHtml(): string {
   .pane-nav { flex: 0 0 var(--nav-w); padding: 14px 12px; background: var(--paper-2); border-right: 1px solid var(--line); }
   .pane-main { flex: 1 1 auto; padding: 0; min-width: 0; background: var(--paper); scrollbar-gutter: stable both-edges; }
   /* 参考站 .c-doc：阅读栏 680px 居中 */
-  .doc-col { max-width: 680px; margin: 0 auto; width: 100%; padding: 28px 24px 56px; }
+  /* 参考站实测：.c-titled-text-body 在 2048 视口下 1003px 宽、13px/1.8、圆角 6、左 3px 语义条 */
+  .doc-col { max-width: 1080px; margin: 0 auto; width: 100%; padding: 26px 32px 56px; }
 
   /* 分隔条：1px 视觉 + 8px 命中区 */
   .splitter { position: relative; flex: 0 0 1px; background: var(--line); cursor: col-resize; touch-action: none; }
@@ -117,21 +117,28 @@ export function viewerHtml(): string {
   h2:first-of-type { margin-top: 2px; }
   #doc-body { width: 100%; }
 
-  /* 左栏章节列表（S2 会换成 rail-item 卡片） */
-  .toc { display: flex; flex-direction: column; gap: 1px; }
-  .toc { gap: 4px; }
+  /* 左栏章节条目：参考站 .cr-itemrow
+     padding 11px 12px / gap 10px / radius 7 / 未访问 opacity .5 /
+     .active 保金边 / .sel 金边 + 2px 金环 */
+  .toc { display: flex; flex-direction: column; gap: 7px; }
   .toc-row {
-    display: flex; align-items: center; gap: 9px; padding: 9px 11px 9px 9px;
-    border: 1px solid var(--line-2); border-left: 3px solid transparent; border-radius: 7px; background: var(--card);
-    transition: border-color .16s var(--ease), background .16s var(--ease);
+    display: flex; align-items: center; gap: 10px; padding: 11px 12px;
+    border: 1px solid var(--line); border-radius: 7px; background: var(--card);
+    opacity: .5; cursor: pointer;
+    transition: opacity .2s var(--ease), border-color .2s var(--ease), box-shadow .2s var(--ease);
   }
-  .toc-row:hover { border-color: var(--line); border-left-color: var(--gold-soft); }
-  /* 选中态用左金色竖条 + 淡金底，避开与「修改」橙卡撞色 */
+  .toc-row:hover { opacity: 1; border-color: var(--gold-soft); }
+  .toc-row.reviewed { opacity: 1; }
   .toc-row.on {
-    border-color: var(--line); border-left-color: var(--gold-deep);
-    background: var(--gold-wash);
+    opacity: 1; border-color: var(--gold-deep); box-shadow: 0 0 0 2px var(--gold-soft);
   }
   .toc-row.on .link { font-weight: 600; color: var(--ink); }
+  .toc-mid { flex: 1 1 auto; min-width: 0; }
+  .toc-nm {
+    display: block; font-size: 13.5px; font-weight: 600; color: var(--ink);
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .toc-sub { font-size: 11.5px; color: var(--ink-3); font-weight: 400; margin-top: 2px; }
   .toc-row.reviewed .dot { background: var(--sage); }
   .dot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; background: var(--line); }
   .dot.reviewed { background: var(--sage); }
@@ -151,10 +158,14 @@ export function viewerHtml(): string {
   .toc-row:hover .mini-action, .toc-row:focus-within .mini-action { opacity: 1; }
 
   /* 配置卡：label / value 两列（参考站 .cc-row） */
+  /* 配置卡：宽屏两列（参考站 .cr-optgrid 的两栏思路） */
+  #doc-body { display: flex; flex-direction: column; }
   .cfgcard {
-    margin: 8px 0; padding: 13px 16px; border: 1px solid var(--line); border-radius: 9px;
+    margin: 6px 0; padding: 11px 14px; border: 1px solid var(--line); border-radius: 6px;
     background: var(--card);
   }
+  .cfg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 8px 12px; margin: 8px 0; }
+  .cfg-grid .cfgcard { margin: 0; }
   .cc-row { display: flex; align-items: center; gap: 11px; font-size: 12.5px; min-height: 26px; }
   .cc-row .cl { color: var(--ink-2); flex: none; min-width: 120px; }
   .cc-row .cv { font-size: 12.5px; font-weight: 600; color: var(--ink); margin-left: auto; text-align: right; }
@@ -190,10 +201,10 @@ export function viewerHtml(): string {
 
   /* 片段卡片（S3 已细化为两列卡 / 规则卡） */
   .seg {
-    margin: 10px 0; padding: 14px 16px; border-radius: 9px;
+    margin: 8px 0; padding: 12px 14px; border-radius: 6px;
     border: 1px solid var(--line); border-left: 3px solid var(--line);
     background: var(--card);
-    font-family: var(--serif); font-size: 14px; line-height: 1.9; color: var(--ink);
+    font-family: var(--serif); font-size: 13px; line-height: 1.8; color: var(--ink);
   }
   .seg[data-lineage="modified"] { border-left-color: var(--gold); background: var(--gold-wash); }
   .seg[data-lineage="added"] { border-left-color: var(--sage); background: var(--sage-wash); }
@@ -552,7 +563,9 @@ async function loadDoc(variant) {
   toc.innerHTML = "";
   let segCount = 0;
 
+  let cfgGrid = null;
   for (const block of doc.blocks) {
+    cfgGrid = null;
     const h2 = document.createElement("h2");
     h2.textContent = block.title;
     h2.id = "sec-" + block.section_id;
@@ -564,11 +577,18 @@ async function loadDoc(variant) {
     const dot = document.createElement("span");
     dot.className = "dot";
     row.appendChild(dot);
+    const mid = document.createElement("div");
+    mid.className = "toc-mid";
     const btn = document.createElement("button");
-    btn.className = "link";
+    btn.className = "link toc-nm";
     btn.textContent = block.title;
     btn.onclick = () => scrollToSection(block.section_id);
-    row.appendChild(btn);
+    mid.appendChild(btn);
+    const sub = document.createElement("div");
+    sub.className = "toc-sub";
+    sub.textContent = block.segments.length + " 段";
+    mid.appendChild(sub);
+    row.appendChild(mid);
     const rv = document.createElement("button");
     rv.className = "link mini-action";
     rv.textContent = "标记已审";
@@ -692,13 +712,24 @@ async function loadDoc(variant) {
         summary.onclick = (ev) => { ev.stopPropagation(); more.hidden = !more.hidden; };
       }
       div.appendChild(foot);
-      body.appendChild(div);
+      if (isConfig) {
+        if (!cfgGrid) {
+          cfgGrid = document.createElement("div");
+          cfgGrid.className = "cfg-grid";
+          body.appendChild(cfgGrid);
+        }
+        cfgGrid.appendChild(div);
+      } else {
+        cfgGrid = null;
+        body.appendChild(div);
+      }
     }
   }
 
   window.__segCount = segCount;
   await loadChecks(variant);
   await loadReviews(variant);
+  markCurrentStep();
   updateStatus();
 }
 
