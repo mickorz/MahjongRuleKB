@@ -60,10 +60,10 @@ export function viewerHtml(): string {
   .head-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
   /* 玩法 tab：参考站 .c-tabs{display:flex;gap:4px} / .c-tab{13px;padding:7px 14px;radius:5px}
      active 为墨色实底 + 纸色字（.c-tab.on{background:var(--ink);color:var(--paper)}） */
-  .vseg { display: flex; gap: 4px; }
+  .vseg { display: flex; gap: 4px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
   .vseg button {
-    border: none; background: none; cursor: pointer; font: inherit;
-    font-size: 13px; padding: 7px 14px; border-radius: 5px; color: var(--ink-2);
+    flex: 1 1 0; border: none; background: none; cursor: pointer; font: inherit;
+    font-size: 13px; padding: 7px 0; border-radius: 5px; color: var(--ink-2); text-align: center;
     transition: background .18s var(--ease), color .18s var(--ease);
   }
   .vseg button:hover:not(.on) { background: var(--paper-2); color: var(--ink); }
@@ -307,7 +307,6 @@ export function viewerHtml(): string {
   <header class="app-head">
     <span class="brand">策划工作台</span>
     <div class="head-right">
-      <div class="vseg" id="variants" role="tablist" aria-label="玩法"></div>
       <span class="doc-name" id="doc-name"></span>
       <span class="doc-ver" id="doc-ver"></span>
     </div>
@@ -315,7 +314,9 @@ export function viewerHtml(): string {
 
   <div class="app-body">
     <nav class="pane pane-nav" id="pane-nav" aria-label="文档导航">
-      <div class="group-label">检查摘要</div>
+      <div class="group-label">玩法</div>
+      <div class="vseg" id="variants" role="tablist" aria-label="玩法"></div>
+      <div class="group-label" style="margin-top:16px">检查摘要</div>
       <div id="checks"></div>
       <details class="findings-box" id="findings-box">
         <summary id="findings-label">检查明细</summary>
