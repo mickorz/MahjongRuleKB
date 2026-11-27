@@ -35,6 +35,23 @@ export type NumericOrigin = "calculator" | "rule" | "config" | "inferred";
 /** 归一化：去掉空白，便于「8 倍」与「8倍」比较 */
 const norm = (s: string) => s.replace(/\s+/g, "");
 
+/** 数字核心：去掉单位后的数字部分（「136张」→「136」） */
+const coreOf = (token: string) => norm(token).replace(/(倍|分|张|番|个|组|牢|秒|毫秒|%)$/, "");
+
+/**
+ * 文本里是否含该数值。
+ * 先比整体（带单位），再比数字核心，且核心必须落在数字边界上：
+ * 避免「8」被「800」或「18」误命中。
+ */
+const hasNumber = (text: string, token: string): boolean => {
+  const flat = norm(text);
+  if (flat.includes(norm(token))) return true;
+  const core = coreOf(token);
+  if (!/^-?\d+(?:[.,]\d+)?$/.test(core)) return false;
+  const escaped = core.replace(/[.*+?^$()|[\]\\]/g, "\\$&");
+  return new RegExp(`(^|[^0-9.])${escaped}([^0-9.]|$)`).test(flat);
+};
+
 export interface NumericVerdict {
   token: string;
   origin: NumericOrigin;
@@ -54,14 +71,15 @@ export function classifyNumericToken(
   ctx: NumericContext,
 ): NumericVerdict {
   const t = norm(token);
-  for (const v of ctx.calculatorValues ?? []) if (norm(v) === t) return { token, origin: "calculator" };
+  for (const v of ctx.calculatorValues ?? [])
+    if (norm(v) === t || coreOf(v) === coreOf(token)) return { token, origin: "calculator" };
   for (const id of refs.ruleRefs) {
     const body = ctx.ruleBodies.get(id);
-    if (body && norm(body).includes(t)) return { token, origin: "rule", hit: id };
+    if (body && hasNumber(body, token)) return { token, origin: "rule", hit: id };
   }
   for (const id of refs.configRefs) {
     const value = ctx.configValues.get(id);
-    if (value && norm(value).includes(t)) return { token, origin: "config", hit: id };
+    if (value && hasNumber(value, token)) return { token, origin: "config", hit: id };
   }
   return { token, origin: "inferred" };
 }

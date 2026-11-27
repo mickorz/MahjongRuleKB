@@ -1,0 +1,13 @@
+{
+  "ruleset_id": "hangzhou-friends-4p",
+  "target_variant": "hangzhou",
+  "document_version": 0,
+  "checked_at": "2026-11-27T03:27:51.453Z",
+  "status": "passed",
+  "findings": [],
+  "summary": {
+    "total": 0,
+    "failed": 0,
+    "warning": 0
+  }
+}

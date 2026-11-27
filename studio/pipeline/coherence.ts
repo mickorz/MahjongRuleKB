@@ -98,7 +98,10 @@ export function checkFacts(document: Document, ctx: CoherenceContext): MachineCh
   const knownRules = new Set(ctx.ruleset.rules.map((r) => r.id));
   const knownConfigs = new Set(ctx.ruleset.configs.map((c) => c.id));
   const ruleBodies = new Map(ctx.ruleset.rules.map((r) => [r.id, r.body]));
-  const configValues = new Map(ctx.ruleset.configs.map((c) => [c.id, String(c.value)]));
+  // 配置项的 value 与 description 都是规则事实的一部分（description 常写具体约束，如「剩 21 张时禁止杠」）
+  const configValues = new Map(
+    ctx.ruleset.configs.map((c) => [c.id, [String(c.value), c.description ?? ""].join(" ").trim()]),
+  );
 
   for (const block of document.blocks) {
     for (const seg of block.content) {

@@ -16,6 +16,7 @@ import { readBaseRuleSet } from "./read-ruleset.ts";
 import { GenerationRunLog } from "./run-log.ts";
 import { DeterministicGenerator, type Generator } from "../generate/provider.ts";
 import { DEFAULT_TIER, resolveTierModel } from "../generate/model-tiers.ts";
+import { createLlmGeneratorFromTier } from "../generate/llm-generator.ts";
 import { isDocumentOutputDir, writeStageArtifact } from "../paths/stage-writer.ts";
 
 export interface RunW1Options {
@@ -23,6 +24,10 @@ export interface RunW1Options {
   kbRoot?: string;
   /** 生成器；缺省用确定性降级（产物必标 degraded，不算通过） */
   generator?: Generator;
+  /** 走真实模型：按档位解析 provider/model 后直连 HTTP */
+  useLlm?: boolean;
+  /** 单章请求超时（毫秒），仅 useLlm 时生效 */
+  timeoutMs?: number;
   /** 模型档位；缺省 fast */
   tier?: string;
   /** G5 Gold Set 默认开启（W1 阶段强制） */
@@ -52,7 +57,19 @@ export async function runW1(options: RunW1Options = {}): Promise<RunW1Result> {
   const kbRoot = options.kbRoot ?? ".";
   const tier = options.tier ?? DEFAULT_TIER;
   const resolved = resolveTierModel(tier, kbRoot);
-  const generator = options.generator ?? new DeterministicGenerator();
+  let warning: string | undefined;
+  const generator =
+    options.generator ??
+    (options.useLlm
+      ? (() => {
+          if (!resolved.model) throw new Error(`无法从档位 ${tier} 解析模型：${resolved.warning ?? "未知原因"}`);
+          const built = createLlmGeneratorFromTier(resolved.model, {
+            ...(options.timeoutMs ? { timeoutMs: options.timeoutMs } : {}),
+          });
+          warning = built.warning;
+          return built.generator;
+        })()
+      : new DeterministicGenerator());
   const taskId = options.taskId ?? `w1-${new Date().toISOString().replace(/[:.]/g, "-")}`;
 
   const lock = buildInputLock({
@@ -87,6 +104,7 @@ export async function runW1(options: RunW1Options = {}): Promise<RunW1Result> {
   const goldset = checkGoldSet(withStatus, { enabled: goldsetEnabled });
 
   const reasons: string[] = [];
+  if (warning) reasons.push(`模型告警：${warning}`);
   if (assembled.failures.length > 0) reasons.push(`章节失败：${assembled.failures.map((f) => f.section_id).join(", ")}`);
   if (coherence.status !== "passed") reasons.push(`连贯性检查未通过（${coherence.status}）`);
   if (!report.ok) reasons.push(`覆盖门禁未通过：${report.problems.join("；")}`);
@@ -192,9 +210,11 @@ export function statsOf(document: {
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const outFlag = process.argv.indexOf("--out");
   const tierFlag = process.argv.indexOf("--tier");
+  const useLlm = process.argv.includes("--llm");
   const result = await runW1({
     ...(outFlag >= 0 ? { outDir: process.argv[outFlag + 1] } : {}),
     ...(tierFlag >= 0 ? { tier: process.argv[tierFlag + 1] } : {}),
+    ...(useLlm ? { useLlm: true } : {}),
     goldset: !process.argv.includes("--no-goldset"),
   });
   console.log(`[W1] 章节：${result.report.sections.length}，段数：${result.report.sections.reduce((a, s) => a + s.segments, 0)}`);
