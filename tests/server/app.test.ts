@@ -112,7 +112,7 @@ describe("W3-1 HTTP 行为", () => {
     rmSync(kb, { recursive: true, force: true });
   });
 
-  it("首页返回三栏 HTML", async () => {
+  it("首页返回两栏 HTML", async () => {
     const res = await fetch(`${base}/`);
     expect(res.status).toBe(200);
     const html = await res.text();
@@ -121,14 +121,17 @@ describe("W3-1 HTTP 行为", () => {
     expect(html).toContain("杭州");
     expect(html).toContain("萧山");
     expect(html).not.toContain(">Rule Studio<");
-    expect(html).toContain('id="steps"');
+    // 顶栏只保留品牌 + 玩法切换（1-8 步骤圆点已移除）
+    expect(html).not.toContain('id="steps"');
     expect(html).toContain('id="variants"');
     // S1/S2：外壳不滚 + 可拖拽分栏 + 状态栏
-    expect(html).toContain('data-layout="three-pane"');
+    expect(html).toContain('data-layout="two-pane"');
     expect(html).toContain('class="splitter"');
     expect(html).toContain('aria-label="状态栏"');
     expect(html).toContain('id="pane-nav"');
-    expect(html).toContain('id="pane-aside"');
+    // 右栏（来源）已合并进卡片脚注
+    expect(html).not.toContain('id="pane-aside"');
+    expect(html).toContain('class="doc-col"');
   });
 
   it("文档接口返回投影结构（章节标题已翻译）", async () => {

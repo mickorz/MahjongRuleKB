@@ -34,7 +34,6 @@ export function viewerHtml(): string {
     --latin: "Newsreader", Georgia, serif;
     --ease: cubic-bezier(.2,.7,.2,1);
     --nav-w: 250px;
-    --aside-w: 320px;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; overflow: hidden; }
@@ -58,23 +57,6 @@ export function viewerHtml(): string {
   }
   .brand { font-weight: 600; font-size: 13px; letter-spacing: .02em; white-space: nowrap; }
 
-  /* 步骤圆点：金实心=当前，sage=已审，灰=未审 */
-  .steps { display: flex; align-items: center; gap: 2px; min-width: 0; overflow: hidden; }
-  .step {
-    border: none; background: none; padding: 2px; cursor: pointer; display: grid; place-items: center;
-    color: var(--ink-3); font: inherit; font-size: 10px; line-height: 1;
-  }
-  .step i {
-    width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center;
-    border: 1px solid var(--line); background: var(--card); font-style: normal;
-    font-variant-numeric: tabular-nums; transition: all .16s var(--ease);
-  }
-  .step:hover i { border-color: var(--gold); color: var(--gold-deep); }
-  .step[data-state="reviewed"] i { background: var(--sage-wash); border-color: var(--sage); color: var(--sage); }
-  .step[data-state="current"] i { background: var(--gold); border-color: var(--gold-deep); color: #fff; }
-  .step:focus-visible i { outline: 2px solid var(--gold-deep); outline-offset: 2px; }
-  .step-sep { width: 10px; height: 1px; background: var(--line); flex: 0 0 auto; }
-
   .head-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
   .vseg {
     display: inline-flex; padding: 2px; gap: 2px; border-radius: 999px;
@@ -95,8 +77,9 @@ export function viewerHtml(): string {
 
   .app-body { flex: 1 1 auto; display: flex; min-height: 0; }
   .pane-nav { flex: 0 0 var(--nav-w); padding: 14px 12px; background: var(--paper-2); border-right: 1px solid var(--line); }
-  .pane-main { flex: 1 1 auto; padding: 20px 28px 56px; min-width: 0; background: var(--paper); }
-  .pane-aside { flex: 0 0 var(--aside-w); padding: 14px; background: var(--paper-2); border-left: 1px solid var(--line); }
+  .pane-main { flex: 1 1 auto; padding: 0; min-width: 0; background: var(--paper); scrollbar-gutter: stable both-edges; }
+  /* 参考站 .c-doc：阅读栏 680px 居中 */
+  .doc-col { max-width: 680px; margin: 0 auto; width: 100%; padding: 28px 24px 56px; }
 
   /* 分隔条：1px 视觉 + 8px 命中区 */
   .splitter { position: relative; flex: 0 0 1px; background: var(--line); cursor: col-resize; touch-action: none; }
@@ -112,6 +95,10 @@ export function viewerHtml(): string {
   }
   .app-foot b { color: var(--ink-2); font-weight: 600; font-variant-numeric: tabular-nums; }
   .foot-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .foot-count {
+    font-size: 11px; font-family: var(--sans); padding: 2px 9px; border-radius: 999px;
+    background: var(--gold-wash); border: 1px solid var(--gold-soft); color: var(--gold-deep);
+  }
   .foot-actions[hidden] { display: none; }
   .app-foot .warn { color: var(--gold-deep); }
   .app-foot .danger { color: var(--terra); }
@@ -128,18 +115,23 @@ export function viewerHtml(): string {
     position: sticky; top: -20px; background: var(--paper); z-index: 2;
   }
   h2:first-of-type { margin-top: 2px; }
-  #doc-body { max-width: 72ch; margin: 0 auto; }
+  #doc-body { width: 100%; }
 
   /* 左栏章节列表（S2 会换成 rail-item 卡片） */
   .toc { display: flex; flex-direction: column; gap: 1px; }
   .toc { gap: 4px; }
   .toc-row {
-    display: flex; align-items: center; gap: 9px; padding: 9px 11px;
-    border: 1px solid var(--line-2); border-radius: 7px; background: var(--card);
-    transition: border-color .16s var(--ease), box-shadow .16s var(--ease);
+    display: flex; align-items: center; gap: 9px; padding: 9px 11px 9px 9px;
+    border: 1px solid var(--line-2); border-left: 3px solid transparent; border-radius: 7px; background: var(--card);
+    transition: border-color .16s var(--ease), background .16s var(--ease);
   }
-  .toc-row:hover { border-color: var(--gold-soft); }
-  .toc-row.on { border-color: var(--gold-deep); box-shadow: 0 0 0 2px var(--gold-soft); }
+  .toc-row:hover { border-color: var(--line); border-left-color: var(--gold-soft); }
+  /* 选中态用左金色竖条 + 淡金底，避开与「修改」橙卡撞色 */
+  .toc-row.on {
+    border-color: var(--line); border-left-color: var(--gold-deep);
+    background: var(--gold-wash);
+  }
+  .toc-row.on .link { font-weight: 600; color: var(--ink); }
   .toc-row.reviewed .dot { background: var(--sage); }
   .dot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; background: var(--line); }
   .dot.reviewed { background: var(--sage); }
@@ -160,7 +152,7 @@ export function viewerHtml(): string {
 
   /* 配置卡：label / value 两列（参考站 .cc-row） */
   .cfgcard {
-    margin: 8px 0; padding: 10px 14px; border: 1px solid var(--line); border-radius: 8px;
+    margin: 8px 0; padding: 13px 16px; border: 1px solid var(--line); border-radius: 9px;
     background: var(--card);
   }
   .cc-row { display: flex; align-items: center; gap: 11px; font-size: 12.5px; min-height: 26px; }
@@ -170,6 +162,24 @@ export function viewerHtml(): string {
   .cc-row + .cc-row { border-top: 1px dashed var(--line-2); }
 
   /* 规则卡：头部（徽章）+ 正文（serif） */
+  .seg-foot {
+    margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--line-2);
+    font-size: 11px; color: var(--ink-3); font-family: var(--sans);
+  }
+  .seg-foot-line { display: inline-block; }
+  .seg-foot-line.clickable { cursor: pointer; }
+  .seg-foot-line.clickable:hover { color: var(--gold-deep); }
+  .seg-foot-ev { margin-top: 6px; line-height: 1.7; }
+
+  .findings-box { margin-top: 14px; font-size: 11.5px; }
+  .findings-box > summary {
+    cursor: pointer; color: var(--ink-3); font-size: 10.5px; letter-spacing: .08em;
+    font-family: var(--sans); list-style: none; padding: 4px 0;
+  }
+  .findings-box > summary::-webkit-details-marker { display: none; }
+  .findings-box > summary::before { content: "▸ "; }
+  .findings-box[open] > summary::before { content: "▾ "; }
+
   .seg-head { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-bottom: 6px; font-family: var(--sans); }
   .seg-body { display: block; }
   .seg-body code, .cc-row .cv code {
@@ -180,10 +190,10 @@ export function viewerHtml(): string {
 
   /* 片段卡片（S3 已细化为两列卡 / 规则卡） */
   .seg {
-    margin: 8px 0; padding: 10px 14px; border-radius: 8px;
+    margin: 10px 0; padding: 14px 16px; border-radius: 9px;
     border: 1px solid var(--line); border-left: 3px solid var(--line);
     background: var(--card);
-    font-family: var(--serif); font-size: 14.5px; line-height: 1.8; color: var(--ink);
+    font-family: var(--serif); font-size: 14px; line-height: 1.9; color: var(--ink);
   }
   .seg[data-lineage="modified"] { border-left-color: var(--gold); background: var(--gold-wash); }
   .seg[data-lineage="added"] { border-left-color: var(--sage); background: var(--sage-wash); }
@@ -195,6 +205,9 @@ export function viewerHtml(): string {
     color: var(--ink-2); background: var(--paper-2); margin-right: 5px; vertical-align: 1px;
     white-space: nowrap;
   }
+  /* 彩底卡片上小字提一档对比度 */
+  .seg[data-lineage="modified"] .badge,
+  .seg[data-lineage="added"] .badge { color: var(--ink); border-color: var(--line); background: var(--card); }
   .locked { opacity: .95; }
   .muted { color: var(--ink-3); font-size: 12px; }
   .warn { color: var(--terra); }
@@ -208,21 +221,15 @@ export function viewerHtml(): string {
   .badge.editable-flag { color: var(--gold-deep); border-color: var(--gold-soft); background: var(--gold-wash); }
   .seg-head .spacer { flex: 1 1 auto; }
 
-  /* 编辑工具条（S4 移到页脚） */
-  .toolbar {
-    display: flex; flex-wrap: wrap; align-items: center; gap: 8px;
-    margin: 0 0 14px; padding: 8px 10px; border-radius: 8px;
-    border: 1px solid var(--gold-soft); background: var(--gold-wash);
-    position: sticky; top: -20px; z-index: 3;
-  }
-  .toolbar[hidden] { display: none; }
-  .toolbar strong { font-size: 12px; color: var(--gold-deep); }
-  .toolbar button, .c-btn {
-    font-size: 12px; padding: 4px 12px; border-radius: 7px; cursor: pointer;
+  /* 底栏操作按钮（S4） */
+  .c-btn {
+    font-size: 12px; padding: 5px 14px; border-radius: 7px; cursor: pointer;
     border: 1px solid var(--line); background: var(--card); color: var(--ink);
-    transition: border-color .15s var(--ease), color .15s var(--ease);
+    transition: border-color .15s var(--ease), color .15s var(--ease), background .15s var(--ease);
   }
-  .toolbar button:hover, .c-btn:hover { border-color: var(--gold-deep); color: var(--gold-deep); }
+  .c-btn:hover { border-color: var(--gold-deep); color: var(--gold-deep); }
+  .c-btn.primary { background: var(--gold-deep); border-color: var(--gold-deep); color: #fff; }
+  .c-btn.primary:hover { background: var(--gold); border-color: var(--gold); color: #fff; }
 
   .diffbox {
     font-size: 12px; border: 1px solid var(--line); border-radius: 8px;
@@ -245,20 +252,49 @@ export function viewerHtml(): string {
   }
   .finding-code { font-family: var(--latin); font-size: 10px; color: var(--gold-deep); margin-right: 6px; }
 
-  @media (max-width: 1100px) {
-    .steps { display: none; }
+  /* 修订记录浮层（S5） */
+  .revpop {
+    position: fixed; z-index: 100000; width: 348px; padding: 15px 16px 14px;
+    background: var(--card); border: 1px solid var(--gold-soft); border-radius: 8px;
+    box-shadow: 0 24px 56px -18px var(--shadow);
   }
+  .revpop[hidden] { display: none; }
+  /* 浮层在卡片侧边，箭头朝左 */
+  .revpop .rv-arrow {
+    position: absolute; left: -7px; top: 26px; width: 12px; height: 12px; background: var(--card);
+    border-left: 1px solid var(--gold-soft); border-bottom: 1px solid var(--gold-soft);
+    transform: rotate(45deg);
+  }
+  .revpop .rv-head { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; margin-bottom: 12px; }
+  .revpop .rv-ad {
+    width: 20px; height: 20px; border-radius: 4px; background: var(--gold-deep); color: #fff;
+    display: grid; place-items: center; font-family: var(--serif); font-size: 11px; flex: none;
+  }
+  .revpop .rv-row { display: flex; gap: 9px; font-size: 12.5px; line-height: 1.6; padding: 9px 11px; border-radius: 6px; }
+  .revpop .rv-row.old { background: var(--paper-2); }
+  .revpop .rv-row.new { background: var(--gold-wash); border: 1px solid var(--gold-soft); }
+  .revpop .rv-k { flex: none; width: 30px; font-size: 10.5px; color: var(--ink-3); font-family: var(--latin); font-style: italic; padding-top: 2px; }
+  .revpop .rv-orig { color: var(--ink-3); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--terra) 70%, transparent); }
+  .revpop .rv-new { color: var(--ink); font-weight: 500; }
+  .revpop .rv-conn { display: grid; place-items: center; color: var(--gold-deep); height: 16px; }
+  .revpop .rv-why { display: flex; gap: 8px; font-size: 11.5px; color: var(--ink-2); background: var(--paper-2); border-radius: 6px; padding: 9px 11px; margin: 10px 0 12px; }
+  .revpop .rv-acts { display: flex; justify-content: flex-end; gap: 8px; }
+  .seg-head .rev-btn {
+    margin-left: auto; border: 1px solid var(--line-2); background: var(--paper-2);
+    color: var(--ink-3); border-radius: 999px; padding: 0 8px; font-size: 10.5px; cursor: pointer;
+    font-family: var(--sans);
+  }
+  .seg-head .rev-btn:hover { color: var(--gold-deep); border-color: var(--gold-soft); }
+
   @media (max-width: 960px) {
-    .pane-aside { display: none; }
     .splitter:last-of-type { display: none; }
   }
 </style>
 </head>
 <body>
-<div class="app" data-layout="three-pane">
+<div class="app" data-layout="two-pane">
   <header class="app-head">
     <span class="brand">策划工作台</span>
-    <div class="steps" id="steps" role="tablist" aria-label="章节进度"></div>
     <div class="head-right">
       <div class="vseg" id="variants" role="tablist" aria-label="玩法"></div>
       <span class="doc-name" id="doc-name"></span>
@@ -270,6 +306,10 @@ export function viewerHtml(): string {
     <nav class="pane pane-nav" id="pane-nav" aria-label="文档导航">
       <div class="group-label">检查摘要</div>
       <div id="checks"></div>
+      <details class="findings-box" id="findings-box">
+        <summary id="findings-label">检查明细</summary>
+        <div id="findings"></div>
+      </details>
       <div class="group-label" style="margin-top:16px">章节</div>
       <div class="toc" id="toc"></div>
     </nav>
@@ -277,25 +317,11 @@ export function viewerHtml(): string {
     <div class="splitter" data-splitter="nav" role="separator" aria-orientation="vertical" aria-label="调整左栏宽度" tabindex="0"></div>
 
     <main class="pane pane-main" id="pane-main" aria-label="需求文档">
-      <div class="toolbar" id="editor-bar" hidden>
-        <strong>编辑草稿</strong>
-        <span class="muted" id="edit-count">0 处改动</span>
-        <button onclick="previewChanges()">预览改动</button>
-        <button onclick="applyChanges()">应用</button>
-        <button onclick="clearDraft()">清空</button>
-      </div>
       <div class="diffbox" id="diff-preview" hidden></div>
-      <div id="doc-body"><p class="muted">选择玩法</p></div>
+      <div class="doc-col"><div id="doc-body"><p class="muted">选择玩法</p></div></div>
     </main>
 
-    <div class="splitter" data-splitter="aside" role="separator" aria-orientation="vertical" aria-label="调整右栏宽度" tabindex="0"></div>
 
-    <aside class="pane pane-aside" id="pane-aside" aria-label="信息面板">
-      <div class="group-label">来源</div>
-      <div id="sources" class="sources">选中一个段落查看它的出处</div>
-      <div class="group-label" style="margin-top:18px" id="findings-label">检查明细</div>
-      <div id="findings"></div>
-    </aside>
   </div>
 
   <footer class="app-foot" aria-label="状态栏">
@@ -305,7 +331,23 @@ export function viewerHtml(): string {
     <span>未审 <b id="st-unreviewed">—</b></span>
     <span>检查 <b id="st-checks">—</b></span>
     <span id="st-version"></span>
+    <div class="foot-actions" id="foot-actions" hidden>
+      <span class="foot-count" id="foot-count">0 处改动</span>
+      <button class="c-btn" onclick="previewChanges()">预览改动</button>
+      <button class="c-btn primary" onclick="applyChanges()">应用</button>
+      <button class="c-btn" onclick="clearDraft()">清空</button>
+    </div>
   </footer>
+</div>
+
+<div class="revpop" id="revpop" hidden role="dialog" aria-label="修订记录">
+  <div class="rv-arrow" id="rv-arrow"></div>
+  <div class="rv-head"><span class="rv-ad" id="rv-ad">段</span><span id="rv-title">修订记录</span></div>
+  <div class="rv-row old"><span class="rv-k">原</span><span class="rv-orig" id="rv-before"></span></div>
+  <div class="rv-conn">↓</div>
+  <div class="rv-row new"><span class="rv-k">新</span><span class="rv-new" id="rv-after"></span></div>
+  <div class="rv-why"><span class="rv-k">说明</span><span id="rv-why"></span></div>
+  <div class="rv-acts"><button class="c-btn" id="rv-close">关闭</button></div>
 </div>
 
 <script>
@@ -323,63 +365,49 @@ let currentDoc = null;
 let reviewSections = {};
 const draft = new Map();
 
-/* ---------- 分栏拖拽（S2）---------- */
-const MIN_NAV = 180, MIN_ASIDE = 260, MIN_MAIN_RATIO = 0.4;
+/* ---------- 左栏拖拽（两栏布局只剩一个分隔条）---------- */
+const MIN_NAV = 200, MAX_NAV_RATIO = 0.42;
 const layoutKey = (v) => "rs-layout:" + v;
 
-function setPaneWidths(navW, asideW) {
+function setPaneWidths(navW) {
   const body = document.querySelector(".app-body");
   const total = body ? body.clientWidth : window.innerWidth;
-  const maxSide = total * (1 - MIN_MAIN_RATIO);
-  const nav = Math.max(MIN_NAV, Math.min(navW || 250, maxSide - MIN_ASIDE));
-  let aside = Math.max(MIN_ASIDE, Math.min(asideW || 320, maxSide - nav));
+  const nav = Math.max(MIN_NAV, Math.min(navW || 260, total * MAX_NAV_RATIO));
   el("pane-nav").style.flex = "0 0 " + Math.round(nav) + "px";
-  el("pane-aside").style.flex = "0 0 " + Math.round(aside) + "px";
 }
 function applyLayout(v) {
   let saved = null;
   try { saved = JSON.parse(localStorage.getItem(layoutKey(v)) || "null"); } catch {}
-  setPaneWidths(saved && saved.nav, saved && saved.aside);
+  setPaneWidths(saved && saved.nav);
 }
 function saveLayout() {
   const nav = el("pane-nav").getBoundingClientRect().width;
-  const aside = el("pane-aside").getBoundingClientRect().width;
-  try { localStorage.setItem(layoutKey(currentVariant), JSON.stringify({ nav: Math.round(nav), aside: Math.round(aside) })); } catch {}
-}
-function startDrag(side, ev) {
-  ev.preventDefault();
-  const splitter = ev.currentTarget;
-  splitter.dataset.dragging = "true";
-  try { splitter.setPointerCapture?.(ev.pointerId); } catch {}
-  const navStart = el("pane-nav").getBoundingClientRect().width;
-  const asideStart = el("pane-aside").getBoundingClientRect().width;
-  const startX = ev.clientX;
-  const onMove = (e) => {
-    const dx = e.clientX - startX;
-    if (side === "nav") setPaneWidths(navStart + dx, asideStart);
-    else setPaneWidths(navStart, asideStart - dx);
-  };
-  const onUp = () => {
-    splitter.dataset.dragging = "false";
-    window.removeEventListener("pointermove", onMove);
-    window.removeEventListener("pointerup", onUp);
-    saveLayout();
-  };
-  window.addEventListener("pointermove", onMove);
-  window.addEventListener("pointerup", onUp);
+  try { localStorage.setItem(layoutKey(currentVariant), JSON.stringify({ nav: Math.round(nav) })); } catch {}
 }
 function bindSplitters() {
-  document.querySelectorAll(".splitter").forEach((s) => {
-    s.addEventListener("pointerdown", (e) => startDrag(s.dataset.splitter, e));
-    s.addEventListener("dblclick", () => { setPaneWidths(250, 320); saveLayout(); });
-    s.addEventListener("keydown", (e) => {
+  document.querySelectorAll('[data-splitter="nav"]').forEach((splitter) => {
+    splitter.addEventListener("pointerdown", (ev) => {
+      ev.preventDefault();
+      splitter.dataset.dragging = "true";
+      try { splitter.setPointerCapture?.(ev.pointerId); } catch {}
+      const start = el("pane-nav").getBoundingClientRect().width;
+      const startX = ev.clientX;
+      const onMove = (e) => setPaneWidths(start + (e.clientX - startX));
+      const onUp = () => {
+        splitter.dataset.dragging = "false";
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        saveLayout();
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    });
+    splitter.addEventListener("dblclick", () => { setPaneWidths(260); saveLayout(); });
+    splitter.addEventListener("keydown", (e) => {
       if (e.key !== "ArrowLeft" && e.key !== "ArrowRight") return;
       e.preventDefault();
       const nav = el("pane-nav").getBoundingClientRect().width;
-      const aside = el("pane-aside").getBoundingClientRect().width;
-      const step = e.key === "ArrowLeft" ? -16 : 16;
-      if (s.dataset.splitter === "nav") setPaneWidths(nav + step, aside);
-      else setPaneWidths(nav, aside - step);
+      setPaneWidths(nav + (e.key === "ArrowLeft" ? -16 : 16));
       saveLayout();
     });
   });
@@ -400,32 +428,6 @@ function renderVariants() {
   }
 }
 
-function renderSteps(doc) {
-  const box = el("steps");
-  box.innerHTML = "";
-  doc.blocks.forEach((block, i) => {
-    if (i > 0) {
-      const sep = document.createElement("span");
-      sep.className = "step-sep";
-      box.appendChild(sep);
-    }
-    const state = reviewSections[block.section_id] === "reviewed" ? "reviewed" : "unreviewed";
-    const b = document.createElement("button");
-    b.className = "step";
-    b.dataset.state = state;
-    b.dataset.section = block.section_id;
-    b.title = block.title + "（" + (state === "reviewed" ? "已审" : "未审") + "）";
-    b.setAttribute("role", "tab");
-    b.innerHTML = "<i>" + (i + 1) + "</i>";
-    b.onclick = () => {
-      const h2 = document.getElementById("sec-" + block.section_id);
-      if (h2) h2.scrollIntoView({ behavior: "smooth", block: "start" });
-    };
-    box.appendChild(b);
-  });
-  markCurrentStep();
-}
-
 /** 当前章节 = 视口内最靠上的 h2 */
 function markCurrentStep() {
   const heads = [...document.querySelectorAll("#doc-body h2")];
@@ -435,21 +437,73 @@ function markCurrentStep() {
     if (h.getBoundingClientRect().top <= top) currentId = h.id;
   }
   const secId = (currentId || "").replace(/^sec-/, "");
-  let idx = 0;
-  document.querySelectorAll(".step").forEach((s) => {
-    if (s.dataset.section === secId) idx = Number(s.textContent) - 1;
-    if (s.dataset.state === "current") s.dataset.state = "unreviewed";
-  });
-  const active = [...document.querySelectorAll(".step")].find((s) => s.dataset.section === secId);
-  if (active && active.dataset.state !== "reviewed") active.dataset.state = "current";
   // 同步左栏选中态
   document.querySelectorAll(".toc-row").forEach((row) => {
     row.classList.toggle("on", row.dataset.section === secId);
   });
-  el("st-section").textContent = secId ? (idx + 1) + " / " + currentDoc.blocks.length : "—";
+  const idx = currentDoc ? currentDoc.blocks.findIndex((b) => b.section_id === secId) : -1;
+  el("st-section").textContent = idx >= 0 ? (idx + 1) + " / " + currentDoc.blocks.length : "—";
+}
+
+/** 跳到某章：直接算偏移，不依赖 scrollIntoView / smooth 动画 */
+function scrollToSection(sectionId) {
+  const main = el("pane-main");
+  const h2 = document.getElementById("sec-" + sectionId);
+  if (!h2) return;
+  const pad = 8;
+  main.scrollTop += h2.getBoundingClientRect().top - main.getBoundingClientRect().top - pad;
+  markCurrentStep();
 }
 
 /* ---------- 文档渲染 ---------- */
+let revAnchor = null;
+
+function closeRevpop() {
+  const pop = el("revpop");
+  if (!pop || pop.hidden) return;
+  pop.hidden = true;
+  revAnchor = null;
+}
+
+function refsLabel(refs) {
+  if (!refs || refs.length === 0) return "";
+  return "规则 " + refs.slice(0, 3).join("、") + (refs.length > 3 ? " 等" : "");
+}
+
+function openRevpop(anchor, seg) {
+  const pop = el("revpop");
+  const entry = draft.get(seg.segment_id);
+  el("rv-before").textContent = seg.text;
+  el("rv-after").textContent = entry ? entry.text : "（尚未修改：在卡片里直接改字）";
+  el("rv-title").textContent = "修订记录 · " + (seg.lineage === "modified" ? "修改" : "新增") + "片段";
+  el("rv-ad").textContent = seg.references.config_refs.length > 0 ? "配" : "规";
+  const diffLabel = { candidate: "待确认", confirmed: "已确认", not_applicable: "不适用" }[seg.diff_status] || seg.diff_status;
+  el("rv-why").textContent = ["段落 " + seg.segment_id, "差异 " + diffLabel, refsLabel(seg.references.rule_refs)].filter(Boolean).join("　");
+
+  const card = anchor.closest(".seg") || anchor;
+  const cardRect = card.getBoundingClientRect();
+  const w = 348;
+  const gap = 12;
+  const margin = 16;
+  const popH = pop.offsetHeight || 260;
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+
+  // 优先放在卡片右侧空余处，不遮住正在看的段落；右侧不够就反过来放左侧
+  let left = cardRect.right + gap;
+  if (left + w > vw - margin) left = cardRect.left - gap - w;
+  if (left < margin) left = Math.max(margin, Math.min(cardRect.left, vw - w - margin));
+
+  // 垂直对齐卡片顶部，超底则上提；始终留边
+  let top = Math.min(Math.max(margin, cardRect.top), vh - popH - margin);
+
+  pop.style.left = Math.round(left) + "px";
+  pop.style.top = Math.round(top) + "px";
+  el("rv-arrow").style.top = Math.round(Math.min(popH - 24, Math.max(14, cardRect.top + 22 - top))) + "px";
+  pop.hidden = false;
+  revAnchor = anchor;
+}
+
 /** 把反引号包裹的片段渲染成行内代码，其余保持纯文本 */
 function renderRich(container, text) {
   const parts = String(text).split(/\`([^\`]+)\`/g);
@@ -482,7 +536,7 @@ async function loadDoc(variant) {
   currentDoc = doc;
   currentVariant = variant;
   draft.clear();
-  el("editor-bar").hidden = true;
+  el("foot-actions").hidden = true;
   el("diff-preview").hidden = true;
   el("doc-name").textContent = nameOf(doc.ruleset_id);
   el("doc-ver").textContent = "v" + doc.document_version;
@@ -513,12 +567,17 @@ async function loadDoc(variant) {
     const btn = document.createElement("button");
     btn.className = "link";
     btn.textContent = block.title;
-    btn.onclick = () => h2.scrollIntoView({ behavior: "smooth", block: "start" });
+    btn.onclick = () => scrollToSection(block.section_id);
     row.appendChild(btn);
     const rv = document.createElement("button");
     rv.className = "link mini-action";
     rv.textContent = "标记已审";
-    rv.onclick = () => markReviewed("section", block.section_id);
+    rv.onclick = (ev) => { ev.stopPropagation(); markReviewed("section", block.section_id); };
+    // 整行可点：任一空白处也能跳章
+    row.onclick = (ev) => {
+      if (ev.target.closest(".mini-action")) return;
+      scrollToSection(block.section_id);
+    };
     row.appendChild(rv);
     toc.appendChild(row);
 
@@ -588,30 +647,51 @@ async function loadDoc(variant) {
         p.className = "editable";
         p.title = "点击即可直接修改这段文字";
         p.spellcheck = false;
-        // 头部追加「可编辑」徽章，解决"看不出哪里能改"
-        const head = div.querySelector(".seg-head");
-        if (head) {
-          const flag = badge("可编辑");
-          flag.classList.add("editable-flag");
-          head.appendChild(flag);
-        } else {
-          const headNew = document.createElement("div");
-          headNew.className = "seg-head";
-          const flag = badge("可编辑");
-          flag.classList.add("editable-flag");
-          headNew.appendChild(flag);
-          div.insertBefore(headNew, div.firstChild);
+        // 头部追加「可编辑」徽章 + 「✎ 修订」按钮
+        let head = div.querySelector(".seg-head");
+        if (!head) {
+          head = document.createElement("div");
+          head.className = "seg-head";
+          div.insertBefore(head, div.firstChild);
         }
+        const flag = badge("可编辑");
+        flag.classList.add("editable-flag");
+        head.appendChild(flag);
+        const revBtn = document.createElement("button");
+        revBtn.className = "rev-btn";
+        revBtn.textContent = "✎ 修订";
+        revBtn.onclick = (ev) => { ev.stopPropagation(); openRevpop(revBtn, seg); };
+        head.appendChild(revBtn);
+        div.dataset.segId = seg.segment_id;
         p.onblur = () => {
           const next = p.textContent.replace(/^\\s+/, "");
-          if (next !== seg.text) markEdited(seg.segment_id, next);
+          if (next !== seg.text) markEdited(seg.segment_id, next, seg.text);
         };
       }
       if (p) div.appendChild(p);
-      div.onclick = (ev) => {
-        if (p && ev.target === p && editableNow) return;
-        showSources(variant, seg.segment_id);
-      };
+
+      // 来源脚注：规则 / 配置 / 原文证据，默认收起
+      const refs = seg.references || {};
+      const refBits = [];
+      if ((refs.rule_refs || []).length) refBits.push("规则 " + refs.rule_refs.join("、"));
+      if ((refs.config_refs || []).length) refBits.push("配置 " + refs.config_refs.join("、"));
+      const evidence = refs.source_evidence_refs || [];
+      const foot = document.createElement("div");
+      foot.className = "seg-foot";
+      const summary = document.createElement("span");
+      summary.className = "seg-foot-line";
+      summary.textContent = refBits.join(" · ") || "无引用";
+      foot.appendChild(summary);
+      if (evidence.length) {
+        const more = document.createElement("div");
+        more.className = "seg-foot-ev";
+        more.hidden = true;
+        more.textContent = "原文证据：" + evidence.join("；");
+        foot.appendChild(more);
+        summary.classList.add("clickable");
+        summary.onclick = (ev) => { ev.stopPropagation(); more.hidden = !more.hidden; };
+      }
+      div.appendChild(foot);
       body.appendChild(div);
     }
   }
@@ -619,27 +699,7 @@ async function loadDoc(variant) {
   window.__segCount = segCount;
   await loadChecks(variant);
   await loadReviews(variant);
-  renderSteps(doc);
   updateStatus();
-}
-
-async function showSources(variant, segmentId) {
-  const res = await fetch("/api/segment/" + variant + "/" + segmentId);
-  if (!res.ok) { el("sources").textContent = "找不到该段落"; return; }
-  const seg = await res.json();
-  const 差异 = { not_applicable: "不适用", candidate: "待确认", confirmed: "已确认" }[seg.diff_status] || seg.diff_status;
-  const 归属 = { base: "基座", default_inherited: "继承", explicit_inherited: "继承", modified: "修改", added: "新增" }[seg.lineage] || seg.lineage;
-  el("sources").textContent = [
-    "段落 " + seg.segment_id,
-    "章节 " + seg.section_title,
-    "归属 " + 归属 + "｜差异 " + 差异,
-    "",
-    "规则 " + (seg.references.rule_refs.join("、") || "—"),
-    "配置 " + (seg.references.config_refs.join("、") || "—"),
-    "",
-    "原文证据",
-    seg.references.source_evidence_refs.join("\\n") || "—",
-  ].join("\\n");
 }
 
 async function loadChecks(variant) {
@@ -718,7 +778,6 @@ async function loadReviews(variant) {
     if (!dot) return;
     dot.className = "dot" + (reviewSections[row.dataset.section] === "reviewed" ? " reviewed" : "");
   });
-  if (currentDoc) renderSteps(currentDoc);
 }
 
 function updateStatus() {
@@ -727,17 +786,17 @@ function updateStatus() {
 }
 
 /* ---------- 编辑草稿 ---------- */
-function markEdited(segmentId, text) {
-  draft.set(segmentId, { text });
-  el("editor-bar").hidden = false;
-  el("edit-count").textContent = draft.size + " 处改动";
+function markEdited(segmentId, text, before) {
+  draft.set(segmentId, { text, before });
+  el("foot-actions").hidden = false;
+  el("foot-count").textContent = draft.size + " 处改动";
   el("diff-preview").hidden = true;
   updateStatus();
 }
 
 function clearDraft() {
   draft.clear();
-  el("editor-bar").hidden = true;
+  el("foot-actions").hidden = true;
   el("diff-preview").hidden = true;
   loadDoc(currentVariant);
 }
@@ -791,7 +850,7 @@ async function applyChanges() {
   if (data.ok) {
     box.textContent = "已应用 " + data.applied + " 处，版本 " + data.documentVersionBefore + " → " + data.documentVersionAfter;
     draft.clear();
-    el("editor-bar").hidden = true;
+    el("foot-actions").hidden = true;
     await loadDoc(currentVariant);
     return;
   }
@@ -810,13 +869,22 @@ async function markReviewed(targetType, targetId) {
 }
 
 /* ---------- 启动 ---------- */
+document.addEventListener("click", (e) => {
+  const pop = el("revpop");
+  if (!pop || pop.hidden) return;
+  if (e.target.closest("#revpop")) return;
+  if (revAnchor && e.target === revAnchor) return;
+  closeRevpop();
+});
+document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeRevpop(); });
+el("rv-close").onclick = closeRevpop;
+
 bindSplitters();
 renderVariants();
 applyLayout(currentVariant);
 el("pane-main").addEventListener("scroll", markCurrentStep, { passive: true });
 window.addEventListener("resize", () => setPaneWidths(
   el("pane-nav").getBoundingClientRect().width,
-  el("pane-aside").getBoundingClientRect().width,
 ));
 loadDoc(currentVariant);
 </script>
