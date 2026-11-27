@@ -24,7 +24,13 @@ createServer((req, res) => {
     res.end("not found");
     return;
   }
-  const type = types[extname(file)] ?? "application/octet-stream";
+  // 抓取时文件名带版本后缀（如 xxx.css_v_20261126_df44），extname 认不出，需要按内容判定
+  const detectType = (f) => {
+    if (/.css(.|_|$)/.test(f)) return "text/css; charset=utf-8";
+    if (/.(m?js)(.|_|$)/.test(f)) return "text/javascript; charset=utf-8";
+    return types[extname(f)] ?? "application/octet-stream";
+  };
+  const type = detectType(file);
   res.writeHead(200, { "content-type": type, "cache-control": "no-store" });
   res.end(readFileSync(file));
 }).listen(port, "127.0.0.1", () => {
