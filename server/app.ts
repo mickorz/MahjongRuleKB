@@ -4,7 +4,7 @@
 // - 读接口只接受 variant + 固定产物名，绝不接受客户端路径
 // - 写入接口（W3-3 起）要求 Origin 同源 + 自定义头；当前阶段只读，写请求一律 405
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -14,7 +14,9 @@ import { addMutation, createSession } from "../studio/edit/session.ts";
 import { applySession } from "../studio/edit/apply-batch.ts";
 import { checkMutation, computeBaseRevision, mutationSchema, mutationToProposalInput } from "../studio/edit/mutation.ts";
 import { documentSchema } from "../studio/contracts/document.ts";
+import { applyDocumentProposal } from "../studio/transaction/apply.ts";
 import { markReviewed, readReviewFile, reviewSummary } from "../studio/review/store.ts";
+import { listRevisions, revisionDiff, revisionOverridesBackup } from "./revisions.ts";
 
 const variantPattern = /^[a-z][a-z0-9-]*$/;
 
@@ -39,6 +41,8 @@ export type ApiRoute =
   | { kind: "artifact"; variant: string; name: ReadableArtifact }
   | { kind: "segment"; variant: string; segmentId: string }
   | { kind: "reviews"; variant: string }
+  | { kind: "revisions"; variant: string }
+  | { kind: "revision-diff"; variant: string; revisionId: string }
   | { kind: "fonts-css" }
   | { kind: "font-file"; name: string }
   | { kind: "not-found" };
@@ -77,6 +81,13 @@ export function resolveRoute(pathname: string): ApiRoute {
     // 名称必须精确命中白名单（不做后缀匹配，防 ../ 与同前缀绕过）
     if (!(readableArtifacts as readonly string[]).includes(name)) return { kind: "not-found" };
     return { kind: "artifact", variant, name: name as ReadableArtifact };
+  }
+
+  if (parts[1] === "revisions" && parts.length === 3 && variantPattern.test(parts[2])) {
+    return { kind: "revisions", variant: parts[2] };
+  }
+  if (parts[1] === "revisions" && parts.length === 4 && variantPattern.test(parts[2])) {
+    return { kind: "revision-diff", variant: parts[2], revisionId: parts[3] };
   }
 
   if (parts[1] === "reviews" && parts.length === 3 && variantPattern.test(parts[2])) {
@@ -203,6 +214,16 @@ export function createWorkbenchServer(options: WorkbenchOptions = {}): Server {
       text(res, 200, viewerHtml({ localFonts }), "text/html; charset=utf-8");
       return;
     }
+    if (route.kind === "revisions") {
+      return json(res, 200, { revisions: listRevisions(kbRoot, route.variant) });
+    }
+    if (route.kind === "revision-diff") {
+      try {
+        return json(res, 200, revisionDiff(kbRoot, route.variant, route.revisionId));
+      } catch (e) {
+        return json(res, 404, { error: "revision_not_found", message: (e as Error).message });
+      }
+    }
     if (route.kind === "fonts-css") {
       const file = join(fontsDir, "fonts.css");
       if (!existsSync(file)) return json(res, 404, { error: "fonts_not_fetched" });
@@ -323,6 +344,7 @@ async function handleWrite(req: IncomingMessage, res: ServerResponse, ctx: Write
   if (ctx.url.pathname === "/api/proposal") return proposalPreview(res, ctx.kbRoot, variant, body);
   if (ctx.url.pathname === "/api/apply") return applyBatch(res, ctx.kbRoot, variant, body);
   if (ctx.url.pathname === "/api/review") return writeReview(res, ctx.kbRoot, variant, body);
+  if (ctx.url.pathname === "/api/restore") return restoreRevision(res, ctx.kbRoot, variant, body);
   return json(res, 404, { error: "not_found" });
 }
 
@@ -404,6 +426,66 @@ function applyBatch(res: ServerResponse, kbRoot: string, variant: string, body: 
   } catch (e) {
     return json(res, 409, { ok: false, error: "apply_failed", message: (e as Error).message });
   }
+}
+
+/**
+ * POST /api/restore：把某个历史版本的「表达层」恢复回来。
+ *
+ * 为什么不能直接写 document.json：按权限矩阵，document.json 只能由 stage 生成，
+ * 事务不得写入（它是产物，不是输入）。真实的输入是 editorial-overrides.yaml，
+ * 所以恢复只回写 overrides，文档需要重新生成才能反映。
+ */
+function restoreRevision(res: ServerResponse, kbRoot: string, variant: string, body: Record<string, unknown>): void {
+  const revisionId = typeof body.revision_id === "string" ? body.revision_id : "";
+  if (!revisionId) return json(res, 400, { error: "bad_revision" });
+  if (!listRevisions(kbRoot, variant).some((r) => r.id === revisionId)) {
+    return json(res, 404, { error: "revision_not_found" });
+  }
+
+  const backup = revisionOverridesBackup(kbRoot, variant, revisionId);
+  if (!backup) return json(res, 409, { ok: false, error: "no_expression_layer", message: "这一版没有表达层快照" });
+  if (!backup.existedBefore) {
+    return json(res, 409, { ok: false, error: "no_expression_layer", message: "这一版之前还没有表达层改动，无需恢复" });
+  }
+  if (backup.content === null) {
+    return json(res, 409, { ok: false, error: "backup_missing" });
+  }
+
+  const current = loadDocument(kbRoot, variant);
+  if (!current) return json(res, 404, { error: "document_not_found" });
+  const txId = nextId(kbRoot, ".rule-studio/transactions", "TX-");
+  const proposalId = nextId(kbRoot, ".rule-studio/changes/active", "DOC-P-");
+  try {
+    const result = applyDocumentProposal({
+      kbRoot,
+      transactionId: txId,
+      proposalId,
+      baseDocumentVersion: current.document_version,
+      intent: "apply-expression",
+      targetPath: `documents/${variant}/editorial-overrides.yaml`,
+      targetContent: backup.content,
+    });
+    return json(res, 200, {
+      ok: true,
+      transaction_id: result.transactionId,
+      note: "表达层已恢复；document.json 需重新生成才会反映",
+    });
+  } catch (e) {
+    return json(res, 409, { ok: false, error: "restore_failed", message: (e as Error).message });
+  }
+}
+
+/** 生成下一个 TX-### / DOC-P-### 编号（3 位，存在即递增） */
+function nextId(kbRoot: string, relDir: string, prefix: string): string {
+  const dir = join(kbRoot, relDir);
+  const used = existsSync(dir)
+    ? readdirSync(dir)
+        .map((n) => new RegExp(`^${prefix}(\d{3})$`).exec(n)?.[1])
+        .filter((v): v is string => typeof v === "string")
+        .map(Number)
+    : [];
+  const next = (used.length > 0 ? Math.max(...used) : 0) + 1;
+  return prefix + String(next).padStart(3, "0");
 }
 
 /** POST /api/review：写一条审查记录（actor=server） */

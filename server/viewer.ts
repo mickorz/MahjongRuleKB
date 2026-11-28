@@ -292,43 +292,84 @@ ${fontLink}
   .c-content-action svg { flex: none; }
   .cr-history-trigger { margin-left: auto; white-space: nowrap; }
 
-  /* 修订记录浮层：尺寸/内距/箭头/行样式取自原站 .c-revpop */
-  .c-revpop {
-    position: fixed; z-index: 100000; width: 348px;
-    background: var(--card); border: 1px solid var(--gold-soft); border-radius: 8px;
-    box-shadow: 0 24px 56px -18px var(--shadow); padding: 15px 16px 16px;
+  /* 修订记录抽屉（原站 .cr-drawer / .cr-revision-*） */
+  .cr-drawer-mask {
+    position: fixed; inset: 0; z-index: 90000; background: rgba(34,29,22,.18);
+    display: flex; justify-content: flex-end;
   }
-  .c-revpop[hidden] { display: none; }
-  .c-revpop .rv-arrow {
-    position: absolute; top: -7px; left: 40px; width: 12px; height: 12px; background: var(--card);
-    border-left: 1px solid var(--gold-soft); border-top: 1px solid var(--gold-soft); transform: rotate(45deg);
+  .cr-drawer-mask[hidden] { display: none; }
+  .cr-drawer {
+    width: 680px; max-width: 96vw; height: 100%; background: var(--paper);
+    border-left: 1px solid var(--line); box-shadow: -30px 0 80px -30px var(--shadow);
+    display: flex; flex-direction: column;
   }
-  .c-revpop .rv-head { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 13px; margin-bottom: 12px; }
-  .c-revpop .rv-ad {
-    width: 20px; height: 20px; border-radius: 4px; background: var(--gold-deep); color: #fff;
-    display: grid; place-items: center; font-family: var(--serif); font-size: 11px; flex: none;
+  .cr-drawer-head {
+    flex: none; display: flex; align-items: center; gap: 12px; padding: 16px 20px;
+    border-bottom: 1px solid var(--line); background: var(--paper-2);
   }
-  .c-revpop .rv-diff { display: flex; flex-direction: column; margin-bottom: 11px; }
-  .c-revpop .rv-row {
-    display: flex; gap: 9px; font-size: 12.5px; line-height: 1.55; align-items: flex-start;
-    border-radius: 6px; padding: 9px 11px;
+  .cr-drawer-head .ad {
+    width: 38px; height: 38px; border-radius: 7px; flex: none; background: var(--gold-deep);
+    color: #fff; display: grid; place-items: center;
   }
-  .c-revpop .rv-row.old { background: var(--paper-2); }
-  .c-revpop .rv-row.new { background: var(--gold-wash); border: 1px solid var(--gold-soft); }
-  .c-revpop .rv-k {
-    flex: none; width: 30px; font-size: 10.5px; color: var(--ink-3); padding-top: 2px;
-    font-family: var(--latin); font-style: italic;
+  .cr-drawer-head .ht { display: flex; flex-direction: column; line-height: 1.3; min-width: 0; }
+  .cr-drawer-head .ht b { font-family: var(--serif); font-size: 17px; font-weight: 600; }
+  .cr-drawer-head .ht i { font-style: normal; font-size: 11.5px; color: var(--ink-3); }
+  .edt-x {
+    width: 22px; height: 22px; border-radius: 4px; border: none; background: transparent;
+    color: var(--ink-3); font-size: 18px; line-height: 1; cursor: pointer; flex: none; margin-left: auto;
   }
-  .c-revpop .rv-orig { color: var(--ink-3); text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--terra) 70%, transparent); }
-  .c-revpop .rv-new { color: var(--ink); font-weight: 500; }
-  .c-revpop .rv-conn { display: flex; justify-content: center; align-items: center; color: var(--gold-deep); height: 15px; }
-  .c-revpop .rv-conn svg { transform: rotate(90deg); }
-  .c-revpop .rv-why {
-    display: flex; gap: 8px; font-size: 11.5px; color: var(--ink-2); background: var(--paper-2);
-    border-radius: 6px; padding: 9px 11px; margin-bottom: 13px; line-height: 1.55;
+  .edt-x:hover { color: var(--terra); }
+
+  .cr-revision-body { display: grid; grid-template-columns: 250px minmax(0, 1fr); flex: 1; min-height: 0; }
+  .cr-revision-list {
+    overflow-y: auto; padding: 10px; border-right: 1px solid var(--line);
+    display: flex; flex-direction: column; gap: 7px;
   }
-  .c-revpop .rv-why .rv-k { font-style: normal; font-family: var(--sans); padding-top: 1px; }
-  .c-revpop .rv-acts { display: flex; justify-content: flex-end; gap: 8px; }
+  .cr-revision-item {
+    display: flex; flex-direction: column; gap: 5px; padding: 10px 11px;
+    border: 1px solid var(--line); border-radius: 8px; background: var(--card); color: var(--ink-2);
+    font-family: var(--sans); text-align: left; cursor: pointer;
+  }
+  .cr-revision-item.on {
+    border-color: var(--gold-deep); background: color-mix(in srgb, var(--gold-deep) 7%, var(--card));
+  }
+  .cr-revision-item-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .cr-revision-item-top b { font-size: 13.5px; }
+  .cr-revision-item time, .cr-revision-item small { font-size: 11px; color: var(--ink-3); }
+  .cr-revision-item small { color: var(--ink-2); }
+
+  .cr-revision-detail { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+  .cr-revision-detailbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    padding: 12px 15px; border-bottom: 1px solid var(--line);
+  }
+  .cr-revision-detailbar b { font-size: 14px; }
+  .cr-revision-detailbar span { font-size: 12px; color: var(--ink-3); margin-left: 8px; }
+  .cr-revision-detail-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex: none; }
+  .cr-revision-progress {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 9px 15px; background: var(--gold-wash); border-bottom: 1px solid var(--gold-soft);
+    font-size: 12px; color: var(--ink-3);
+  }
+  .cr-revision-progress b { color: var(--ink); font-weight: 600; }
+  .cr-revision-diff { flex: 1; overflow-y: auto; padding: 14px 15px 24px; display: flex; flex-direction: column; gap: 10px; }
+  .cr-rdiff-row { display: flex; flex-direction: column; gap: 6px; }
+  .cr-rdiff-row > h4 {
+    margin: 0; font: 600 11px/1.4 var(--sans); letter-spacing: .04em; color: var(--ink-3);
+  }
+  .cr-rdiff-old {
+    padding: 9px 11px; border-radius: 6px; background: var(--paper-2); color: var(--ink-3);
+    font-family: var(--serif); font-size: 12.5px; line-height: 1.7;
+    text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--terra) 60%, transparent);
+  }
+  .cr-rdiff-new {
+    padding: 9px 11px; border-radius: 6px; background: var(--gold-wash);
+    border: 1px solid var(--gold-soft); color: var(--ink);
+    font-family: var(--serif); font-size: 12.5px; line-height: 1.7;
+  }
+  .cr-revision-empty { padding: 24px 4px; text-align: center; color: var(--ink-3); font-size: 12.5px; }
+  .c-btn.sm { min-height: 26px; padding: 3px 10px; font-size: 11.5px; }
+  .c-btn.gold { border-color: var(--gold-deep); background: var(--gold-deep); color: #fff; }
 
   @media (max-width: 960px) {
     .splitter:last-of-type { display: none; }
@@ -385,33 +426,31 @@ ${fontLink}
   </footer>
 </div>
 
-<div class="c-revpop" id="revpop" hidden role="dialog" aria-label="修订记录">
-  <div class="rv-arrow" id="rv-arrow"></div>
-  <div class="rv-head">
-    <span class="rv-ad" id="rv-ad">段</span>
-    <span id="rv-title">修订记录</span>
-  </div>
-  <div class="rv-diff">
-    <div class="rv-row old">
-      <span class="rv-k">原</span>
-      <span class="rv-orig" id="rv-before"></span>
+<div class="cr-drawer-mask" id="rev-drawer" hidden>
+  <aside class="cr-drawer cr-revision-drawer" role="dialog" aria-modal="true" aria-label="修订记录">
+    <div class="cr-drawer-head">
+      <span class="ad" id="rev-drawer-icon"></span>
+      <div class="ht">
+        <b id="rev-drawer-title">修订记录</b>
+        <i>每次修改都保留为独立版本，可查看差异或恢复</i>
+      </div>
+      <button class="edt-x" id="rev-drawer-close" title="关闭" type="button">×</button>
     </div>
-    <div class="rv-conn">
-      <svg width="12" height="12" viewBox="0 0 12 12" aria-hidden="true"><path d="M2 6h6M5 3l3 3-3 3" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" /></svg>
+    <div class="cr-revision-body">
+      <div class="cr-revision-list" id="rev-list"></div>
+      <div class="cr-revision-detail">
+        <div class="cr-revision-detailbar">
+          <div><b class="c-latin" id="rev-ver">—</b><span id="rev-meta"></span></div>
+          <div class="cr-revision-detail-actions">
+            <button class="c-btn sm" id="rev-original" type="button">查看原版</button>
+            <button class="c-btn gold sm" id="rev-restore" type="button">恢复此版本</button>
+          </div>
+        </div>
+        <div class="cr-revision-progress"><span>写入这个版本时</span><b id="rev-progress">—</b></div>
+        <div class="cr-revision-diff" id="rev-diff"></div>
+      </div>
     </div>
-    <div class="rv-row new">
-      <span class="rv-k">新</span>
-      <span class="rv-new" id="rv-after"></span>
-    </div>
-  </div>
-  <div class="rv-why">
-    <span class="rv-k">为什么</span>
-    <span id="rv-why"></span>
-  </div>
-  <div class="rv-acts">
-    <button class="c-content-action" id="rv-restore">恢复此版本</button>
-    <button class="c-content-action" id="rv-close">关闭</button>
-  </div>
+  </aside>
 </div>
 
 <script>
@@ -539,69 +578,150 @@ function clockIcon() {
 }
 
 function closeRevpop() {
-  const pop = el("revpop");
-  if (!pop || pop.hidden) return;
-  pop.hidden = true;
+  const mask = el("rev-drawer");
+  if (!mask || mask.hidden) return;
+  mask.hidden = true;
   if (revAnchor) revAnchor.setAttribute("aria-expanded", "false");
   revAnchor = null;
+}
+
+let revList = [];
+let revSelected = null;
+let revShowOriginal = false;
+
+function fmtTime(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return String(iso);
+  const p = (n) => String(n).padStart(2, "0");
+  return d.getFullYear() + "/" + p(d.getMonth() + 1) + "/" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
+}
+
+async function openDocRevisions(anchor, doc) {
+  const mask = el("rev-drawer");
+  el("rev-drawer-icon").innerHTML = clockIcon(18);
+  el("rev-drawer-title").textContent = nameOf(doc.ruleset_id) + " · 修订记录";
+  mask.hidden = false;
+  anchor.setAttribute("aria-expanded", "true");
+  revAnchor = anchor;
+
+  el("rev-list").innerHTML = '<div class="cr-revision-empty">读取版本…</div>';
+  const res = await fetch("/api/revisions/" + currentVariant);
+  if (!res.ok) {
+    el("rev-list").innerHTML = '<div class="cr-revision-empty">读取版本失败</div>';
+    return;
+  }
+  const body = await res.json();
+  revList = body.revisions || [];
+  if (revList.length === 0) {
+    el("rev-list").innerHTML = '<div class="cr-revision-empty">还没有历史版本</div>';
+    return;
+  }
+  renderRevList();
+  await selectRevision(revList[0].id);
+}
+
+function renderRevList() {
+  const box = el("rev-list");
+  box.innerHTML = "";
+  for (const rev of revList) {
+    const item = document.createElement("button");
+    item.type = "button";
+    item.className = "cr-revision-item" + (rev.id === revSelected ? " on" : "");
+    const top = document.createElement("span");
+    top.className = "cr-revision-item-top";
+    const v = document.createElement("b");
+    v.className = "c-latin";
+    v.textContent = "v" + rev.version;
+    const src = document.createElement("span");
+    src.textContent = rev.source;
+    top.appendChild(v);
+    top.appendChild(src);
+    item.appendChild(top);
+    const time = document.createElement("time");
+    time.textContent = fmtTime(rev.time);
+    item.appendChild(time);
+    const small = document.createElement("small");
+    small.textContent = rev.note;
+    item.appendChild(small);
+    item.onclick = () => selectRevision(rev.id);
+    box.appendChild(item);
+  }
+}
+
+async function selectRevision(id) {
+  revSelected = id;
+  revShowOriginal = false;
+  renderRevList();
+  const rev = revList.find((r) => r.id === id);
+  if (!rev) return;
+  el("rev-ver").textContent = "v" + rev.version;
+  el("rev-meta").textContent = rev.source + " · " + fmtTime(rev.time);
+  el("rev-progress").textContent = rev.id === "current" ? "当前本地版本" : "该版本已提交到本地";
+  el("rev-restore").disabled = rev.id === "current";
+  el("rev-original").disabled = rev.id === "current";
+
+  const diff = el("rev-diff");
+  diff.innerHTML = '<div class="cr-revision-empty">读取差异…</div>';
+  const res = await fetch("/api/revisions/" + currentVariant + "/" + encodeURIComponent(id));
+  if (!res.ok) {
+    diff.innerHTML = '<div class="cr-revision-empty">这一版没有可比较的原文（备份缺失）</div>';
+    return;
+  }
+  const body = await res.json();
+  renderRevDiff(body.rows || []);
+}
+
+function renderRevDiff(rows) {
+  const box = el("rev-diff");
+  box.innerHTML = "";
+  if (rows.length === 0) {
+    box.innerHTML = '<div class="cr-revision-empty">这一版与当前文档没有文本差异</div>';
+    return;
+  }
+  for (const row of rows) {
+    const wrap = document.createElement("div");
+    wrap.className = "cr-rdiff-row";
+    const h = document.createElement("h4");
+    h.textContent = row.section_title + " · " + row.segment_id;
+    wrap.appendChild(h);
+    if (!revShowOriginal) {
+      const old = document.createElement("div");
+      old.className = "cr-rdiff-old";
+      old.textContent = row.before;
+      wrap.appendChild(old);
+    }
+    const now = document.createElement("div");
+    now.className = "cr-rdiff-new";
+    now.textContent = row.after;
+    wrap.appendChild(now);
+    box.appendChild(wrap);
+  }
+}
+
+async function restoreRevision() {
+  if (!revSelected || revSelected === "current") return;
+  el("rev-restore").disabled = true;
+  const res = await fetch("/api/restore", {
+    method: "POST",
+    headers: { "content-type": "application/json", "X-Rule-Studio": "1" },
+    body: JSON.stringify({ variant: currentVariant, revision_id: revSelected }),
+  });
+  const body = await res.json().catch(() => ({}));
+  el("rev-restore").disabled = false;
+  if (!res.ok) {
+    el("rev-diff").insertAdjacentHTML("afterbegin", '<div class="cr-revision-empty">恢复失败：' + (body.message || body.error || res.status) + "</div>");
+    return;
+  }
+  closeRevpop();
+  alert("表达层已恢复（事务 " + (body.transaction_id || "") + "）。document.json 是生成产物，需重新生成才会反映。");
+  await loadDoc(currentVariant);
 }
 
 function refsLabel(refs) {
   if (!refs || refs.length === 0) return "";
   return "规则 " + refs.slice(0, 3).join("、") + (refs.length > 3 ? " 等" : "");
 }
-
-function openDocRevisions(anchor, doc) {
-  const pop = el("revpop");
-  const segs = doc.blocks.reduce((n, b) => n + b.segments.length, 0);
-  el("rv-ad").textContent = "文";
-  el("rv-title").textContent = "修订记录 · " + nameOf(doc.ruleset_id);
-  el("rv-before").textContent = "当前文档 v" + doc.document_version + "（" + doc.blocks.length + " 章 / " + segs + " 段）";
-  if (draft.size === 0) {
-    el("rv-after").textContent = "无改动：草稿为空，正文即为已应用版本";
-  } else {
-    const ids = [...draft.keys()];
-    el("rv-after").textContent =
-      "草稿 " + draft.size + " 处改动：" + ids.slice(0, 3).join("、") + (ids.length > 3 ? " 等" : "");
-  }
-  el("rv-why").textContent = draft.size === 0
-    ? "修订记录按事务保存：点「应用」后写入 editorial-overrides.yaml 并生成新版本。"
-    : "草稿存在浏览器会话里，点「应用」前不写盘；应用后进入 editorial-overrides.yaml，可回滚。";
-
-  const restore = el("rv-restore");
-  restore.textContent = draft.size === 0 ? "无改动可恢复" : "清空全部草稿";
-  restore.disabled = draft.size === 0;
-  restore.dataset.mode = "all";
-
-  placeRevpop(anchor);
-  pop.hidden = false;
-  anchor.setAttribute("aria-expanded", "true");
-  revAnchor = anchor;
-}
-
-/** 定位：优先卡片右侧空白，右侧放不下翻到左侧；垂直对齐卡片顶部并留边 */
-function placeRevpop(anchor) {
-  const pop = el("revpop");
-  const r = anchor.getBoundingClientRect();
-  const w = 348, margin = 16;
-  const popH = pop.offsetHeight || 260;
-  const vw = window.innerWidth, vh = window.innerHeight;
-
-  // 参考 .c-revpop：贴在触发按钮下方，左移一点让箭头落在按钮附近
-  let left = r.left - 40;
-  if (left + w > vw - margin) left = vw - w - margin;
-  if (left < margin) left = margin;
-  let top = r.bottom + 6;
-  if (top + popH > vh - margin) top = Math.max(margin, r.top - popH - 6);
-
-  pop.style.left = Math.round(left) + "px";
-  pop.style.top = Math.round(top) + "px";
-  const arrow = el("rv-arrow");
-  arrow.style.left = Math.round(Math.min(w - 24, Math.max(14, r.left + r.width / 2 - left))) + "px";
-  arrow.style.top = "-7px";
-}
-
-
 
 /** 把反引号包裹的片段渲染成行内代码，其余保持纯文本 */
 function renderRich(container, text) {
@@ -656,7 +776,7 @@ async function loadDoc(variant) {
   historyBtn.innerHTML = clockIcon() + "修订记录";
   historyBtn.onclick = (ev) => {
     ev.stopPropagation();
-    if (!el("revpop").hidden && revAnchor === historyBtn) { closeRevpop(); return; }
+    if (!el("rev-drawer").hidden && revAnchor === historyBtn) { closeRevpop(); return; }
     openDocRevisions(historyBtn, doc);
   };
   titleRow.appendChild(historyBtn);
@@ -998,22 +1118,18 @@ async function markReviewed(targetType, targetId) {
 
 /* ---------- 启动 ---------- */
 document.addEventListener("click", (e) => {
-  const pop = el("revpop");
-  if (!pop || pop.hidden) return;
-  if (e.target.closest("#revpop")) return;
-  if (revAnchor && e.target === revAnchor) return;
-  closeRevpop();
+  const mask = el("rev-drawer");
+  if (mask.hidden) return;
+  // 点遮罩空白处关闭；点抽屉内部不关
+  if (e.target === mask) closeRevpop();
 });
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeRevpop(); });
-const replaceRevpop = () => { if (revAnchor && !el("revpop").hidden) placeRevpop(revAnchor); };
-window.addEventListener("resize", replaceRevpop);
-document.getElementById("pane-main").addEventListener("scroll", replaceRevpop, { passive: true });
-el("rv-close").onclick = closeRevpop;
-el("rv-restore").onclick = () => {
-  // 页面级：清空全部草稿并重载文档（草稿只存在于会话内存）
-  if (draft.size === 0) { closeRevpop(); return; }
-  clearDraft();
-  closeRevpop();
+el("rev-drawer-close").onclick = closeRevpop;
+el("rev-restore").onclick = restoreRevision;
+el("rev-original").onclick = () => {
+  revShowOriginal = !revShowOriginal;
+  el("rev-original").textContent = revShowOriginal ? "隐藏原版" : "查看原版";
+  selectRevision(revSelected);
 };
 
 bindSplitters();
