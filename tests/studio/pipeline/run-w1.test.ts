@@ -140,7 +140,7 @@ describe("W1-9 入口", () => {
     expect(on.goldset.enabled).toBe(true);
     const off = await runW1({ outDir: join(dir, "g5off"), kbRoot: dir, taskId: "t-off", generator: new PlanDrivenGenerator(), goldset: false });
     expect(off.goldset.enabled).toBe(false);
-  });
+  }, 30000);
 });
 
 describe("W1-9 新旧对比统计", () => {

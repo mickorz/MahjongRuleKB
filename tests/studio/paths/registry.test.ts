@@ -132,22 +132,22 @@ describe("主体 × intent 权限矩阵", () => {
     );
   });
 
-  it("C2：diff-review.yaml 由人工在系统外维护，任何主体均不得写", () => {
+  it("C2：diff-review.yaml 已从注册表移除，任何主体写它都算未注册产物", () => {
     for (const actor of actors) {
-      for (const intent of ["generate", "apply-expression", "apply-structure", "apply-review"] as const) {
+      for (const intent of ["generate", "apply-expression", "apply-structure"] as const) {
         expect(() => assertWritable(actor, intent, "documents/xiaoshan/diff-review.yaml")).toThrow(PathPolicyError);
       }
     }
   });
 
-  it("W0-6：产物注册表覆盖 12 个登记组，且每项都有写入主体或显式声明无人可写", () => {
+  it("W0-6：产物注册表每个登记组都有写入主体", () => {
     const categories = new Set(artifactCatalog.map((a) => a.category));
-    expect(categories.size).toBe(12);
+    expect(categories.size).toBe(10);
     for (const spec of artifactCatalog) {
       expect(["persistent", "version-bound", "per-generation", "per-check", "during-upgrade", "rebuildable", "system"]).toContain(
         spec.lifetime,
       );
-      if (spec.name !== "diff-review.yaml") expect(spec.writers.length).toBeGreaterThan(0);
+      expect(spec.writers.length).toBeGreaterThan(0);
     }
   });
 
@@ -156,12 +156,10 @@ describe("主体 × intent 权限矩阵", () => {
     expect(() => assertWritable("stage", "generate", "documents/xiaoshan/quality-report.json")).toBeTruthy();
   });
 
-  it("W0-6：server 只能写审查记录，不得写文档内容", () => {
-    expect(assertWritable("server", "apply-review", "documents/xiaoshan/review-records.json")).toBeTruthy();
-    expect(() => assertWritable("server", "apply-review", "documents/xiaoshan/document.json")).toThrow(
-      /写入主体清单/, 
-    );
-    expect(() => assertWritable("server", "generate", "documents/xiaoshan/document.json")).toThrow(PathPolicyError);
+  it("W0-6：server 不写任何文档产物", () => {
+    for (const name of ["document.json", "editorial-overrides.yaml", "quality-report.json"]) {
+      expect(() => assertWritable("server", "generate", `documents/xiaoshan/${name}`)).toThrow(PathPolicyError);
+    }
   });
 
   it("Archive 只能写归档目录，Compiler 只能写 compiled", () => {

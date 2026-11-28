@@ -21,7 +21,6 @@ export type WriteIntent =
   | "apply-expression" // approved Proposal 写表达层
   | "apply-structure" // approved Proposal 写章节装配
   | "apply-rule" // approved Proposal 写规则事实
-  | "apply-review" // 本地服务端写审查记录
   | "archive" // Verify 后归档
   | "compile"; // 编译器写产物
 
@@ -30,8 +29,6 @@ export type ArtifactCategory =
   | "document"
   | "outline"
   | "override"
-  | "review-input"
-  | "review-record"
   | "lock"
   | "quality"
   | "diff-report"
@@ -71,8 +68,6 @@ export const artifactCatalog: readonly ArtifactSpec[] = [
   },
   { name: "editorial-overrides.yaml", category: "override", lifetime: "persistent", writers: [{ actor: "transaction", intent: "apply-expression" }] },
   // 人工输入：外部直接编辑文件，系统内任何主体都不允许写
-  { name: "diff-review.yaml", category: "review-input", lifetime: "persistent", writers: [] },
-  { name: "review-records.json", category: "review-record", lifetime: "persistent", writers: [{ actor: "server", intent: "apply-review" }] },
   { name: "generation.lock.json", category: "lock", lifetime: "version-bound", writers: [{ actor: "stage", intent: "generate" }] },
   { name: "quality-report.json", category: "quality", lifetime: "per-generation", writers: [{ actor: "stage", intent: "generate" }] },
   { name: "diff-warnings.json", category: "diff-report", lifetime: "per-check", writers: [{ actor: "stage", intent: "generate" }] },
@@ -212,10 +207,7 @@ const MATRIX: Record<Actor, Partial<Record<WriteIntent, Rule>>> = {
       prefixes: [`${ROOT_DOCUMENTS}/`, `${ROOT_RUNTIME}/workflow/`, `${ROOT_RUNTIME}/drafts/`],
     },
   },
-  server: {
-    // 本地 Web 服务只写审查记录，不碰文档内容
-    "apply-review": { prefixes: [`${ROOT_DOCUMENTS}/`] },
-  },
+  server: {}, // 本地 Web 服务不写任何文档产物
   transaction: {
     // 表达层只允许改 override；结构层只允许改章节装配
     "apply-expression": { prefixes: [`${ROOT_DOCUMENTS}/`] },

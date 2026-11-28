@@ -16,13 +16,11 @@ import {
 import { isDocumentOutputDir, writeStageArtifact } from "../../../studio/paths/stage-writer.ts";
 
 describe("W0-6 产物注册表", () => {
-  it("12 个登记组，类别无拼写漂移", () => {
+  it("10 个登记组，类别无拼写漂移", () => {
     const expected = [
       "document",
       "outline",
       "override",
-      "review-input",
-      "review-record",
       "lock",
       "quality",
       "diff-report",
@@ -42,11 +40,9 @@ describe("W0-6 产物注册表", () => {
     expect(rebuildable).not.toContain("editorial-overrides.yaml");
   });
 
-  it("正式文档只允许 stage 生成，review-records 只允许 server 写", () => {
+  it("正式文档只允许 stage 生成", () => {
     const doc = artifactCatalog.find((a) => a.name === "document.json")!;
     expect(doc.writers).toEqual([{ actor: "stage", intent: "generate" }]);
-    const review = artifactCatalog.find((a) => a.name === "review-records.json")!;
-    expect(review.writers).toEqual([{ actor: "server", intent: "apply-review" }]);
   });
 
   it("history 用目录前缀登记，允许事务写快照", () => {
@@ -83,9 +79,9 @@ describe("W0-6 Stage 写入口", () => {
     expect(existsSync(join(kb, "documents/xiaoshan/临时草稿.json"))).toBe(false);
   });
 
-  it("人工输入 diff-review.yaml 通过写入口一律拒绝", () => {
+  it("未注册的 diff-review.yaml 写不进去", () => {
     expect(() => writeStageArtifact(kb, "xiaoshan", "diff-review.yaml", "confirmed_rules: []\n")).toThrow(
-      /系统外维护/,
+      /未知文档产物/,
     );
     expect(existsSync(join(kb, "documents/xiaoshan/diff-review.yaml"))).toBe(false);
   });

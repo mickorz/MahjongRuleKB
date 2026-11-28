@@ -15,7 +15,6 @@ import { applySession } from "../studio/edit/apply-batch.ts";
 import { checkMutation, computeBaseRevision, mutationSchema, mutationToProposalInput } from "../studio/edit/mutation.ts";
 import { documentSchema } from "../studio/contracts/document.ts";
 import { applyDocumentProposal } from "../studio/transaction/apply.ts";
-import { markReviewed, readReviewFile, reviewSummary } from "../studio/review/store.ts";
 import { listRevisions, revisionDiff, revisionOverridesBackup } from "./revisions.ts";
 import { allRefIds, resolveNames } from "./ref-names.ts";
 import { askAssistant, AssistantUnavailable } from "./assistant.ts";
@@ -42,7 +41,6 @@ export type ApiRoute =
   | { kind: "diffs"; variant: string }
   | { kind: "artifact"; variant: string; name: ReadableArtifact }
   | { kind: "segment"; variant: string; segmentId: string }
-  | { kind: "reviews"; variant: string }
   | { kind: "refs"; variant: string }
   | { kind: "revisions"; variant: string }
   | { kind: "revision-diff"; variant: string; revisionId: string }
@@ -96,9 +94,6 @@ export function resolveRoute(pathname: string): ApiRoute {
     return { kind: "revision-diff", variant: parts[2], revisionId: parts[3] };
   }
 
-  if (parts[1] === "reviews" && parts.length === 3 && variantPattern.test(parts[2])) {
-    return { kind: "reviews", variant: parts[2] };
-  }
 
   if (parts[1] === "segment" && parts.length === 4) {
     const variant = parts[2];
@@ -289,12 +284,6 @@ export function createWorkbenchServer(options: WorkbenchOptions = {}): Server {
       const content = readFileSync(file, "utf8");
       return route.name.endsWith(".md") ? text(res, 200, content, "text/markdown; charset=utf-8") : json(res, 200, JSON.parse(content));
     }
-    if (route.kind === "reviews") {
-      const doc = projectDocument(kbRoot, route.variant);
-      if (!doc) return json(res, 404, { error: "document_not_found" });
-      const file = readReviewFile(kbRoot, route.variant, doc.ruleset_id);
-      return json(res, 200, reviewSummary(file, doc.ruleset_id, doc.document_version, doc.blocks.map((b) => b.section_id)));
-    }
     if (route.kind === "segment") {
       const doc = projectDocument(kbRoot, route.variant);
       if (!doc) return json(res, 404, { error: "document_not_found" });
@@ -366,7 +355,6 @@ async function handleWrite(req: IncomingMessage, res: ServerResponse, ctx: Write
 
   if (ctx.url.pathname === "/api/proposal") return proposalPreview(res, ctx.kbRoot, variant, body);
   if (ctx.url.pathname === "/api/apply") return applyBatch(res, ctx.kbRoot, variant, body);
-  if (ctx.url.pathname === "/api/review") return writeReview(res, ctx.kbRoot, variant, body);
   if (ctx.url.pathname === "/api/restore") return restoreRevision(res, ctx.kbRoot, variant, body);
   if (ctx.url.pathname === "/api/assistant") return assistantReply(res, variant, body);
   return json(res, 404, { error: "not_found" });
@@ -534,37 +522,6 @@ function assistantReply(res: ServerResponse, variant: string, body: Record<strin
       }
       return json(res, 502, { error: "assistant_failed", message: e.message });
     });
-}
-
-/** POST /api/review：写一条审查记录（actor=server） */
-function writeReview(res: ServerResponse, kbRoot: string, variant: string, body: Record<string, unknown>): void {
-  const document = loadDocument(kbRoot, variant);
-  if (!document) return json(res, 404, { error: "document_not_found" });
-  const target = body.target as { type?: string; id?: string } | undefined;
-  if (!target || !["document", "section", "segment"].includes(target.type ?? "") || !target.id) {
-    return json(res, 400, { error: "bad_target" });
-  }
-  const status = body.status === "reviewed" ? "reviewed" : body.status === "unreviewed" ? "unreviewed" : undefined;
-  if (!status) return json(res, 400, { error: "bad_status" });
-  const reviewer = typeof body.reviewer === "string" && body.reviewer.trim() ? body.reviewer.trim() : "策划";
-
-  const file = markReviewed({
-    kbRoot,
-    variant,
-    rulesetId: document.ruleset_id,
-    target: { type: target.type as "document" | "section" | "segment", id: target.id },
-    status,
-    documentVersion: document.document_version,
-    reviewer,
-    ...(typeof body.note === "string" ? { note: body.note } : {}),
-  });
-  const summary = reviewSummary(
-    file,
-    document.ruleset_id,
-    document.document_version,
-    document.blocks.map((b) => b.section_id),
-  );
-  return json(res, 200, { ok: true, file, summary });
 }
 
 export { viewerHtml };

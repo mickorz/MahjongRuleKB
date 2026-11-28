@@ -1,4 +1,4 @@
-// W4-2 / W4-3：批量应用与审查记录
+// W4-2：批量应用
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import { existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -8,7 +8,6 @@ import { applySession, overridesYaml } from "../../../studio/edit/apply-batch.ts
 import { addMutation, createSession } from "../../../studio/edit/session.ts";
 import { mutationSchema } from "../../../studio/edit/mutation.ts";
 import { documentSchema } from "../../../studio/contracts/document.ts";
-import { reviewRecordsFileSchema } from "../../../studio/contracts/review.ts";
 import { block, documentFixture, segment } from "../fixtures.ts";
 
 const variantDoc = (version = 3) =>
@@ -95,59 +94,4 @@ describe("W4-2 批量应用", () => {
   });
 });
 
-describe("W4-3 审查记录在编辑后失效", () => {
-  let kb: string;
-  beforeEach(() => {
-    kb = join(tmpdir(), `kb-rvw-${process.pid}-${Date.now()}-${Math.random().toString(16).slice(2)}`);
-    mkdirSync(join(kb, "documents/xiaoshan"), { recursive: true });
-    mkdirSync(join(kb, ".rule-studio/transactions"), { recursive: true });
-    writeFileSync(join(kb, "documents/xiaoshan/document.json"), JSON.stringify(variantDoc(), null, 2), "utf8");
-    writeFileSync(join(kb, "documents/xiaoshan/editorial-overrides.yaml"), "- overrides: []\n", "utf8");
-    writeFileSync(
-      join(kb, "documents/xiaoshan/review-records.json"),
-      JSON.stringify(
-        reviewRecordsFileSchema.parse({
-          ruleset_id: "xiaoshan-friends-4p",
-          target_variant: "xiaoshan",
-          records: [
-            { review_id: "RVW-0001", target: { type: "document", id: "xiaoshan-friends-4p" }, status: "reviewed", document_version: 3, reviewer: "策划", at: "2026-11-25T00:00:00.000Z" },
-            { review_id: "RVW-0002", target: { type: "section", id: "opening" }, status: "reviewed", document_version: 3, reviewer: "策划", at: "2026-11-25T00:00:00.000Z" },
-            { review_id: "RVW-0003", target: { type: "segment", id: "SEG-000001" }, status: "reviewed", document_version: 3, reviewer: "策划", at: "2026-11-25T00:00:00.000Z" },
-            { review_id: "RVW-0004", target: { type: "segment", id: "SEG-000002" }, status: "reviewed", document_version: 3, reviewer: "策划", at: "2026-11-25T00:00:00.000Z" },
-          ],
-        }),
-        null,
-        2,
-      ),
-      "utf8",
-    );
-  });
-  afterEach(() => rmSync(kb, { recursive: true, force: true }));
 
-  it("被编辑片段及文档级记录退回未审，其他片段保持", () => {
-    createSession({ kbRoot: kb, sessionId: "SES-0001", rulesetId: "xiaoshan-friends-4p", targetVariant: "xiaoshan", documentVersion: 3 });
-    addMutation(kb, "xiaoshan", "SES-0001", replace("SEG-000001", "改写"));
-    const res = applySession({ kbRoot: kb, variant: "xiaoshan", sessionId: "SES-0001", transactionId: "TX-003", proposalId: "DOC-P-003" });
-    expect(res.ok).toBe(true);
-    expect(res.reviewInvalidated).toBeGreaterThan(0);
-
-    const file = JSON.parse(readFileSync(join(kb, "documents/xiaoshan/review-records.json"), "utf8")) as {
-      records: Array<{ target: { type: string; id: string }; status: string; document_version: number }>;
-    };
-    const byId = new Map(file.records.map((r) => [`${r.target.type}:${r.target.id}`, r]));
-    expect(byId.get("segment:SEG-000001")!.status).toBe("unreviewed");
-    expect(byId.get("document:xiaoshan-friends-4p")!.status).toBe("unreviewed");
-    expect(byId.get("segment:SEG-000002")!.status).toBe("reviewed");
-    expect(byId.get("segment:SEG-000002")!.document_version).toBe(4);
-  });
-
-  it("没有审查记录文件时不报错（视为 0 条）", () => {
-    rmSync(join(kb, "documents/xiaoshan/review-records.json"));
-    createSession({ kbRoot: kb, sessionId: "SES-0001", rulesetId: "xiaoshan-friends-4p", targetVariant: "xiaoshan", documentVersion: 3 });
-    addMutation(kb, "xiaoshan", "SES-0001", replace("SEG-000001", "改写"));
-    const res = applySession({ kbRoot: kb, variant: "xiaoshan", sessionId: "SES-0001", transactionId: "TX-004", proposalId: "DOC-P-004" });
-    expect(res.ok).toBe(true);
-    expect(res.reviewInvalidated).toBe(0);
-    expect(existsSync(join(kb, "documents/xiaoshan/review-records.json"))).toBe(false);
-  });
-});

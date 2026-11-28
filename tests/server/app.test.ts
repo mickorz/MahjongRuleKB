@@ -281,34 +281,20 @@ describe("W3-4 写接口", () => {
     expect(JSON.stringify(await res.json())).toMatch(/继承/);
   });
 
-  it("apply 落盘并升版本，同时把审查记录退回未审", async () => {
-    // 先标一次已审
-    const r1 = await fetch(`${base}/api/review`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ variant: "xiaoshan", target: { type: "document", id: "xiaoshan-friends-4p" }, status: "reviewed" }),
-    });
-    expect(r1.status).toBe(200);
-    expect(((await r1.json()) as { summary: { document: string } }).summary.document).toBe("reviewed");
-
+  it("apply 落盘并升版本", async () => {
     const res = await fetch(`${base}/api/apply`, {
       method: "POST",
       headers,
       body: JSON.stringify({ variant: "xiaoshan", mutations: [mutation], transaction_id: "TX-001", proposal_id: "DOC-P-001" }),
     });
     expect(res.status).toBe(200);
-    const body = (await res.json()) as { ok: boolean; applied: number; documentVersionAfter: number; reviewInvalidated: number };
+    const body = (await res.json()) as { ok: boolean; applied: number; documentVersionAfter: number };
     expect(body.ok, JSON.stringify(body)).toBe(true);
     expect(body.applied).toBe(1);
     expect(body.documentVersionAfter).toBe(4);
-    expect(body.reviewInvalidated).toBeGreaterThan(0);
 
     const overrides = readFileSync(join(kb, "documents/xiaoshan/editorial-overrides.yaml"), "utf8");
     expect(overrides).toContain("改写后的段落");
-
-    // 审查状态已退回
-    const rev = await fetch(`${base}/api/reviews/xiaoshan`);
-    expect(((await rev.json()) as { document: string }).document).toBe("unreviewed");
   });
 
   it("请求体含 U+FFFD（非 UTF-8）→ 400，不写盘", async () => {
@@ -329,28 +315,6 @@ describe("W3-4 写接口", () => {
   it("apply 空批次 → 400", async () => {
     const res = await fetch(`${base}/api/apply`, { method: "POST", headers, body: JSON.stringify({ variant: "xiaoshan", mutations: [] }) });
     expect(res.status).toBe(400);
-  });
-
-  it("审查记录 GET /api/reviews 汇总文档与章节状态", async () => {
-    await fetch(`${base}/api/review`, {
-      method: "POST",
-      headers,
-      body: JSON.stringify({ variant: "xiaoshan", target: { type: "section", id: "opening" }, status: "reviewed" }),
-    });
-    const res = await fetch(`${base}/api/reviews/xiaoshan`);
-    const body = (await res.json()) as { document: string; sections: Record<string, string> };
-    expect(body.sections.opening).toBe("reviewed");
-    expect(body.document).toBe("unreviewed");
-  });
-
-  it("审查目标与状态非法 → 400", async () => {
-    for (const body of [
-      { variant: "xiaoshan", target: { type: "bogus", id: "x" }, status: "reviewed" },
-      { variant: "xiaoshan", target: { type: "section", id: "opening" }, status: "maybe" },
-    ]) {
-      const res = await fetch(`${base}/api/review`, { method: "POST", headers, body: JSON.stringify(body) });
-      expect(res.status).toBe(400);
-    }
   });
 
   it("未知写路径 → 404", async () => {

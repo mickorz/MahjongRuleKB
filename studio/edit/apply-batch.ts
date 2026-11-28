@@ -4,7 +4,6 @@ import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { documentSchema, type Document } from "../contracts/document.ts";
-import { reviewRecordsFileSchema, invalidateOnEdit, type ReviewRecordsFile } from "../contracts/review.ts";
 import { applyDocumentProposal } from "../transaction/apply.ts";
 import { documentPath } from "../paths/registry.ts";
 import { checkMutation, computeBaseRevision, mutationToProposalInput } from "./mutation.ts";
@@ -29,7 +28,6 @@ export interface ApplySessionResult {
   targetPath?: string;
   documentVersionBefore: number;
   documentVersionAfter?: number;
-  reviewInvalidated: number;
 }
 
 /** 把一批 mutation 串行化成 editorial-overrides.yaml 内容（表达层唯一权威输入） */
@@ -89,7 +87,7 @@ export function applySession(options: ApplySessionOptions): ApplySessionResult {
     });
   }
 
-  const base = { documentVersionBefore: document.document_version, reviewInvalidated: 0 };
+  const base = { documentVersionBefore: document.document_version };
   // 全或无：任何拒绝都不落盘
   if (rejected.length > 0) return { ok: false, applied: 0, rejected, ...base };
   if (accepted.length === 0) return { ok: false, applied: 0, rejected: [{ reasons: ["会话里没有可应用的改动"] }], ...base };
@@ -109,8 +107,6 @@ export function applySession(options: ApplySessionOptions): ApplySessionResult {
 
   // 版本以落盘后的 document.json 为准（事务已 +1）
   const versionAfter = (JSON.parse(readFileSync(docFile, "utf8")) as { document_version: number }).document_version;
-  // W4-3：编辑命中片段后，把相关审查记录退回未审
-  const invalidated = invalidateReviewsFor(kbRoot, variant, accepted.map((a) => a.segment_id), versionAfter);
 
   return {
     ok: true,
@@ -120,28 +116,10 @@ export function applySession(options: ApplySessionOptions): ApplySessionResult {
     targetPath,
     documentVersionBefore: revision.document_version,
     documentVersionAfter: versionAfter,
-    reviewInvalidated: invalidated,
   };
 }
 
-const reviewFile = (kbRoot: string, variant: string) => join(kbRoot, "documents", variant, "review-records.json");
 
-/** 编辑后失效：返回被改动的记录数（无文件则视为 0） */
-function invalidateReviewsFor(kbRoot: string, variant: string, segmentIds: ReadonlyArray<string>, nextVersion: number): number {
-  const file = reviewFile(kbRoot, variant);
-  if (!existsSync(file)) return 0;
-  const parsed = reviewRecordsFileSchema.safeParse(JSON.parse(readFileSync(file, "utf8")));
-  if (!parsed.success) return 0;
-  let changed = 0;
-  let current: ReviewRecordsFile = parsed.data;
-  for (const segmentId of segmentIds) {
-    const before = current.records;
-    current = invalidateOnEdit(current, { segment_id: segmentId }, nextVersion);
-    changed += before.filter((r, i) => r.status !== current.records[i]?.status).length;
-  }
-  void writeJson(file, current);
-  return changed;
-}
 
 function writeJson(file: string, value: unknown): void {
   const { writeFileSync } = require("node:fs") as typeof import("node:fs");

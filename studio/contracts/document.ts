@@ -110,7 +110,7 @@ export const segmentSchema = z
     base_rule_ref: z.union([z.string().regex(ruleRefPattern), z.string().regex(configRefPattern)]).nullish(),
     /**
      * W0-3：机器检查状态。只表达检查结论，不表达人工确认（那是 diff_status）
-     * 也不表达人工审查（那是 review-records.json）。默认 not_checked，向后兼容。
+     * 也不表达任何人工状态。默认 not_checked，向后兼容。
      */
     machine_check_status: z.enum(machineCheckStatusValues).optional(),
     /**
