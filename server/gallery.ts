@@ -128,6 +128,59 @@ const COMPONENT_CSS = `
   }
   .mg-voice-note { font: 11.5px/1.6 var(--sans); color: var(--ink-3); }
 
+  /* 自由布局关系图谱（原站 .c-relationship-canvas / -edge / -edge-label / -mode） */
+  .mg-relcanvas {
+    position: relative; height: 320px; min-height: 300px; overflow: hidden;
+    border: 1px solid var(--line); border-radius: 9px;
+    background: radial-gradient(circle at 50% 46%, var(--paper-2), var(--card) 72%);
+  }
+  .mg-relcanvas > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .mg-rel-edge {
+    stroke: var(--ink-3); stroke-width: 1.6; opacity: .52;
+    vector-effect: non-scaling-stroke; transition: stroke .15s, stroke-width .15s, opacity .15s;
+  }
+  .mg-rel-edge.ally { stroke: var(--gold-deep); stroke-width: 2.2; opacity: .72; }
+  .mg-rel-edge.hostile { stroke: var(--terra); stroke-width: 2.5; opacity: .78; }
+  .mg-rel-edge.mixed { stroke: var(--terra); stroke-width: 2.3; stroke-dasharray: 8 4; opacity: .76; }
+  .mg-rel-edge.secret { stroke: var(--gold); stroke-width: 2.1; stroke-dasharray: 5 4; opacity: .78; }
+  .mg-rel-edge.selected { stroke-width: 2.8; opacity: 1; }
+
+  /* 节点药丸（原站 .c-relationship-node） */
+  .mg-rel-pill {
+    position: absolute; z-index: 4; transform: translate(-50%, -50%);
+    display: inline-flex; align-items: center; gap: 8px; max-width: 190px; min-width: 112px;
+    padding: 5px; border: 1.5px solid var(--line); border-radius: 999px;
+    background: var(--card); cursor: pointer; font-family: inherit; text-align: left;
+  }
+  .mg-rel-pill:hover, .mg-rel-pill.selected { border-color: var(--gold); }
+  .mg-rel-av {
+    display: grid; place-items: center; width: 28px; height: 28px; flex: none; border-radius: 50%;
+    background: var(--ink-2); color: #fff; font: 500 12px/1 var(--serif);
+  }
+  .mg-rel-pill.selected .mg-rel-av { background: var(--gold-deep); }
+  .mg-rel-copy { display: flex; min-width: 0; flex-direction: column; gap: 1px; }
+  .mg-rel-copy b { font: 12.5px/1.3 var(--sans); color: var(--ink); white-space: nowrap; }
+  .mg-rel-copy small { font: 400 9.5px/1.25 var(--sans); color: var(--ink-3); white-space: nowrap; }
+
+  /* 连线标签（原站 .c-relationship-edge-label） */
+  .mg-rel-edge-label {
+    position: absolute; z-index: 3; transform: translate(-50%, -50%); max-width: 142px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    padding: 3px 8px; border: 1px solid var(--line); border-radius: 6px;
+    background: var(--card); color: var(--ink-2); font: 11px/1.4 var(--sans); cursor: pointer;
+  }
+  .mg-rel-edge-label:hover, .mg-rel-edge-label.selected { border-color: var(--gold); color: var(--gold-deep); }
+  .mg-rel-edge-label.hostile { color: var(--terra); border-color: color-mix(in srgb, var(--terra) 35%, var(--line)); }
+  .mg-rel-edge-label.ally { color: var(--gold-deep); border-color: var(--gold-soft); }
+  .mg-rel-edge-label.mixed { color: var(--terra); border-color: color-mix(in srgb, var(--terra) 35%, var(--gold)); background: var(--gold-wash); }
+
+  /* 图谱 / 列表 切换（原站 .c-relationship-mode 的圆角拼接） */
+  .mg-relmode { display: inline-flex; align-items: center; gap: 0; }
+  .mg-relmode .c-content-action { border-radius: 0; }
+  .mg-relmode .c-content-action:first-child { border-radius: 5px 0 0 5px; }
+  .mg-relmode .c-content-action:last-child { margin-left: -1px; border-radius: 0 5px 5px 0; }
+  .mg-relmode .c-content-action.active { border-color: var(--gold-soft); background: var(--gold-wash); color: var(--gold-deep); }
+
   .mg-hint { font: 11.5px/1.6 var(--sans); color: var(--ink-3); }
 `;
 
@@ -324,7 +377,7 @@ const SAMPLES: Sample[] = [
   { family: "g5", name: "硬约束 · 引文 + 依据", tags: ["可直接编辑"], where: "文档约束", classes: "mg-belief-quote + badge + mg-belief-src(.lab/.v)", html: belief() },
   { family: "g6", name: "瀑布分组 · 可展开", tags: ["可直接编辑"], where: "算分规则", classes: "mg-reader-waterfall + mg-reader-group(h3) + mg-reader-row(.key/.value) + 布局/展开按钮", html: reader() },
   { family: "g7", name: "编号索引 + 内容", tags: ["可直接编辑"], where: "UI 交互及表现", classes: "mg-voice-body + mg-voice-index(button.on/.no) + mg-voice-quote", html: voice() },
-  { family: "g8", name: "图形化节点图", tags: ["只读"], where: "规则关系", classes: "mg-relmap + mg-relcanvas + mg-rel-edge + mg-rel-node + mg-rel-edge-label + mg-relmode", html: relationMapSample() },
+  { family: "g8", name: "图形化节点图", tags: ["只读"], where: "规则关系", classes: "mg-relcanvas(svg .mg-rel-edge) + .mg-rel-pill(.mg-rel-av/.mg-rel-copy) + .mg-rel-edge-label + .mg-relmode", html: relationMapSample() },
 ];
 
 /* g8：画布式的自由布局图谱（与原站 c-relationship-map.mode-graph 同构） */
@@ -346,10 +399,10 @@ function relationMapSample(): string {
     <button class="mg-rel-edge-label" style="left:36%;top:44%">前置</button>
     <button class="mg-rel-edge-label mixed" style="left:50%;top:58%">冲突</button>
     <button class="mg-rel-edge-label" style="left:36%;top:70%">触发</button>
-    <button class="mg-rel-node selected" style="left:50%;top:30%"><b>定庄</b><span>2 条关系</span></button>
-    <button class="mg-rel-node selected" style="left:78%;top:58%"><b>庄家牢数</b><span>2 条关系</span></button>
-    <button class="mg-rel-node" style="left:22%;top:58%"><b>财神归属</b><span>未裁决</span></button>
-    <button class="mg-rel-node" style="left:50%;top:82%"><b>拖底</b><span>1 条关系</span></button>
+    <button class="mg-rel-pill selected" style="left:50%;top:30%"><span class="mg-rel-av">庄</span><span class="mg-rel-copy"><b>定庄</b><small>2 条关系</small></span></button>
+    <button class="mg-rel-pill selected" style="left:78%;top:58%"><span class="mg-rel-av">牢</span><span class="mg-rel-copy"><b>庄家牢数</b><small>2 条关系</small></span></button>
+    <button class="mg-rel-pill" style="left:22%;top:58%"><span class="mg-rel-av">财</span><span class="mg-rel-copy"><b>财神归属</b><small>2 条关系 · 未裁决</small></span></button>
+    <button class="mg-rel-pill" style="left:50%;top:82%"><span class="mg-rel-av">拖</span><span class="mg-rel-copy"><b>拖底</b><small>1 条关系</small></span></button>
   </div>
 </section>`;
 }
