@@ -33,3 +33,6 @@ dev-examples/bishuxiezuo-workspace
 # dev-examples 运行产物（日志、PiBot 开发数据目录）
 dev-examples/*/data*/
 dev-examples/*/*.log
+
+# 外部参考项目：Windows junction 指向 E:\WorkProjects\xc-ui-flow（本地只读目录，不入库）
+thirdparties/xc-ui-flow
