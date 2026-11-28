@@ -51,6 +51,7 @@ export type ApiRoute =
   | { kind: "revisions"; variant: string }
   | { kind: "revision-diff"; variant: string; revisionId: string }
   | { kind: "gallery" }
+  | { kind: "chat-widget"; name: "chat-lib.js" | "chat-lib.css" }
   | { kind: "fonts-css" }
   | { kind: "font-file"; name: string }
   | { kind: "not-found" };
@@ -58,10 +59,13 @@ export type ApiRoute =
 /** 纯函数路由解析：便于单测，不碰文件系统 */
 const fontFilePattern = /^[A-Za-z0-9_-]+\.woff2$/;
 const fontsDir = join(dirname(fileURLToPath(import.meta.url)), "fonts");
+const chatWidgetDir = join(dirname(fileURLToPath(import.meta.url)), "chat-widget");
 
 export function resolveRoute(pathname: string): ApiRoute {
   if (pathname === "/" || pathname === "/index.html") return { kind: "index" };
   if (pathname === "/gallery" || pathname === "/gallery.html") return { kind: "gallery" };
+  if (pathname === "/chat-widget/chat-lib.js") return { kind: "chat-widget", name: "chat-lib.js" };
+  if (pathname === "/chat-widget/chat-lib.css") return { kind: "chat-widget", name: "chat-lib.css" };
   if (pathname === "/fonts.css") return { kind: "fonts-css" };
   if (pathname.startsWith("/fonts/")) {
     const name = pathname.slice("/fonts/".length);
@@ -226,7 +230,8 @@ export function createWorkbenchServer(options: WorkbenchOptions = {}): Server {
 
     if (route.kind === "index") {
       const localFonts = existsSync(join(fontsDir, "fonts.css"));
-      text(res, 200, viewerHtml({ localFonts }), "text/html; charset=utf-8");
+      const chatWidget = existsSync(join(chatWidgetDir, "chat-lib.js"));
+      text(res, 200, viewerHtml({ localFonts, chatWidget }), "text/html; charset=utf-8");
       return;
     }
     if (route.kind === "refs") {
@@ -253,6 +258,14 @@ export function createWorkbenchServer(options: WorkbenchOptions = {}): Server {
     if (route.kind === "gallery") {
       const localFonts = existsSync(join(fontsDir, "fonts.css"));
       text(res, 200, galleryHtml({ localFonts }), "text/html; charset=utf-8");
+      return;
+    }
+    if (route.kind === "chat-widget") {
+      const file = join(chatWidgetDir, route.name);
+      if (!existsSync(file)) return json(res, 404, { error: "chat_widget_not_built" });
+      const type = route.name.endsWith(".css") ? "text/css; charset=utf-8" : "text/javascript; charset=utf-8";
+      res.writeHead(200, { "content-type": type, ...NO_STORE });
+      res.end(readFileSync(file));
       return;
     }
     if (route.kind === "fonts-css") {

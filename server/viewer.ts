@@ -423,6 +423,8 @@ export function baseStyles(): string {
   }
   .asst-heading p { max-width: 700px; margin: 7px 0 0; color: var(--ink-2); font-size: 12px; line-height: 1.7; }
 
+  .asst-widget { flex: 1 1 auto; min-height: 0; overflow: hidden; display: block; }
+  .asst-widget[hidden] { display: none; }
   .asst-thread {
     min-height: 0; overflow: auto; padding: 20px 18px;
     display: flex; flex-direction: column; gap: 2px;
@@ -643,7 +645,16 @@ export function baseStyles(): string {
 // 工作台前端（无构建，单文件）
 // 结构：外壳不滚，三栏各自滚动；1px 分隔条可拖拽，比例记忆（S1/S2）
 // 视觉：暖纸 + 墨字 + 金点（S1 已换令牌；卡片细化在 S3）
-export function viewerHtml(options: { localFonts?: boolean } = {}): string {
+declare global {
+  interface Window {
+    __xcChat?: { mountChat: (el: HTMLElement, options: Record<string, unknown>) => { applyTurns: (turns: unknown[]) => void } };
+    __xcChatHandle?: { applyTurns: (turns: unknown[]) => void };
+  }
+}
+
+export function viewerHtml(options: { localFonts?: boolean; chatWidget?: boolean } = {}): string {
+  // 聊天框：vendor/xc-chat 构建出 server/chat-widget/ 时启用，否则回退内置渲染
+  const chatWidget = options.chatWidget === true;
   // 本地有字体就发本地（离线可用），否则回退 Google CDN
   const fontLink = options.localFonts
     ? '<link rel="stylesheet" href="/fonts.css" />'
@@ -728,6 +739,7 @@ ${fontLink}
       <button class="edt-x" id="asst-close" title="关闭" type="button">×</button>
     </div>
   </header>
+  <div class="asst-widget" id="asst-widget" hidden></div>
   <div class="asst-thread" id="asst-thread"></div>
   <div class="asst-compose">
     <div class="asst-compose-input">
@@ -906,6 +918,7 @@ function scrollToSection(sectionId) {
 let refNames = { rules: {}, configs: {} };
 
 /** 助手会话与窗口状态（持久化到 localStorage，仅本机浏览器） */
+const CHAT_WIDGET = ${chatWidget ? "true" : "false"};
 const ASST_KEY = "rs-assistant";
 const asst = {
   messages: [],
@@ -1070,9 +1083,117 @@ function asstBindResize() {
   bind(asstEl("asst-resize-left"), "x");
 }
 
+/** 预构建聊天框（vendor/xc-chat 产出）；未构建时 chatWidget 为 false，走内置渲染 */
+function widgetAvailable() {
+  return CHAT_WIDGET === true;
+}
+
+/**
+ * 把我们的会话历史映射成聊天框的 Turn 结构。
+ * 约定与 studio/assistant/chat-turns.ts 一致：user 消息与随后的 assistant 消息合成一个 turn，
+ * 否则工具步骤会落在没有提问的孤立 turn 里。
+ */
+function chatTurnsPayload() {
+  const now = Date.now();
+  const turns = [];
+  let current = null;
+  asst.messages.forEach((m, index) => {
+    if (!current || m.role === "user") {
+      const turnId = "turn-" + (index + 1);
+      current = { id: turnId, conversationId: "conv-workbench", status: "completed", items: [] };
+      turns.push(current);
+    }
+    const turnId = current.id;
+    if (m.role === "user") {
+      current.items.push({ id: turnId + "-user", turnId, type: "userMessage", text: m.content, timestamp: now + index });
+      return;
+    }
+    // 兼容旧数据：早期只存了工具名字符串
+    const stepList = (m.tools || []).map((t) => (typeof t === "string" ? { name: t, ok: true } : t));
+    stepList.forEach((tool, i) => {
+      current.items.push({
+        id: turnId + "-tool-" + i,
+        turnId,
+        type: "dynamicToolCall",
+        toolCallId: turnId + "-call-" + i,
+        tool: tool.name,
+        status: tool.ok ? "completed" : "failed",
+        arguments: tool.args || {},
+        output: tool.ok ? "ok" : String(tool.code || "error"),
+        timestamp: now + index,
+      });
+    });
+    const bad = (m.claims || []).filter((c) => c.status !== "ok");
+    if (bad.length > 0) {
+      current.items.push({
+        id: turnId + "-notice",
+        turnId,
+        type: "reasoning",
+        status: "completed",
+        text: "有 " + bad.length + " 条结论缺少可追溯依据：" + bad.map((c) => c.text.slice(0, 24)).join("；"),
+        timestamp: now + index,
+      });
+    }
+    if (String(m.content || "").trim()) {
+      // phase=final_answer 才会被聊天框当作"最终回答"渲染（否则归入工作过程）
+      current.items.push({
+        id: turnId + "-answer",
+        turnId,
+        type: "agentMessage",
+        status: "completed",
+        phase: "final_answer",
+        text: m.content,
+        timestamp: now + index,
+      });
+    }
+  });
+  return turns;
+}
+
+/** 用预构建聊天框渲染整个会话；返回 false 表示不可用（调用方回退） */
+async function renderWithWidget() {
+  if (!widgetAvailable()) return false;
+  const host = asstEl("asst-widget");
+  if (!host) return false;
+  if (!window.__xcChat) {
+    try {
+      window.__xcChat = await import("/chat-widget/chat-lib.js");
+    } catch (error) {
+      console.warn("[chat-widget] 加载失败，回退内置渲染", error);
+      return false;
+    }
+  }
+  try {
+    if (!host.__mounted) {
+      host.__mounted = true;
+      window.__xcChatHandle = window.__xcChat.mountChat(host, {
+        turns: chatTurnsPayload(),
+        language: "zh-CN",
+        cssUrl: "/chat-widget/chat-lib.css",
+      });
+    } else {
+      window.__xcChatHandle.applyTurns(chatTurnsPayload());
+    }
+    return true;
+  } catch (error) {
+    console.warn("[chat-widget] 渲染失败，回退内置渲染", error);
+    return false;
+  }
+}
+
 function asstRender() {
   const thread = asstEl("asst-thread");
   thread.innerHTML = "";
+
+  // 预构建聊天框可用时：整段会话交给它渲染，内置渲染留作空态与回退
+  const widgetHost = asstEl("asst-widget");
+  if (widgetHost) widgetHost.hidden = !widgetAvailable() || asst.messages.length === 0;
+  if (widgetAvailable() && asst.messages.length > 0) {
+    thread.hidden = true;
+    renderWithWidget();
+    return;
+  }
+  thread.hidden = false;
 
   if (asst.messages.length === 0) {
     const block = document.createElement("div");

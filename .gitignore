@@ -26,6 +26,11 @@ server/fonts/
 # xc-ui-flow 聊天框复刻 spike：含参考项目 worktree 与构建产物，整目录不入库
 dev-examples/xc-chat-spike/
 
+# 聊天框预构建产物与参考项目 worktree（由 vendor/xc-chat/build.mjs 生成）
+server/chat-widget/
+vendor/xc-chat/fork/
+vendor/xc-chat/src/chat-subset.css
+
 # 测试缓存
 node_modules/.vite/
 
