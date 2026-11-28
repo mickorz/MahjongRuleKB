@@ -1,15 +1,18 @@
-// Rule Copilot 查询层：跨玩法比较（第三批 3/3）
+// Rule Copilot 查询层：跨玩法比较（第三批 3/3，第四批前修订）
 //
 // 三条硬约束（评审确认）：
-// 1) 基座与变体只能通过 base_rule_ref 配对，绝不按同名 ID / 同名称猜；
+// 1) 基座与变体只通过 base_rule_ref 配对，不按同名 ID / 同名称猜；
 // 2) 比较范围必须显式：ids{side} / keyword / all_changes，空参数不等于全量；
 // 3) 配置比较直接复用 effectiveConfigs()，不重复实现合并逻辑。
 //
-// 以及：差异 / 杭麻 这类对照槽位不参与规则差异判定；争议与阻塞项必须原样带出，
-// 无法确定的情况标 uncertain，不允许当成"相同"。
+// 第四批前修订（评审 P1）：
+// - 新增 include: both | rules | configs（默认 both），三种 scope 都支持；
+// - keyword 改为真正的双侧命中并集：基座命中要把它对应的变体卡也拉进来；
+// - max_rows 统一为「本次返回的条目总预算」（规则 + 配置合计），不再各给 20；
+// - all_changes 在 include 含 configs 时纳入变体侧配置变更。
 import { z } from "zod";
 
-import { changeTypes, ruleTypes } from "../../schemas/rule.ts";
+import { changeTypes } from "../../schemas/rule.ts";
 import { configIdPattern } from "../../schemas/config.ts";
 import { effectiveConfigs } from "./configs.ts";
 import { buildSnapshot, type QueryOptions, type RuleRecord, type RuleSetSnapshot } from "./rules.ts";
@@ -33,11 +36,17 @@ export const compareScopeSchema = z.discriminatedUnion("kind", [
 
 export type CompareScope = z.infer<typeof compareScopeSchema>;
 
+export const compareIncludes = ["both", "rules", "configs"] as const;
+export type CompareInclude = (typeof compareIncludes)[number];
+
 export const compareRulesInputSchema = z
   .object({
     base: z.string(),
     variant: z.string(),
     scope: compareScopeSchema,
+    /** 比较对象：规则 / 配置 / 两者（默认 both） */
+    include: z.enum(compareIncludes).default("both"),
+    /** 本次返回的条目总预算（规则 + 配置合计），不是各自上限 */
     max_rows: z.number().int().min(1).max(40).default(20),
   })
   .strict();
@@ -57,21 +66,16 @@ export interface SlotDiff {
 
 export interface CompareRuleRow {
   kind: CompareRowKind;
-  /** 变体卡 ID（base_only 时缺省） */
   variant_id?: string;
-  /** 基座卡 ID（added 时缺省） */
   base_id?: string;
   variant_name?: string;
   base_name?: string;
-  /** 变体侧声明的 change_type（base_only 时缺省） */
   change_type?: (typeof changeTypes)[number];
-  /** 基座存在但变体没有覆盖时为 true */
   base_only: boolean;
   slot_diff: SlotDiff[];
   variant_status?: string;
   base_status?: string;
   unresolved_refs: string[];
-  /** 无法自动判定的原因（例如 base_rule_ref 指向不存在的基座卡） */
   uncertain_reason?: string;
 }
 
@@ -91,7 +95,12 @@ export interface CompareConfigRow {
 
 export interface CompareOutput {
   scope: CompareScope;
-  matched: number;
+  include: CompareInclude;
+  /** 命中总数（未受预算限制） */
+  matched: { rules: number; configs: number };
+  /** 本次实际返回条数（合计 ≤ max_rows） */
+  returned: { rules: number; configs: number };
+  budget: number;
   truncated: boolean;
   summary: {
     inherited: number;
@@ -175,6 +184,11 @@ function pairByVariantId(base: RuleSetSnapshot, variantRecord: RuleRecord): Pair
   };
 }
 
+const isConfigId = (id: string): boolean => {
+  const rest = id.replace(/^-/, "").replace(/-$/, "");
+  return new RegExp(configIdPattern.source.replace("^", "").replace("$", "")).test(rest);
+};
+
 /* ---------------- 主函数 ---------------- */
 
 export function compareRules(
@@ -185,6 +199,7 @@ export function compareRules(
   if (!parsed.success) return invalidParams(parsed.error);
   const input = parsed.data;
   const root = options.root ?? process.cwd();
+  const include = input.include;
 
   if (input.base === input.variant) {
     return {
@@ -222,82 +237,117 @@ export function compareRules(
   const caveats: string[] = [];
   const pairs: Pair[] = [];
   const configTargets = new Set<string>();
-  let matched = 0;
 
-  const idList = input.scope.kind === "ids" ? input.scope.ids : [];
-  const wantedSide = input.scope.kind === "ids" ? input.scope.side : undefined;
+  const fail = (code: "invalid_params" | "not_found", message: string, hint?: string) => ({
+    ok: false as const,
+    error: { code, message, ...(hint ? { hint } : {}) },
+    context: variant.context,
+  });
+
+  /* ---- 规则配对 ---- */
 
   if (input.scope.kind === "ids") {
-    for (const rawId of idList) {
-      const id = rawId.trim().toUpperCase();
-      const isConfig = new RegExp(configIdPattern.source.replace("^", "").replace("$", "")).test(id);
-
-      if (isConfig) {
-        if (wantedSide === "base" && !id.startsWith("HJ-")) {
-          return badSide("config", wantedSide, id, "HJ-C-*");
+    if (include === "configs") {
+      // 只比配置时，规则 ID 是越界的
+      for (const rawId of input.scope.ids) {
+        const id = rawId.trim().toUpperCase();
+        if (!isConfigId(id)) {
+          return fail("invalid_params", `include=configs 时不能传规则 ID：${id}`, "规则请用 include=both/rules");
         }
-        if (wantedSide === "variant" && !id.startsWith("XS-")) {
-          return badSide("config", wantedSide, id, "XS-C-*");
+      }
+    }
+    for (const rawId of input.scope.ids) {
+      const id = rawId.trim().toUpperCase();
+      const configLike = isConfigId(id);
+
+      if (configLike) {
+        if (include === "rules") {
+          return fail("invalid_params", `include=rules 时不能传配置 ID：${id}`, "配置请用 include=both/configs");
+        }
+        if (input.scope.side === "base" && !id.startsWith("HJ-")) {
+          return fail("invalid_params", `side=base 不接受配置 ID ${id}`, "基座配置形如 HJ-C-*");
+        }
+        if (input.scope.side === "variant" && !id.startsWith("XS-")) {
+          return fail("invalid_params", `side=variant 不接受配置 ID ${id}`, "变体配置形如 XS-C-*");
         }
         const canonical = resolveConfigCanonical(variant, id, root);
-        if (!canonical) {
-          return notFound(id, input.variant, "配置 ID 在两个规则集里都找不到");
-        }
+        if (!canonical) return fail("not_found", `配置 ${id} 在两个规则集里都找不到`, "先用 get_config 确认");
         configTargets.add(canonical);
-        matched += 1;
         continue;
       }
 
-      if (wantedSide === "base") {
-        if (!id.startsWith("HJ-")) return badSide("rule", "base", id, "HJ-R-* / HJ-K-* …");
+      if (include === "configs") {
+        return fail("invalid_params", `include=configs 时不能传规则 ID：${id}`, "规则请用 include=both/rules");
+      }
+
+      if (input.scope.side === "base") {
+        if (!id.startsWith("HJ-")) return fail("invalid_params", `side=base 不接受 ${id}`, "基座规则形如 HJ-R-*");
         const baseRecord = base.rules.get(id);
-        if (!baseRecord) return notFound(id, input.base, "基座里没有这张卡");
+        if (!baseRecord) return fail("not_found", `${input.base} 中不存在 ${id}`, "先用 search_rules 确认 ID");
         const variantIds = variant.variantsByBase.get(id) ?? [];
         if (variantIds.length === 0) {
           pairs.push({ base: baseRecord, kind: "base_only" });
         } else {
           for (const vid of variantIds) {
             const vRecord = variant.rules.get(vid.toUpperCase());
-            if (!vRecord) continue;
-            pairs.push(pairByVariantId(base, vRecord));
+            if (vRecord) pairs.push(pairByVariantId(base, vRecord));
           }
         }
-        matched += 1;
         continue;
       }
 
-      // side = variant
-      if (!id.startsWith("XS-")) return badSide("rule", "variant", id, "XS-R-* / XS-K-* …");
+      if (!id.startsWith("XS-")) return fail("invalid_params", `side=variant 不接受 ${id}`, "变体规则形如 XS-R-*");
       const vRecord = variant.rules.get(id);
-      if (!vRecord) return notFound(id, input.variant, "变体里没有这张卡");
+      if (!vRecord) return fail("not_found", `${input.variant} 中不存在 ${id}`, "先用 search_rules 确认 ID");
       pairs.push(pairByVariantId(base, vRecord));
-      matched += 1;
     }
   } else if (input.scope.kind === "keyword") {
-    const q = input.scope.query.toLowerCase();
-    const variantHits = [...variant.rules.values()].filter(
-      (r) => r.meta.name.toLowerCase().includes(q) || r.body.toLowerCase().includes(q),
-    );
-    for (const vRecord of variantHits) pairs.push(pairByVariantId(base, vRecord));
+    if (include !== "configs") {
+      // 真正的双侧并集：变体命中 ∪ 基座命中（基座命中要把对应变体卡拉进来）
+      const q = input.scope.query.toLowerCase();
+      const variantHitIds = new Set<string>();
+      const baseOnly: RuleRecord[] = [];
 
-    // 关键词命中的基座卡：若变体没有对应卡，标 base_only
-    for (const baseRecord of base.rules.values()) {
-      const hit = baseRecord.meta.name.toLowerCase().includes(q) || baseRecord.body.toLowerCase().includes(q);
-      if (!hit) continue;
-      const variantIds = variant.variantsByBase.get(baseRecord.meta.id.toUpperCase()) ?? [];
-      if (variantIds.length === 0) pairs.push({ base: baseRecord, kind: "base_only" });
+      for (const vRecord of variant.rules.values()) {
+        if (vRecord.meta.name.toLowerCase().includes(q) || vRecord.body.toLowerCase().includes(q)) {
+          variantHitIds.add(vRecord.meta.id);
+        }
+      }
+      for (const baseRecord of base.rules.values()) {
+        const hit = baseRecord.meta.name.toLowerCase().includes(q) || baseRecord.body.toLowerCase().includes(q);
+        if (!hit) continue;
+        const variantIds = variant.variantsByBase.get(baseRecord.meta.id.toUpperCase()) ?? [];
+        if (variantIds.length === 0) {
+          baseOnly.push(baseRecord);
+          continue;
+        }
+        for (const vid of variantIds) variantHitIds.add(vid);
+      }
+
+      for (const vid of [...variantHitIds].sort()) {
+        const vRecord = variant.rules.get(vid.toUpperCase());
+        if (vRecord) pairs.push(pairByVariantId(base, vRecord));
+      }
+      for (const baseRecord of baseOnly) pairs.push({ base: baseRecord, kind: "base_only" });
     }
 
-    // 配置同关键词一起比
-    const configView = effectiveConfigs(variant, root);
-    for (const item of configView.values()) {
-      if (!item.name.toLowerCase().includes(q) && !item.canonical_id.toLowerCase().includes(q)) continue;
-      configTargets.add(item.canonical_id);
+    if (include !== "rules") {
+      const q = input.scope.query.toLowerCase();
+      for (const item of effectiveConfigs(variant, root).values()) {
+        if (!item.name.toLowerCase().includes(q) && !item.canonical_id.toLowerCase().includes(q)) continue;
+        configTargets.add(item.canonical_id);
+      }
     }
-    matched = pairs.length + configTargets.size;
   } else {
-    for (const vRecord of variant.rules.values()) pairs.push(pairByVariantId(base, vRecord));
-    matched = pairs.length;
+    // all_changes：规则取全部变体卡；配置取变体侧有记录的条目
+    if (include !== "configs") {
+      for (const vRecord of variant.rules.values()) pairs.push(pairByVariantId(base, vRecord));
+    }
+    if (include !== "rules") {
+      for (const item of effectiveConfigs(variant, root).values()) {
+        if (item.origin === "variant") configTargets.add(item.canonical_id);
+      }
+    }
   }
 
   /* ---- 规则行 ---- */
@@ -328,15 +378,15 @@ export function compareRules(
 
   rows.sort((a, b) => (a.variant_id ?? a.base_id ?? "").localeCompare(b.variant_id ?? b.base_id ?? ""));
 
-  /* ---- 配置行（复用 effectiveConfigs，不重写合并） ---- */
+  /* ---- 配置行（复用 effectiveConfigs） ---- */
 
   const configView = effectiveConfigs(variant, root);
+  const baseConfigView = include === "rules" ? new Map() : effectiveConfigs(base, root);
   const configRows: CompareConfigRow[] = [];
   for (const canonical of configTargets) {
     const item = configView.get(canonical.toUpperCase());
     if (!item) continue;
-    const baseEntry = effectiveConfigs(base, root).get(canonical.toUpperCase());
-    const baseValue = baseEntry?.value;
+    const baseValue = baseConfigView.get(canonical.toUpperCase())?.value;
     configRows.push({
       canonical_id: item.canonical_id,
       id: item.id,
@@ -353,16 +403,23 @@ export function compareRules(
   }
   configRows.sort((a, b) => a.canonical_id.localeCompare(b.canonical_id));
 
-  /* ---- 规模与提示 ---- */
+  /* ---- 统一预算：规则先占，配置吃剩余 ---- */
 
-  const limit = input.scope.kind === "all_changes" ? Math.min(input.max_rows, 20) : input.max_rows;
-  const truncated = rows.length > limit || configRows.length > limit;
-  const rowsOut = rows.slice(0, limit);
-  const configOut = configRows.slice(0, limit);
+  const budget = input.scope.kind === "all_changes" ? Math.min(input.max_rows, 20) : input.max_rows;
+  const rulesTake = include === "configs" ? 0 : Math.min(rows.length, budget);
+  const configTake = include === "rules" ? 0 : Math.min(configRows.length, Math.max(0, budget - rulesTake));
+  const rowsOut = rows.slice(0, rulesTake);
+  const configOut = configRows.slice(0, configTake);
+
+  const truncated = rulesTake < rows.length || configTake < configRows.length;
   if (truncated) {
     caveats.push(
-      `结果超过上限 ${limit}：规则 ${rows.length} 组、配置 ${configRows.length} 组，请缩小范围（ids / 更具体的关键词）`,
+      `返回受预算限制：本次上限 ${budget} 条（规则 ${rulesTake}/${rows.length}、配置 ${configTake}/${configRows.length}），` +
+        "请缩小范围（ids / 更具体的关键词）或提高 max_rows",
     );
+  }
+  if (include === "both" && rows.length >= budget && configRows.length > 0) {
+    caveats.push(`规则已占满预算，配置未返回；如只看配置可设 include=configs（共 ${configRows.length} 条配置差异）`);
   }
 
   const summary = {
@@ -374,12 +431,12 @@ export function compareRules(
     config_changed: configOut.filter((r) => r.changed).length,
   };
 
-  if (summary.uncertain > 0) caveats.push(`${summary.uncertain} 组无法自动判定（见 uncertain_reason），不要当成一致`);
-  // 未决提示按「全部命中结果」统计：截断不能把风险提示一起裁掉
+  // 风险提示按「全量命中」统计，截断不能把提示一起裁掉
   const unresolvedInRows = new Set([
     ...rows.flatMap((r) => r.unresolved_refs),
     ...configRows.flatMap((r) => r.unresolved_refs),
   ]);
+  if (summary.uncertain > 0) caveats.push(`${summary.uncertain} 组无法自动判定（见 uncertain_reason），不要当成一致`);
   if (unresolvedInRows.size > 0) {
     const blockers = [...unresolvedInRows].filter((id) => {
       const entry = [...variant.unresolved, ...base.unresolved].find((u) => u.id === id);
@@ -407,37 +464,21 @@ export function compareRules(
 
   return {
     ok: true,
-    data: { scope: input.scope, matched, truncated, summary, rows: rowsOut, config_rows: configOut, caveats },
+    data: {
+      scope: input.scope,
+      include,
+      matched: { rules: rows.length, configs: configRows.length },
+      returned: { rules: rowsOut.length, configs: configOut.length },
+      budget,
+      truncated,
+      summary,
+      rows: rowsOut,
+      config_rows: configOut,
+      caveats,
+    },
     context: variant.context,
     citations,
   };
-
-  /* ---- 内部小工具（闭包，避免污染导出） ---- */
-
-  function badSide(kind: "rule" | "config", side: "variant" | "base", id: string, expected: string) {
-    const error = {
-      ok: false as const,
-      error: {
-        code: "invalid_params" as const,
-        message: `side=${side} 不接受 ${kind} ID ${id}`,
-        hint: `${kind === "rule" ? "规则" : "配置"}在 ${side} 侧应形如 ${expected}`,
-      },
-      context: variant.context,
-    };
-    return error;
-  }
-
-  function notFound(id: string, where: string, message: string) {
-    return {
-      ok: false as const,
-      error: {
-        code: "not_found" as const,
-        message: `${where} 中不存在 ${id}：${message}`,
-        hint: "先用 search_rules / get_config 确认 ID",
-      },
-      context: variant.context,
-    };
-  }
 }
 
 /** 配置在两侧的统一身份：变体侧有 base_rule_ref 取基座 ID，否则取自身 */
@@ -452,6 +493,3 @@ function resolveConfigCanonical(
   }
   return undefined;
 }
-
-/** compare 里用到的规则类型白名单（保持与 schemas 同步；仅用于文案提示） */
-export const compareRuleTypes = ruleTypes;

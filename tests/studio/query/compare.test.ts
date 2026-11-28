@@ -19,7 +19,10 @@ const run = (input: unknown) =>
     summary: Record<string, number>;
     truncated: boolean;
     caveats: string[];
-    matched: number;
+    include: string;
+    budget: number;
+    matched: { rules: number; configs: number };
+    returned: { rules: number; configs: number };
   }>(compareRules(input, { root: ROOT }));
 
 afterEach(() => clearSnapshotCache());
@@ -211,7 +214,7 @@ describe("8) 对照槽位不参与差异判定", () => {
 describe("9) keyword 范围", () => {
   it("query=财神 命中规则与配置，并提示未决项", () => {
     const data = run({ base: "hangzhou", variant: "xiaoshan", scope: { kind: "keyword", query: "财神" } });
-    expect(data.matched).toBeGreaterThan(0);
+    expect(data.matched.rules + data.matched.configs).toBeGreaterThan(0);
     expect(data.caveats.join(" ")).toContain("未决项");
     expect(data.caveats.join(" ")).toContain("XS-U-001");
   });
@@ -276,5 +279,152 @@ describe("12) 参数与规则集方向", () => {
     expect(res.ok).toBe(false);
     if (res.ok) return;
     expect(res.error.code).toBe("invalid_params");
+  });
+});
+
+describe("13) include 参数：三种 scope × 三种取值", () => {
+  it("ids(规则) + include=rules → 只有规则行", () => {
+    const data = run({
+      base: "hangzhou",
+      variant: "xiaoshan",
+      scope: { kind: IDS, side: "variant", ids: ["XS-R-ZHUANGJIA-02"] },
+      include: "rules",
+    });
+    expect(data.returned.rules).toBe(1);
+    expect(data.returned.configs).toBe(0);
+    expect(data.config_rows).toHaveLength(0);
+  });
+
+  it("ids(规则) + include=configs → invalid_params", () => {
+    const res = compareRules(
+      {
+        base: "hangzhou",
+        variant: "xiaoshan",
+        scope: { kind: IDS, side: "variant", ids: ["XS-R-ZHUANGJIA-02"] },
+        include: "configs",
+      },
+      { root: ROOT },
+    );
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.error.code).toBe("invalid_params");
+  });
+
+  it("ids(配置) + include=rules → invalid_params", () => {
+    const res = compareRules(
+      {
+        base: "hangzhou",
+        variant: "xiaoshan",
+        scope: { kind: IDS, side: "variant", ids: ["XS-C-QIANGGANGHU"] },
+        include: "rules",
+      },
+      { root: ROOT },
+    );
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.error.code).toBe("invalid_params");
+  });
+
+  it("ids(配置) + include=configs → 只有配置行", () => {
+    const data = run({
+      base: "hangzhou",
+      variant: "xiaoshan",
+      scope: { kind: IDS, side: "variant", ids: ["XS-C-QIANGGANGHU"] },
+      include: "configs",
+    });
+    expect(data.returned.rules).toBe(0);
+    expect(data.returned.configs).toBe(1);
+  });
+
+  it("keyword 财神：both 同时给规则与配置，rules/configs 各自收敛", () => {
+    const both = run({ base: "hangzhou", variant: "xiaoshan", scope: { kind: "keyword", query: "财神" } });
+    expect(both.include).toBe("both");
+    expect(both.matched.rules).toBeGreaterThan(0);
+    expect(both.matched.configs).toBeGreaterThan(0);
+
+    const rulesOnly = run({
+      base: "hangzhou",
+      variant: "xiaoshan",
+      scope: { kind: "keyword", query: "财神" },
+      include: "rules",
+    });
+    expect(rulesOnly.returned.configs).toBe(0);
+    expect(rulesOnly.matched.configs).toBe(0);
+
+    const configsOnly = run({
+      base: "hangzhou",
+      variant: "xiaoshan",
+      scope: { kind: "keyword", query: "财神" },
+      include: "configs",
+    });
+    expect(configsOnly.returned.rules).toBe(0);
+    expect(configsOnly.matched.rules).toBe(0);
+    expect(configsOnly.matched.configs).toBeGreaterThan(0);
+  });
+
+  it("all_changes：both 纳入配置变更，rules 不含配置，configs 不含规则", () => {
+    const both = run({ base: "hangzhou", variant: "xiaoshan", scope: { kind: "all_changes" } });
+    expect(both.matched.rules).toBeGreaterThan(20);
+    expect(both.matched.configs).toBeGreaterThan(0);
+
+    const rulesOnly = run({
+      base: "hangzhou",
+      variant: "xiaoshan",
+      scope: { kind: "all_changes" },
+      include: "rules",
+    });
+    expect(rulesOnly.matched.configs).toBe(0);
+
+    const configsOnly = run({
+      base: "hangzhou",
+      variant: "xiaoshan",
+      scope: { kind: "all_changes" },
+      include: "configs",
+    });
+    expect(configsOnly.matched.rules).toBe(0);
+    expect(configsOnly.matched.configs).toBe(9); // 变体侧有记录的 9 条配置
+    expect(configsOnly.summary.config_changed).toBeGreaterThan(0);
+  });
+});
+
+describe("14) keyword 必须是双侧命中并集", () => {
+  it("杠上开花：基座命中把对应变体卡拉进来（变体正文不含该词）", () => {
+    const data = run({ base: "hangzhou", variant: "xiaoshan", scope: { kind: "keyword", query: "杠上开花" } });
+    const ids = data.rows.map((r) => r.variant_id ?? r.base_id);
+    // 变体卡正文里没有「杠上开花」，但基座 HJ-K-GANGKAI 命中后被 base_rule_ref 拉进来
+    expect(ids).toContain("XS-K-LIANGANG");
+    expect(ids).toContain("XS-K-FANXING");
+    // 基座命中且无变体覆盖 → base_only
+    const baseOnly = data.rows.find((r) => r.kind === "base_only");
+    expect(baseOnly?.base_id).toBe("HJ-K-PIAOGANG");
+  });
+});
+
+describe("15) max_rows 是规则+配置的总预算", () => {
+  it("max_rows=6 时 returned 合计等于 6，且 truncated=true", () => {
+    const data = run({ base: "hangzhou", variant: "xiaoshan", scope: { kind: "all_changes" }, max_rows: 6 });
+    expect(data.budget).toBe(6);
+    expect(data.returned.rules + data.returned.configs).toBe(6);
+    expect(data.truncated).toBe(true);
+    expect(data.caveats.join(" ")).toContain("受预算限制");
+  });
+
+  it("规则占满预算时提示可单独看配置", () => {
+    const data = run({ base: "hangzhou", variant: "xiaoshan", scope: { kind: "all_changes" }, max_rows: 5 });
+    expect(data.returned.configs).toBe(0);
+    expect(data.caveats.join(" ")).toContain("include=configs");
+  });
+
+  it("include=configs 时预算全部给配置", () => {
+    const data = run({
+      base: "hangzhou",
+      variant: "xiaoshan",
+      scope: { kind: "all_changes" },
+      include: "configs",
+      max_rows: 4,
+    });
+    expect(data.returned.configs).toBe(4);
+    expect(data.returned.rules).toBe(0);
+    expect(data.matched.configs).toBe(9);
   });
 });
