@@ -888,6 +888,7 @@ function renderVariants() {
       if (v.key !== currentVariant) {
         // 会话按玩法隔离：切玩法即换会话 ID 并清空当前消息
         asst.messages = [];
+        asst.live = null;
         asst.sessionId = newAssistantSessionId();
         asstSave();
       }
@@ -942,6 +943,8 @@ const CHAT_WIDGET_V = "?v=${chatWidgetVersion}";
 const ASST_KEY = "rs-assistant";
 const asst = {
   messages: [],
+  // 流式进行中的那一轮：{ question, startedAt, tools: [{name, ok, code}] }
+  live: null,
   editMode: false,
   busy: false,
   mode: "floating", // floating | docked
@@ -1177,6 +1180,26 @@ function chatTurnsPayload() {
       });
     }
   });
+  if (asst.live) {
+    const live = asst.live;
+    const items = [
+      { id: "live-user", turnId: "turn-live", type: "userMessage", text: live.question, timestamp: live.startedAt },
+    ];
+    live.tools.forEach((tool, i) => {
+      items.push({
+        id: "live-tool-" + i,
+        turnId: "turn-live",
+        type: "dynamicToolCall",
+        toolCallId: "live-call-" + i,
+        tool: tool.name,
+        status: tool.ok === undefined ? "inProgress" : tool.ok ? "completed" : "failed",
+        arguments: tool.args || {},
+        output: tool.ok === undefined ? undefined : tool.ok ? "ok" : String(tool.code || "error"),
+        timestamp: tool.at || live.startedAt + i,
+      });
+    });
+    turns.push({ id: "turn-live", conversationId: "conv-workbench", status: "inProgress", items });
+  }
   return turns;
 }
 
@@ -1509,51 +1532,124 @@ async function asstApplyProposal(proposal, card) {
   }
 }
 
+/** 逐帧读 SSE：把 data: {...} 块交给 onEvent */
+async function readSse(res, onEvent) {
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  const SEP = String.fromCharCode(10, 10);
+  for (;;) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    let cut = buffer.indexOf(SEP);
+    while (cut >= 0) {
+      const frame = buffer.slice(0, cut);
+      buffer = buffer.slice(cut + SEP.length);
+      const payload = frame.split(String.fromCharCode(10))
+        .filter((line) => line.startsWith("data:"))
+        .map((line) => line.slice(5).trim())
+        .join(String.fromCharCode(10));
+      if (payload) {
+        try {
+          onEvent(JSON.parse(payload));
+        } catch {}
+      }
+      cut = buffer.indexOf(SEP);
+    }
+  }
+}
+
 async function asstAsk(text) {
   const content = text.trim();
   if (!content || asst.busy) return;
   asst.messages.push({ role: "user", content, at: Date.now() });
   asstSave();
-  asstRender();
   asst.busy = true;
   const send = asstEl("asst-send");
   const sendHtml = send.innerHTML;
-  send.disabled = true;
-  send.innerHTML = '<span class="c-spin"></span>';
-  asstEl("asst-input").value = "";
-  asstRender();
   const startedAt = Date.now();
+  // 流式：先把这一轮登记成 inProgress，工具一跑就在时间线上冒出来
+  asst.live = { question: content, startedAt, tools: [] };
+  asstRender();
+  asstEl("asst-input").value = "";
+  const composer = composerHandle();
+  if (composer) composer.clear();
+  if (send) {
+    send.disabled = true;
+    send.innerHTML = '<span class="c-spin"></span>';
+  }
+
   let assistantAt = 0;
   try {
     const ctx = asstContext();
-    const res = await fetch("/api/assistant", {
+    const body = JSON.stringify({ variant: currentVariant, messages: asst.messages, session_id: asstEnsureSession(), ...ctx });
+    const res = await fetch("/api/assistant/stream", {
       method: "POST",
       headers: { "content-type": "application/json", "X-Rule-Studio": "1" },
-      body: JSON.stringify({ variant: currentVariant, messages: asst.messages, session_id: asstEnsureSession(), ...ctx }),
+      body,
     });
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      assistantAt = Date.now();
-      asst.messages.push({ role: "assistant", at: assistantAt, ms: assistantAt - startedAt, content: "（" + (data.message || data.error || res.status) + "）" });
-    } else {
+
+    if (!res.ok || !res.body) {
+      // 流式不可用（例如模型未配置）：退回一次性请求，行为与之前一致
+      const data = await res.json().catch(() => ({}));
       assistantAt = Date.now();
       asst.messages.push({
         role: "assistant",
         at: assistantAt,
         ms: assistantAt - startedAt,
-        content: data.text,
+        content: res.ok && data.text ? data.text : "（" + (data.message || data.error || res.status) + "）",
         ...(Array.isArray(data.claims) ? { claims: data.claims } : {}),
-        ...(typeof data.grounded === "boolean" ? { grounded: data.grounded } : {}),
         ...(Array.isArray(data.tool_calls) ? { tools: data.tool_calls.map((t) => ({ name: t.name, ok: t.ok })) } : {}),
+      });
+      return;
+    }
+
+    let result = null;
+    await readSse(res, (event) => {
+      if (!asst.live) return;
+      if (event.type === "tool_start") {
+        asst.live.tools.push({ name: event.name, args: event.args, at: Date.now() });
+      } else if (event.type === "tool_end") {
+        const slot = [...asst.live.tools].reverse().find((t) => t.name === event.name && t.ok === undefined);
+        if (slot) Object.assign(slot, { ok: event.ok, code: event.code, ms: event.ms, at: Date.now() });
+      } else if (event.type === "result") {
+        result = event;
+      } else if (event.type === "error") {
+        result = { ok: false, message: event.message };
+      }
+      asstRender();
+    });
+
+    assistantAt = Date.now();
+    if (result && result.ok) {
+      asst.messages.push({
+        role: "assistant",
+        at: assistantAt,
+        ms: assistantAt - startedAt,
+        content: result.text,
+        ...(Array.isArray(result.claims) ? { claims: result.claims } : {}),
+        ...(typeof result.grounded === "boolean" ? { grounded: result.grounded } : {}),
+        ...(Array.isArray(result.tool_calls) ? { tools: result.tool_calls.map((t) => ({ name: t.name, ok: t.ok })) } : {}),
+      });
+    } else {
+      asst.messages.push({
+        role: "assistant",
+        at: assistantAt,
+        ms: assistantAt - startedAt,
+        content: "（" + ((result && result.message) || "流式回答中断") + "）",
       });
     }
   } catch (e) {
     asst.messages.push({ role: "assistant", content: "（请求失败：" + e.message + "）" });
   } finally {
+    asst.live = null;
     asst.busy = false;
     asstSave();
-    send.disabled = false;
-    send.innerHTML = sendHtml;
+    if (send) {
+      send.disabled = false;
+      send.innerHTML = sendHtml;
+    }
     asstRender();
   }
 }
@@ -2169,6 +2265,7 @@ el("asst-edit-mode").onclick = () => {
 el("asst-reset").onclick = (ev) => {
   ev.stopPropagation();
   asst.messages = [];
+  asst.live = null;
   asst.sessionId = newAssistantSessionId();
   asstSave();
   asstRender();

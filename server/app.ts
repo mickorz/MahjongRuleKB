@@ -397,6 +397,7 @@ async function handleWrite(req: IncomingMessage, res: ServerResponse, ctx: Write
   if (ctx.url.pathname === "/api/apply") return applyBatch(res, ctx.kbRoot, variant, body);
   if (ctx.url.pathname === "/api/restore") return restoreRevision(res, ctx.kbRoot, variant, body);
   if (ctx.url.pathname === "/api/assistant") return assistantReply(res, variant, body, ctx.kbRoot);
+  if (ctx.url.pathname === "/api/assistant/stream") return assistantStream(res, variant, body, ctx.kbRoot);
   if (ctx.url.pathname === "/api/assistant/edit") return assistantEdit(res, ctx.kbRoot, variant, body);
   return json(res, 404, { error: "not_found" });
 }
@@ -641,6 +642,124 @@ function assistantReply(res: ServerResponse, variant: string, body: Record<strin
     .catch((e: Error) => {
       logAssistant(502, { error: "assistant_failed", message: e.message.slice(0, 200) });
       return json(res, 502, { error: "assistant_failed", message: e.message });
+    });
+}
+
+/**
+ * POST /api/assistant/stream：与 /api/assistant 同一条 Runtime，只是把进度边跑边推。
+ * 事件形如 data: {"type":"tool_start",...}
+
+；结束时一条 {"type":"result",...}。
+ * 模型不可用时还没写响应头，直接返回普通 JSON 503，客户端回退非流式请求。
+ */
+function assistantStream(res: ServerResponse, variant: string, body: Record<string, unknown>, kbRoot: string): void {
+  const turns = Array.isArray(body.messages) ? body.messages : [];
+  const messages = turns
+    .filter((m): m is { role: string; content: string } =>
+      typeof m === "object" && m !== null &&
+      (((m as Record<string, unknown>).role === "user") || ((m as Record<string, unknown>).role === "assistant")) &&
+      typeof (m as Record<string, unknown>).content === "string")
+    .map((m) => ({ role: m.role as "user" | "assistant", content: m.content.slice(0, 4000) }));
+  if (messages.length === 0) return json(res, 400, { error: "no_messages" });
+
+  const title = typeof body.title === "string" ? body.title : undefined;
+  const excerpt = typeof body.excerpt === "string" ? body.excerpt.slice(0, 60000) : undefined;
+  const sessionId = typeof body.session_id === "string" && /^[A-Za-z0-9_-]{1,40}$/.test(body.session_id)
+    ? body.session_id
+    : `AS-${Date.now().toString(36)}`;
+
+  const startedAt = Date.now();
+  const logAssistant = (status: number, extra: Record<string, unknown> = {}): void => {
+    console.log(
+      `[assistant] ${JSON.stringify({
+        ts: new Date().toISOString(),
+        status,
+        variant,
+        session: sessionId,
+        messages: messages.length,
+        ms: Date.now() - startedAt,
+        stream: true,
+        ...extra,
+      })}`,
+    );
+  };
+
+  let client;
+  try {
+    client = createChatClient(resolveChatModel());
+  } catch (e) {
+    if (e instanceof ChatModelUnavailable) {
+      logAssistant(503, { error: "assistant_unavailable" });
+      return json(res, 503, { error: "assistant_unavailable", message: e.message });
+    }
+    throw e;
+  }
+
+  res.writeHead(200, {
+    "content-type": "text/event-stream; charset=utf-8",
+    "cache-control": "no-store",
+    connection: "keep-alive",
+    "x-accel-buffering": "no",
+  });
+  const send = (payload: unknown): void => {
+    res.write(`data: ${JSON.stringify(payload)}
+
+`);
+  };
+  send({ type: "start", session_id: sessionId, model: client.model });
+
+  const question = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+
+  runAssistant(
+    { messages },
+    {
+      client,
+      tools: READ_ONLY_TOOLS,
+      audit: { root: kbRoot, sessionId },
+      context: { ...(title ? { title } : {}), ...(excerpt ? { excerpt } : {}) },
+      onEvent: (event) => send(event),
+      preRetrieval: async () => {
+        const query = keywordOf(question);
+        const hits = searchRules({ variant, query, limit: 8 }, { root: kbRoot });
+        const configs = getConfig({ variant, query, include_base_fallback: true }, { root: kbRoot });
+        return [
+          { tool: "search_rules", result: hits },
+          { tool: "get_config", result: configs },
+        ];
+      },
+    },
+  )
+    .then((result) => {
+      logAssistant(200, {
+        mode: result.mode,
+        rounds: result.rounds,
+        tools: result.toolCalls.map((t) => t.name),
+        tool_failures: result.toolCalls.filter((t) => !t.ok).map((t) => `${t.name}:${t.code}`),
+        grounded: result.grounded,
+        claims: result.claims.length,
+        budget_exceeded: result.budgetExceeded,
+      });
+      send({
+        type: "result",
+        ok: true,
+        variant,
+        session_id: sessionId,
+        model: client.model,
+        text: result.text,
+        claims: result.claims,
+        grounded: result.grounded,
+        mode: result.mode,
+        rounds: result.rounds,
+        tool_calls: result.toolCalls,
+        injected_ids: result.injectedIds.slice(0, 40),
+        budget_exceeded: result.budgetExceeded,
+      });
+      res.end();
+    })
+    .catch((e: Error) => {
+      logAssistant(502, { error: "assistant_failed", message: e.message.slice(0, 200) });
+      send({ type: "error", error: "assistant_failed", message: e.message });
+      res.end();
     });
 }
 

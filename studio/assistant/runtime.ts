@@ -50,6 +50,14 @@ export interface AuditEntry {
   citations: string[];
 }
 
+/** 流式事件：SSE 端点把它们逐条推给界面，界面据此「边跑边出现」 */
+export type RuntimeEvent =
+  | { type: "round"; round: number }
+  | { type: "tool_start"; name: string; args: unknown }
+  | { type: "tool_end"; name: string; ok: boolean; code?: string; ms: number; citations: string[] }
+  | { type: "thinking"; note: string }
+  | { type: "final"; text: string };
+
 export interface RuntimeOptions {
   client: ChatClient;
   /** 默认注册表；测试可注入子集 */
@@ -61,6 +69,8 @@ export interface RuntimeOptions {
   audit?: { root: string; sessionId: string };
   /** 自定义审计回调（测试用） */
   onAudit?: (entry: AuditEntry) => void;
+  /** 进度回调（SSE 流式）；抛错不影响主流程 */
+  onEvent?: (event: RuntimeEvent) => void;
   system?: string;
   /** 文档上下文，拼进 system */
   context?: { title?: string; excerpt?: string };
@@ -163,6 +173,13 @@ export async function runAssistant(
   const maxRounds = options.maxRounds ?? DEFAULT_MAX_ROUNDS;
   const timeoutMs = options.toolTimeoutMs ?? DEFAULT_TOOL_TIMEOUT_MS;
   const audit = auditWriter(options);
+  const emit = (event: RuntimeEvent): void => {
+    try {
+      options.onEvent?.(event);
+    } catch {
+      // 进度推送失败不能打断回答
+    }
+  };
 
   const systemParts = [options.system ?? DEFAULT_SYSTEM];
   if (options.context?.title) systemParts.push(`当前文档：${options.context.title}`);
@@ -225,6 +242,7 @@ export async function runAssistant(
   } else {
     while (rounds < maxRounds) {
       rounds += 1;
+      emit({ type: "round", round: rounds });
       let response: ChatResponse;
       try {
         response = await options.client.chat({
@@ -284,6 +302,7 @@ export async function runAssistant(
         const perTool = (perToolCount.get(name) ?? 0) + 1;
         perToolCount.set(name, perTool);
 
+        emit({ type: "tool_start", name, args });
         const startedAt = Date.now();
         let result: ToolResult<unknown>;
         if (!tool) {
@@ -317,6 +336,7 @@ export async function runAssistant(
         if (result.ok) for (const id of citations) injected.add(id);
 
         toolCalls.push({ name, args, ok: result.ok, ...(result.ok ? {} : { code: result.error.code }), ms });
+        emit({ type: "tool_end", name, ok: result.ok, ...(result.ok ? {} : { code: result.error.code }), ms, citations });
         audit({
           ts: new Date().toISOString(),
           tool: name,
@@ -336,6 +356,7 @@ export async function runAssistant(
       }
 
       if (budgetExceeded) {
+        emit({ type: "thinking", note: "工具预算用尽，改为基于已查到的内容作答" });
         content = await requestFinal("工具调用预算已用尽");
         break;
       }
@@ -345,6 +366,7 @@ export async function runAssistant(
   // 轮数上限也可能导致还没拿到正文：显式收口，避免空回答
   if (content.trim() === "") content = await requestFinal("工具调用轮次已用尽");
 
+  emit({ type: "final", text: content });
   const grounding = groundAnswer(content, injected);
   return {
     text: grounding.text || content,

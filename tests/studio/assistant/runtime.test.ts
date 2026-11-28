@@ -367,3 +367,49 @@ describe("8) 降级检索关键词", () => {
     expect(keywordOf("拖底阈值是多少")).toBe("拖底阈值");
   });
 });
+
+describe("9) 流式进度事件", () => {
+  it("按顺序给出 round → tool_start → tool_end → final", async () => {
+    const events: Array<{ type: string; name?: string; ok?: boolean; text?: string }> = [];
+    const client = scripted([
+      { tool_calls: [{ id: "c1", function: { name: "echo", arguments: json({ q: 1 }) } }] },
+      { content: answerWithClaims(["XS-R-TUODI"]) },
+    ]);
+    const result = await runAssistant(
+      { messages: [{ role: "user", content: "拖底" }] },
+      { client, tools: [echoTool("echo", 2)], onEvent: (event) => events.push(event) },
+    );
+
+    const kinds = events.map((e) => e.type);
+    expect(kinds[0]).toBe("round");
+    expect(kinds).toContain("tool_start");
+    expect(kinds).toContain("tool_end");
+    expect(kinds[kinds.length - 1]).toBe("final");
+
+    const end = events.find((e) => e.type === "tool_end");
+    expect(end?.name).toBe("echo");
+    expect(end?.ok).toBe(true);
+    // final 的文本是 grounding 之前的原文，含结尾的 claims JSON 代码块
+    const finalText = events.find((e) => e.type === "final")?.text ?? "";
+    expect(finalText.startsWith(result.text)).toBe(true);
+    expect(finalText).toContain("claims");
+  });
+
+  it("进度回调抛错不影响回答", async () => {
+    const client = scripted([
+      { tool_calls: [{ id: "c1", function: { name: "echo", arguments: "{}" } }] },
+      { content: answerWithClaims(["XS-R-TUODI"]) },
+    ]);
+    const result = await runAssistant(
+      { messages: [{ role: "user", content: "x" }] },
+      {
+        client,
+        tools: [echoTool("echo", 2)],
+        onEvent: () => {
+          throw new Error("订阅方炸了");
+        },
+      },
+    );
+    expect(result.grounded).toBe(true);
+  });
+});
