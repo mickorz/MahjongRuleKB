@@ -31,6 +31,8 @@ export function baseStyles(): string {
     --d-slow: 1.25s;
     --d-page: .92s;
     --nav-w: 250px;
+    /* 中间栏阅读宽度：正文列的 max-width，改这一个值即可调整整栏宽窄 */
+    --doc-w: 680px;
   }
   * { box-sizing: border-box; }
   /* 入场/交互动画（原站同名关键帧，参数一致） */
@@ -99,10 +101,9 @@ export function baseStyles(): string {
     animation: lfColLeftIn var(--d-base) var(--ease-out) both;
   }
   .pane-main { flex: 1 1 auto; padding: 0; min-width: 0; background: var(--paper); scrollbar-gutter: stable both-edges; }
-  /* 参考站 .c-doc：阅读栏 680px 居中 */
-  /* 参考站实测：.c-titled-text-body 在 2048 视口下 1003px 宽、13px/1.8、圆角 6、左 3px 语义条 */
+  /* 正文列：宽度由 --doc-w 控制（原 1200px 的硬编码会把自定义宽度顶掉） */
   .doc-col {
-    max-width: 1200px; margin: 0 auto; width: 100%; padding: 30px 40px 56px;
+    max-width: var(--doc-w); margin: 0 auto; width: 100%; padding: 30px 40px 56px;
     animation: lfShiftL var(--d-page) var(--ease-out) both, lfFadeOnly var(--d-page) ease both;
   }
   /* 章节内元素首屏逐条落位（原站 .c-doc>* 的 nth-child 错开） */
