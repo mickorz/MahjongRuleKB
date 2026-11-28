@@ -266,6 +266,11 @@ ${fontLink}
 
   .seg-head { display: flex; flex-wrap: wrap; align-items: center; gap: 5px; margin-bottom: 6px; font-family: var(--sans); }
   .seg-body { display: block; }
+  .seg-body .ref-inline, .cc-row .cv .ref-inline {
+    font-family: inherit; color: var(--gold-deep); border-bottom: 1px dotted var(--gold-soft);
+  }
+  .seg-body code.ref-inline { font-family: inherit; background: none; border: none; border-bottom: 1px dotted var(--gold-soft); }
+
   .seg-body code, .cc-row .cv code {
     font-family: var(--mono);
     font-size: .92em; background: var(--paper-2); border: 1px solid var(--line-2);
@@ -659,6 +664,17 @@ function scrollToSection(sectionId) {
 }
 
 /* ---------- 文档渲染 ---------- */
+let refNames = { rules: {}, configs: {} };
+
+/** 取全量 ID→中文名；正文里的 ID 会被换成名字（悬停仍显示 ID） */
+async function loadRefNames(variant) {
+  refNames = { rules: {}, configs: {} };
+  try {
+    const res = await fetch("/api/refs/" + variant);
+    if (res.ok) refNames = await res.json();
+  } catch {}
+}
+
 let revAnchor = null;
 
 /** 原站 RevisionHistoryButton 用的 clock 图标 */
@@ -827,16 +843,46 @@ function refsLabel(refs) {
 }
 
 /** 把反引号包裹的片段渲染成行内代码，其余保持纯文本 */
+function nameOfRef(id) {
+  return refNames.rules[id] || refNames.configs[id] || "";
+}
+
+/** 行内 ID（如 HJ-R-LUNZHUANG）渲染成中文名，悬停显示原 ID */
+function appendTextWithRefs(container, text) {
+  const re = /(?:HJ|XS)-[A-Z0-9]+(?:-[A-Z0-9]+)*/g;
+  let last = 0;
+  for (const m of text.matchAll(re)) {
+    const name = nameOfRef(m[0]);
+    if (!name) continue;
+    if (m.index > last) container.appendChild(document.createTextNode(text.slice(last, m.index)));
+    const span = document.createElement("span");
+    span.className = "ref-inline";
+    span.textContent = name;
+    span.title = m[0];
+    container.appendChild(span);
+    last = m.index + m[0].length;
+  }
+  if (last < text.length) container.appendChild(document.createTextNode(text.slice(last)));
+}
+
 function renderRich(container, text) {
   const parts = String(text).split(/\`([^\`]+)\`/g);
   for (let i = 0; i < parts.length; i += 1) {
     if (!parts[i]) continue;
     if (i % 2 === 1) {
+      // 反引号段（多为规则 ID）：能翻成名字就写名字，翻不到保留 ID
+      const name = nameOfRef(parts[i].trim());
       const code = document.createElement("code");
-      code.textContent = parts[i];
+      if (name) {
+        code.textContent = name;
+        code.title = parts[i];
+        code.className = "ref-inline";
+      } else {
+        code.textContent = parts[i];
+      }
       container.appendChild(code);
     } else {
-      container.appendChild(document.createTextNode(parts[i]));
+      appendTextWithRefs(container, parts[i]);
     }
   }
 }
@@ -857,6 +903,7 @@ async function loadDoc(variant) {
   const doc = await res.json();
   currentDoc = doc;
   currentVariant = variant;
+  await loadRefNames(variant);
   draft.clear();
   el("foot-actions").hidden = true;
   el("diff-preview").hidden = true;
@@ -1013,17 +1060,27 @@ async function loadDoc(variant) {
       }
       if (p) div.appendChild(p);
 
-      // 来源脚注：规则 / 配置 / 原文证据，默认收起
+      // 来源脚注：显示中文名而不是字段 ID；ID 放 title 供追溯
       const refs = seg.references || {};
+      const disp = seg.refs_display || { rules: [], configs: [] };
       const refBits = [];
-      if ((refs.rule_refs || []).length) refBits.push("规则 " + refs.rule_refs.join("、"));
-      if ((refs.config_refs || []).length) refBits.push("配置 " + refs.config_refs.join("、"));
+      const refIds = [];
+      if (disp.rules.length) {
+        refBits.push("依据 " + disp.rules.map((r) => r.name).join("、"));
+        refIds.push(...disp.rules.map((r) => r.id));
+      }
+      if (disp.configs.length) {
+        const fromBase = seg.lineage === "default_inherited" || seg.lineage === "explicit_inherited";
+        refBits.push(fromBase ? "杭州固定值，不可改" : "萧山改写值");
+        refIds.push(...disp.configs.map((c) => c.id));
+      }
       const evidence = refs.source_evidence_refs || [];
       const foot = document.createElement("div");
       foot.className = "seg-foot";
       const summary = document.createElement("span");
       summary.className = "seg-foot-line";
       summary.textContent = refBits.join(" · ") || "无引用";
+      if (refIds.length) summary.title = refIds.join("、");
       foot.appendChild(summary);
       if (evidence.length) {
         const more = document.createElement("div");

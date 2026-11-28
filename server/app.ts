@@ -17,6 +17,7 @@ import { documentSchema } from "../studio/contracts/document.ts";
 import { applyDocumentProposal } from "../studio/transaction/apply.ts";
 import { markReviewed, readReviewFile, reviewSummary } from "../studio/review/store.ts";
 import { listRevisions, revisionDiff, revisionOverridesBackup } from "./revisions.ts";
+import { allRefIds, resolveNames } from "./ref-names.ts";
 
 const variantPattern = /^[a-z][a-z0-9-]*$/;
 
@@ -41,6 +42,7 @@ export type ApiRoute =
   | { kind: "artifact"; variant: string; name: ReadableArtifact }
   | { kind: "segment"; variant: string; segmentId: string }
   | { kind: "reviews"; variant: string }
+  | { kind: "refs"; variant: string }
   | { kind: "revisions"; variant: string }
   | { kind: "revision-diff"; variant: string; revisionId: string }
   | { kind: "fonts-css" }
@@ -83,6 +85,9 @@ export function resolveRoute(pathname: string): ApiRoute {
     return { kind: "artifact", variant, name: name as ReadableArtifact };
   }
 
+  if (parts[1] === "refs" && parts.length === 3 && variantPattern.test(parts[2])) {
+    return { kind: "refs", variant: parts[2] };
+  }
   if (parts[1] === "revisions" && parts.length === 3 && variantPattern.test(parts[2])) {
     return { kind: "revisions", variant: parts[2] };
   }
@@ -148,7 +153,13 @@ export function projectDocument(kbRoot: string, variant: string): { ruleset_id: 
       block_id: b.block_id,
       section_id: b.section_id,
       title: SECTION_TITLES[b.section_id] ?? b.section_id,
-      segments: b.content,
+      segments: b.content.map((seg) => ({
+        ...seg,
+        refs_display: {
+          rules: resolveNames(kbRoot, variant, seg.references?.rule_refs ?? [], "rule"),
+          configs: resolveNames(kbRoot, variant, seg.references?.config_refs ?? [], "config"),
+        },
+      })),
     })),
   };
 }
@@ -213,6 +224,17 @@ export function createWorkbenchServer(options: WorkbenchOptions = {}): Server {
       const localFonts = existsSync(join(fontsDir, "fonts.css"));
       text(res, 200, viewerHtml({ localFonts }), "text/html; charset=utf-8");
       return;
+    }
+    if (route.kind === "refs") {
+      // 全量 ID → 中文名映射，前端用它把正文里的 ID 换成名字（悬停仍可看 ID）
+      const index = { rules: {}, configs: {} } as { rules: Record<string, string>; configs: Record<string, string> };
+      for (const kind of ["rules", "configs"] as const) {
+        for (const id of allRefIds(kbRoot, route.variant, kind)) {
+          const [hit] = resolveNames(kbRoot, route.variant, [id], kind === "rules" ? "rule" : "config");
+          index[kind][id] = hit.name;
+        }
+      }
+      return json(res, 200, index);
     }
     if (route.kind === "revisions") {
       return json(res, 200, { revisions: listRevisions(kbRoot, route.variant) });
