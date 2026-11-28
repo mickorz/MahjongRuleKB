@@ -1104,8 +1104,11 @@ function asstBindResize() {
 }
 
 /** 预构建聊天框（vendor/xc-chat 产出）；未构建时 chatWidget 为 false，走内置渲染 */
+// 加载/渲染失败一次就不再重试，避免每帧都去 import 一个坏产物
+let widgetBroken = false;
+
 function widgetAvailable() {
-  return CHAT_WIDGET === true;
+  return CHAT_WIDGET === true && !widgetBroken;
 }
 
 /**
@@ -1221,6 +1224,8 @@ async function renderWithWidget() {
       window.__xcChat = await import("/chat-widget/chat-lib.js" + CHAT_WIDGET_V);
     } catch (error) {
       console.warn("[chat-widget] 加载失败，回退内置渲染", error);
+      widgetBroken = true;
+      setTimeout(() => asstRender(), 0);
       return false;
     }
   }
@@ -1240,6 +1245,8 @@ async function renderWithWidget() {
     return true;
   } catch (error) {
     console.warn("[chat-widget] 渲染失败，回退内置渲染", error);
+    widgetBroken = true;
+    setTimeout(() => asstRender(), 0);
     return false;
   }
 }
@@ -2155,6 +2162,7 @@ el("asst-edit-mode").onclick = () => {
   asst.editMode = !asst.editMode;
   el("asst-edit-mode").setAttribute("aria-pressed", String(asst.editMode));
   asstEl("asst-input").placeholder = asst.editMode ? "描述要怎么改，例如「把这段写得更简洁」" : "问点什么，回车发送";
+  syncComposer();
   const liveComposer = composerHandle();
   if (liveComposer) liveComposer.focus(); else asstEl("asst-input").focus();
 };

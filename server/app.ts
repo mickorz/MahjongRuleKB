@@ -5,6 +5,7 @@
 // - 写入接口（W3-3 起）要求 Origin 同源 + 自定义头；当前阶段只读，写请求一律 405
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { gzipSync } from "node:zlib";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -267,8 +268,18 @@ export function createWorkbenchServer(options: WorkbenchOptions = {}): Server {
       const file = join(chatWidgetDir, route.name);
       if (!existsSync(file)) return json(res, 404, { error: "chat_widget_not_built" });
       const type = route.name.endsWith(".css") ? "text/css; charset=utf-8" : "text/javascript; charset=utf-8";
-      res.writeHead(200, { "content-type": type, ...NO_STORE });
-      res.end(readFileSync(file));
+      // 产物 URL 带 mtime 版本号（?v=），可以长缓存；同时按 Accept-Encoding 压一遍，
+      // 666KB 未压缩走 chunked 时浏览器侧容易卡住整段加载
+      const body = readFileSync(file);
+      const useGzip = String(req.headers["accept-encoding"] ?? "").includes("gzip");
+      const payload = useGzip ? gzipSync(body) : body;
+      res.writeHead(200, {
+        "content-type": type,
+        "content-length": payload.byteLength,
+        "cache-control": "public, max-age=31536000, immutable",
+        ...(useGzip ? { "content-encoding": "gzip", vary: "accept-encoding" } : {}),
+      });
+      res.end(payload);
       return;
     }
     if (route.kind === "fonts-css") {
