@@ -269,6 +269,7 @@ export function baseStyles(): string {
   .seg[data-lineage="added"] { border-left-color: var(--sage); background: var(--sage-wash); }
   .seg[data-lineage$="inherited"] { border-left-color: oklch(0.70 0.06 250); }
   .seg:hover { border-color: var(--gold-soft); }
+  .badge.warn { background: var(--gold-wash); border-color: var(--gold-soft); color: var(--gold-deep); font-weight: 600; }
   .badge { animation: crSeal .42s var(--ease-out) both;
     display: inline-block; font-family: var(--sans); font-size: 10.5px; line-height: 16px;
     padding: 0 7px; border-radius: 999px; border: 1px solid var(--line);
@@ -1679,7 +1680,10 @@ async function loadDoc(variant) {
       if (isVariantOwn) {
         if (seg.lineage === "modified") badges.push("修改");
         if (seg.lineage === "added") badges.push("新增");
-        if (seg.release_blocker_refs && seg.release_blocker_refs.length) badges.push("待裁决 " + seg.release_blocker_refs.join("、"));
+        if (seg.release_blocker_refs && seg.release_blocker_refs.length) {
+          // 待裁决单独标记，渲染时加 .warn 变体（金色），与新增/修改区分
+          badges.push({ text: "待裁决 " + seg.release_blocker_refs.join("、"), warn: true });
+        }
         if (!seg.editable) badges.push("数值不可改写");
       }
 
@@ -1700,7 +1704,7 @@ async function loadDoc(variant) {
         if (badges.length) {
           const note = document.createElement("span");
           note.className = "cv-note";
-          note.textContent = badges.join(" · ");
+          note.textContent = badges.map((b) => (typeof b === "string" ? b : b.text)).join(" · ");
           row.appendChild(note);
         }
         const cv = document.createElement("span");
@@ -1715,7 +1719,12 @@ async function loadDoc(variant) {
         if (badges.length) {
           const head = document.createElement("div");
           head.className = "seg-head";
-          for (const b of badges) head.appendChild(badge(b));
+          for (const b of badges) {
+            const label = typeof b === "string" ? b : b.text;
+            const node = badge(label);
+            if (typeof b === "object" && b.warn) node.classList.add("warn");
+            head.appendChild(node);
+          }
           div.appendChild(head);
         }
         p = document.createElement("span");
