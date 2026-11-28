@@ -20,6 +20,9 @@ node_modules/
 # 生成的文档产物：由 run-w1/run-w2 重建，不入库
 documents/
 
+# 自托管字体（node dev-examples/fetch-fonts.mjs 抓取，12MB，不入库）
+server/fonts/
+
 # 测试缓存
 node_modules/.vite/
 

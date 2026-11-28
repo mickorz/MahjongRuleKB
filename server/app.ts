@@ -5,7 +5,8 @@
 // - 写入接口（W3-3 起）要求 Origin 同源 + 自定义头；当前阶段只读，写请求一律 405
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
 import { existsSync, readFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { SECTION_TITLES } from "../studio/pipeline/render.ts";
 import { viewerHtml } from "./viewer.ts";
@@ -38,11 +39,22 @@ export type ApiRoute =
   | { kind: "artifact"; variant: string; name: ReadableArtifact }
   | { kind: "segment"; variant: string; segmentId: string }
   | { kind: "reviews"; variant: string }
+  | { kind: "fonts-css" }
+  | { kind: "font-file"; name: string }
   | { kind: "not-found" };
 
 /** 纯函数路由解析：便于单测，不碰文件系统 */
+const fontFilePattern = /^[A-Za-z0-9_-]+\.woff2$/;
+const fontsDir = join(dirname(fileURLToPath(import.meta.url)), "fonts");
+
 export function resolveRoute(pathname: string): ApiRoute {
   if (pathname === "/" || pathname === "/index.html") return { kind: "index" };
+  if (pathname === "/fonts.css") return { kind: "fonts-css" };
+  if (pathname.startsWith("/fonts/")) {
+    const name = pathname.slice("/fonts/".length);
+    // 只接受 Google 的哈希文件名：无斜杠、无点号穿越
+    return fontFilePattern.test(name) ? { kind: "font-file", name } : { kind: "not-found" };
+  }
   const parts = pathname.split("/").filter(Boolean).map(decodeURIComponent);
   if (parts[0] !== "api") return { kind: "not-found" };
 
@@ -187,7 +199,25 @@ export function createWorkbenchServer(options: WorkbenchOptions = {}): Server {
     const route = resolveRoute(url.pathname);
 
     if (route.kind === "index") {
-      text(res, 200, viewerHtml(), "text/html; charset=utf-8");
+      const localFonts = existsSync(join(fontsDir, "fonts.css"));
+      text(res, 200, viewerHtml({ localFonts }), "text/html; charset=utf-8");
+      return;
+    }
+    if (route.kind === "fonts-css") {
+      const file = join(fontsDir, "fonts.css");
+      if (!existsSync(file)) return json(res, 404, { error: "fonts_not_fetched" });
+      text(res, 200, readFileSync(file, "utf8"), "text/css; charset=utf-8");
+      return;
+    }
+    if (route.kind === "font-file") {
+      const file = join(fontsDir, route.name);
+      if (!existsSync(file)) return json(res, 404, { error: "font_not_found" });
+      res.writeHead(200, {
+        "content-type": "font/woff2",
+        "cache-control": "public, max-age=31536000, immutable",
+        "x-content-type-options": "nosniff",
+      });
+      res.end(readFileSync(file));
       return;
     }
     if (route.kind === "not-found") {

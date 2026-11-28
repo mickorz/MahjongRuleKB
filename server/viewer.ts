@@ -1,7 +1,11 @@
 // 工作台前端（无构建，单文件）
 // 结构：外壳不滚，三栏各自滚动；1px 分隔条可拖拽，比例记忆（S1/S2）
 // 视觉：暖纸 + 墨字 + 金点（S1 已换令牌；卡片细化在 S3）
-export function viewerHtml(): string {
+export function viewerHtml(options: { localFonts?: boolean } = {}): string {
+  // 本地有字体就发本地（离线可用），否则回退 Google CDN
+  const fontLink = options.localFonts
+    ? '<link rel="stylesheet" href="/fonts.css" />'
+    : '<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&display=swap" />';
   return `<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -9,9 +13,7 @@ export function viewerHtml(): string {
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta http-equiv="cache-control" content="no-store" />
 <title>策划工作台</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&display=swap" />
+${fontLink}
 <style>
   :root {
     color-scheme: light;
@@ -113,6 +115,10 @@ export function viewerHtml(): string {
     font: 600 11px/1.4 var(--latin); letter-spacing: .08em; text-transform: uppercase;
     color: var(--ink-3); margin: 4px 0 12px;
   }
+  .doc-titlerow { display: flex; align-items: flex-start; gap: 16px; }
+  .doc-titlerow h1 { flex: 1 1 auto; min-width: 0; }
+  .doc-titlerow .cr-history-trigger { margin-top: 8px; }
+
   /* 文档大标题（原站 .cr-vol-nm：34px / 600 / 1.1） */
   h1 { font-family: var(--serif); font-size: 34px; font-weight: 600; line-height: 1.1; margin: 3px 0 18px; color: var(--ink); }
   /* 章节标题（衬线小节 + 2px 金线，参考 .cr-vol-paneh） */
@@ -529,7 +535,7 @@ let revAnchor = null;
 
 /** 原站 RevisionHistoryButton 用的 clock 图标 */
 function clockIcon() {
-  return '<svg width="12" height="12" viewBox="0 0 16 16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6"></circle><path d="M8 4.6V8l2.4 1.6"></path></svg>';
+  return '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 7v5l3 2"></path></svg>';
 }
 
 function closeRevpop() {
@@ -545,27 +551,28 @@ function refsLabel(refs) {
   return "规则 " + refs.slice(0, 3).join("、") + (refs.length > 3 ? " 等" : "");
 }
 
-function openRevpop(anchor, seg) {
+function openDocRevisions(anchor, doc) {
   const pop = el("revpop");
-  const entry = draft.get(seg.segment_id);
-  el("rv-before").textContent = seg.text;
-  el("rv-after").textContent = entry ? entry.text : "（尚未修改：在卡片里直接改字）";
-  const topic = (seg.text.split(/[：:；。]/)[0] || "本段").trim().slice(0, 14);
-  el("rv-title").textContent = "修订记录 · " + topic;
-  el("rv-ad").textContent = seg.references.config_refs.length > 0 ? "配" : "规";
-  const diffLabel = { candidate: "待确认", confirmed: "已确认", not_applicable: "不适用" }[seg.diff_status] || seg.diff_status;
-  const locked = !seg.editable;
-  const why = entry
-    ? "人工改写草稿，尚未应用。依据：" + (refsLabel(seg.references.rule_refs) || "本段引用")
-    : locked
-      ? "本段" + (seg.lineage.endsWith("inherited") ? "由基座继承，基座不可人工改写" : "含数值或公式，禁止手改")
-        + "。依据：" + (refsLabel(seg.references.rule_refs) || "本段引用")
-      : "尚无改动，当前显示文档原文。本段依据：" + (refsLabel(seg.references.rule_refs) || "本段引用");
-  el("rv-why").textContent = why;
-  el("rv-restore").disabled = !entry;
-  el("rv-restore").textContent = entry ? "恢复此版本" : (locked ? "本段只读" : "无改动可恢复");
+  const segs = doc.blocks.reduce((n, b) => n + b.segments.length, 0);
+  el("rv-ad").textContent = "文";
+  el("rv-title").textContent = "修订记录 · " + nameOf(doc.ruleset_id);
+  el("rv-before").textContent = "当前文档 v" + doc.document_version + "（" + doc.blocks.length + " 章 / " + segs + " 段）";
+  if (draft.size === 0) {
+    el("rv-after").textContent = "无改动：草稿为空，正文即为已应用版本";
+  } else {
+    const ids = [...draft.keys()];
+    el("rv-after").textContent =
+      "草稿 " + draft.size + " 处改动：" + ids.slice(0, 3).join("、") + (ids.length > 3 ? " 等" : "");
+  }
+  el("rv-why").textContent = draft.size === 0
+    ? "修订记录按事务保存：点「应用」后写入 editorial-overrides.yaml 并生成新版本。"
+    : "草稿存在浏览器会话里，点「应用」前不写盘；应用后进入 editorial-overrides.yaml，可回滚。";
 
-  pop.dataset.segId = seg.segment_id;
+  const restore = el("rv-restore");
+  restore.textContent = draft.size === 0 ? "无改动可恢复" : "清空全部草稿";
+  restore.disabled = draft.size === 0;
+  restore.dataset.mode = "all";
+
   placeRevpop(anchor);
   pop.hidden = false;
   anchor.setAttribute("aria-expanded", "true");
@@ -575,21 +582,25 @@ function openRevpop(anchor, seg) {
 /** 定位：优先卡片右侧空白，右侧放不下翻到左侧；垂直对齐卡片顶部并留边 */
 function placeRevpop(anchor) {
   const pop = el("revpop");
-  const card = anchor.closest(".seg") || anchor;
-  const cardRect = card.getBoundingClientRect();
-  const w = 348, gap = 12, margin = 16;
+  const r = anchor.getBoundingClientRect();
+  const w = 348, margin = 16;
   const popH = pop.offsetHeight || 260;
   const vw = window.innerWidth, vh = window.innerHeight;
 
-  let left = cardRect.right + gap;
-  if (left + w > vw - margin) left = cardRect.left - gap - w;
-  if (left < margin) left = Math.max(margin, Math.min(cardRect.left, vw - w - margin));
-  const top = Math.min(Math.max(margin, cardRect.top), vh - popH - margin);
+  // 参考 .c-revpop：贴在触发按钮下方，左移一点让箭头落在按钮附近
+  let left = r.left - 40;
+  if (left + w > vw - margin) left = vw - w - margin;
+  if (left < margin) left = margin;
+  let top = r.bottom + 6;
+  if (top + popH > vh - margin) top = Math.max(margin, r.top - popH - 6);
 
   pop.style.left = Math.round(left) + "px";
   pop.style.top = Math.round(top) + "px";
-  el("rv-arrow").style.top = Math.round(Math.min(popH - 24, Math.max(14, cardRect.top + 22 - top))) + "px";
+  const arrow = el("rv-arrow");
+  arrow.style.left = Math.round(Math.min(w - 24, Math.max(14, r.left + r.width / 2 - left))) + "px";
+  arrow.style.top = "-7px";
 }
+
 
 
 /** 把反引号包裹的片段渲染成行内代码，其余保持纯文本 */
@@ -632,9 +643,24 @@ async function loadDoc(variant) {
 
   const body = el("doc-body");
   body.innerHTML = "";
+  const titleRow = document.createElement("div");
+  titleRow.className = "doc-titlerow";
   const h1 = document.createElement("h1");
   h1.textContent = nameOf(doc.ruleset_id) + "需求文档";
-  body.appendChild(h1);
+  titleRow.appendChild(h1);
+  // 整页唯一一个「修订记录」按钮（原站 RevisionHistoryButton，包在 DetailTools 里）
+  const historyBtn = document.createElement("button");
+  historyBtn.type = "button";
+  historyBtn.className = "c-content-action utility cr-history-trigger";
+  historyBtn.setAttribute("aria-expanded", "false");
+  historyBtn.innerHTML = clockIcon() + "修订记录";
+  historyBtn.onclick = (ev) => {
+    ev.stopPropagation();
+    if (!el("revpop").hidden && revAnchor === historyBtn) { closeRevpop(); return; }
+    openDocRevisions(historyBtn, doc);
+  };
+  titleRow.appendChild(historyBtn);
+  body.appendChild(titleRow);
 
   const toc = el("toc");
   toc.innerHTML = "";
@@ -760,28 +786,6 @@ async function loadDoc(variant) {
         };
       }
       if (p) div.appendChild(p);
-
-      // 「修订记录」每张规则卡都有（原站每个字段都有），只读卡点开说明为什么不能改
-      if (!isConfig) {
-        let head = div.querySelector(".seg-head");
-        if (!head) {
-          head = document.createElement("div");
-          head.className = "seg-head";
-          div.insertBefore(head, div.firstChild);
-        }
-        const revBtn = document.createElement("button");
-        revBtn.type = "button";
-        revBtn.className = "c-content-action cr-history-trigger";
-        revBtn.setAttribute("aria-expanded", "false");
-        revBtn.innerHTML = clockIcon() + "修订记录";
-        revBtn.onclick = (ev) => {
-          ev.stopPropagation();
-          if (!el("revpop").hidden && revAnchor === revBtn) { closeRevpop(); return; }
-          openRevpop(revBtn, seg);
-        };
-        head.appendChild(revBtn);
-        div.dataset.segId = seg.segment_id;
-      }
 
       // 来源脚注：规则 / 配置 / 原文证据，默认收起
       const refs = seg.references || {};
@@ -1006,18 +1010,9 @@ window.addEventListener("resize", replaceRevpop);
 document.getElementById("pane-main").addEventListener("scroll", replaceRevpop, { passive: true });
 el("rv-close").onclick = closeRevpop;
 el("rv-restore").onclick = () => {
-  const id = el("revpop").dataset.segId;
-  if (!id || !draft.has(id)) { closeRevpop(); return; }
-  const card = document.querySelector('.seg[data-seg-id="' + id + '"] .editable');
-  draft.delete(id);
-  if (card) {
-    const seg = currentSegById(id);
-    if (seg) { card.innerHTML = ""; renderRich(card, seg.text); }
-  }
-  el("foot-count").textContent = draft.size + " 处改动";
-  if (draft.size === 0) el("foot-actions").hidden = true;
-  el("diff-preview").hidden = true;
-  updateStatus();
+  // 页面级：清空全部草稿并重载文档（草稿只存在于会话内存）
+  if (draft.size === 0) { closeRevpop(); return; }
+  clearDraft();
   closeRevpop();
 };
 
