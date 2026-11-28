@@ -20,6 +20,7 @@ ${fontLink}
     /* 暖纸 + 墨字 + 金点（取自参考站 design-tokens） */
     --paper: #FEFCF8;
     --paper-2: #F8F4EB;
+    --paper-3: #F1E9DA;
     --card: #FFFFFF;
     --ink: #221D16;
     --ink-2: #5E5447;
@@ -39,9 +40,30 @@ ${fontLink}
     --latin: "Newsreader", Georgia, serif;
     --mono: ui-monospace, "SF Mono", monospace;
     --ease: cubic-bezier(.2,.7,.2,1);
+    --ease-out: cubic-bezier(.16,1,.3,1);
+    --d-base: .5s;
+    --d-slow: 1.25s;
+    --d-page: .92s;
     --nav-w: 250px;
   }
   * { box-sizing: border-box; }
+  /* 入场/交互动画（原站同名关键帧，参数一致） */
+  @keyframes crRiseSm { 0% { opacity: 0; transform: translateY(14px) scale(.985); } 100% { opacity: 1; transform: none; } }
+  @keyframes crRise { 0% { opacity: 0; transform: translateY(28px); } 100% { opacity: 1; transform: none; } }
+  @keyframes crFade { 0% { opacity: 0; } 100% { opacity: 1; } }
+  @keyframes crslidein { from { transform: translateX(40px); opacity: .4; } to { transform: none; opacity: 1; } }
+  @keyframes crInlineDiffEnter { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes crSeal { 0% { opacity: 0; transform: scale(.35) rotate(-14deg); } 60% { opacity: 1; } 100% { opacity: 1; transform: none; } }
+  @keyframes lfShiftL { from { transform: translateY(40px); } to { transform: none; } }
+  @keyframes lfFadeOnly { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes lfTextSettle { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+  @keyframes lfColLeftIn { from { opacity: 0; transform: translateX(-24px); } to { opacity: 1; transform: none; } }
+  @keyframes lfScrimIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes ctoast { from { opacity: 0; transform: translate(-50%, 8px); } }
+  @keyframes cshim { to { background-position: -200% 0; } }
+  @keyframes cblink { 0%, 100% { opacity: .3; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.1); } }
+  @keyframes cspin { to { transform: rotate(360deg); } }
+  @keyframes rgPop { from { transform: translateY(26px) scale(.96); } to { transform: none; } }
   html, body { height: 100%; margin: 0; overflow: hidden; }
   body {
     font: 13px/1.6 var(--sans);
@@ -64,16 +86,17 @@ ${fontLink}
   .brand { font-weight: 600; font-size: 13px; letter-spacing: .02em; white-space: nowrap; }
 
   .head-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-  /* 玩法 tab：参考站 .c-tabs{display:flex;gap:4px} / .c-tab{13px;padding:7px 14px;radius:5px}
-     active 为墨色实底 + 纸色字（.c-tab.on{background:var(--ink);color:var(--paper)}） */
-  .vseg { display: flex; gap: 4px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
-  .vseg button {
-    flex: 1 1 0; border: none; background: none; cursor: pointer; font: inherit;
-    font-size: 13px; padding: 7px 0; border-radius: 5px; color: var(--ink-2); text-align: center;
-    transition: background .18s var(--ease), color .18s var(--ease);
+  /* 玩法 tab：原站 .cr-phasebar + .pbi（胶囊，选中金底白字，未选描边） */
+  .cr-phasebar { display: flex; gap: 6px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+  .cr-phasebar .pbi {
+    font-size: 11.5px; color: var(--ink-3); background: var(--card);
+    border: 1px solid var(--line); border-radius: 999px; padding: 4px 11px;
+    cursor: pointer; font-family: inherit; line-height: 1.4;
+    transition: background .18s var(--ease), color .18s var(--ease), border-color .18s var(--ease);
   }
-  .vseg button:hover:not(.on) { background: var(--paper-2); color: var(--ink); }
-  .vseg button.on { background: var(--ink); color: var(--paper); font-weight: 500; }
+  .cr-phasebar .pbi:hover:not(.on) { color: var(--ink); border-color: var(--gold-soft); }
+  .cr-phasebar .pbi.done { background: var(--gold-wash); color: var(--gold-deep); border-color: var(--gold-soft); }
+  .cr-phasebar .pbi.on { background: var(--gold-deep); color: #fff; border-color: var(--gold-deep); font-weight: 600; }
   .doc-name { font-size: 12px; color: var(--ink-2); white-space: nowrap; }
   .doc-ver {
     font-size: 11px; color: var(--ink-3); font-variant-numeric: tabular-nums;
@@ -81,11 +104,28 @@ ${fontLink}
   }
 
   .app-body { flex: 1 1 auto; display: flex; min-height: 0; }
-  .pane-nav { flex: 0 0 var(--nav-w); padding: 14px 12px; background: var(--paper-2); border-right: 1px solid var(--line); }
+  .pane-nav {
+    flex: 0 0 var(--nav-w); padding: 14px 12px; background: var(--paper-2);
+    border-right: 1px solid var(--line);
+    animation: lfColLeftIn var(--d-base) var(--ease-out) both;
+  }
   .pane-main { flex: 1 1 auto; padding: 0; min-width: 0; background: var(--paper); scrollbar-gutter: stable both-edges; }
   /* 参考站 .c-doc：阅读栏 680px 居中 */
   /* 参考站实测：.c-titled-text-body 在 2048 视口下 1003px 宽、13px/1.8、圆角 6、左 3px 语义条 */
-  .doc-col { max-width: 1200px; margin: 0 auto; width: 100%; padding: 30px 40px 56px; }
+  .doc-col {
+    max-width: 1200px; margin: 0 auto; width: 100%; padding: 30px 40px 56px;
+    animation: lfShiftL var(--d-page) var(--ease-out) both, lfFadeOnly var(--d-page) ease both;
+  }
+  /* 章节内元素首屏逐条落位（原站 .c-doc>* 的 nth-child 错开） */
+  .chapter > * { animation: lfTextSettle var(--d-page) var(--ease-out) both, lfFadeOnly var(--d-page) ease both; }
+  .chapter > *:nth-child(1) { animation-delay: .04s; }
+  .chapter > *:nth-child(2) { animation-delay: .09s; }
+  .chapter > *:nth-child(3) { animation-delay: .14s; }
+  .chapter > *:nth-child(4) { animation-delay: .19s; }
+  .chapter > *:nth-child(5) { animation-delay: .24s; }
+  .chapter > *:nth-child(6) { animation-delay: .29s; }
+  .chapter > *:nth-child(7) { animation-delay: .33s; }
+  .chapter > *:nth-child(n+8) { animation-delay: .37s; }
 
   /* 分隔条：1px 视觉 + 8px 命中区 */
   .splitter { position: relative; flex: 0 0 1px; background: var(--line); cursor: col-resize; touch-action: none; }
@@ -115,6 +155,16 @@ ${fontLink}
     font: 600 11px/1.4 var(--latin); letter-spacing: .08em; text-transform: uppercase;
     color: var(--ink-3); margin: 4px 0 12px;
   }
+  /* 章节容器：切章时逐条升起（原站 .cr-dp>*） */
+  .chapter { display: block; }
+  .chapter.enter > * { animation: crRiseSm var(--d-page) var(--ease-out) both; }
+  .chapter.enter > *:nth-child(1) { animation-delay: 0s; }
+  .chapter.enter > *:nth-child(2) { animation-delay: .04s; }
+  .chapter.enter > *:nth-child(3) { animation-delay: .08s; }
+  .chapter.enter > *:nth-child(4) { animation-delay: .12s; }
+  .chapter.enter > *:nth-child(5) { animation-delay: .16s; }
+  .chapter.enter > *:nth-child(n+6) { animation-delay: .20s; }
+
   .doc-titlerow { display: flex; align-items: flex-start; gap: 16px; }
   .doc-titlerow h1 { flex: 1 1 auto; min-width: 0; }
   .doc-titlerow .cr-history-trigger { margin-top: 8px; }
@@ -141,6 +191,14 @@ ${fontLink}
     opacity: .5; cursor: pointer;
     transition: opacity .2s var(--ease), border-color .2s var(--ease), box-shadow .2s var(--ease);
   }
+  /* 左栏列表逐条升起（原站 .cr-itemlist>* + nth-child 错开） */
+  .toc > * { animation: crRiseSm .72s var(--ease-out) both; }
+  .toc > *:nth-child(1) { animation-delay: .20s; }
+  .toc > *:nth-child(2) { animation-delay: .28s; }
+  .toc > *:nth-child(3) { animation-delay: .36s; }
+  .toc > *:nth-child(4) { animation-delay: .44s; }
+  .toc > *:nth-child(5) { animation-delay: .52s; }
+  .toc > *:nth-child(n+6) { animation-delay: .60s; }
   .toc-row:hover { opacity: 1; border-color: var(--gold-soft); }
   .toc-row.reviewed { opacity: 1; }
   .toc-row.on {
@@ -226,7 +284,7 @@ ${fontLink}
   .seg[data-lineage="added"] { border-left-color: var(--sage); background: var(--sage-wash); }
   .seg[data-lineage$="inherited"] { border-left-color: oklch(0.70 0.06 250); }
   .seg:hover { border-color: var(--gold-soft); }
-  .badge {
+  .badge { animation: crSeal .42s var(--ease-out) both;
     display: inline-block; font-family: var(--sans); font-size: 10.5px; line-height: 16px;
     padding: 0 7px; border-radius: 999px; border: 1px solid var(--line);
     color: var(--ink-2); background: var(--paper-2); margin-right: 5px; vertical-align: 1px;
@@ -294,12 +352,14 @@ ${fontLink}
 
   /* 修订记录抽屉（原站 .cr-drawer / .cr-revision-*） */
   .cr-drawer-mask {
-    position: fixed; inset: 0; z-index: 90000; background: rgba(34,29,22,.18);
+    position: fixed; inset: 0;
+    animation: lfScrimIn .3s ease both; backdrop-filter: blur(3px); z-index: 90000; background: rgba(34,29,22,.18);
     display: flex; justify-content: flex-end;
   }
   .cr-drawer-mask[hidden] { display: none; }
   .cr-drawer {
     width: 680px; max-width: 96vw; height: 100%; background: var(--paper);
+    animation: crslidein .26s var(--ease) both;
     border-left: 1px solid var(--line); box-shadow: -30px 0 80px -30px var(--shadow);
     display: flex; flex-direction: column;
   }
@@ -353,7 +413,7 @@ ${fontLink}
   }
   .cr-revision-progress b { color: var(--ink); font-weight: 600; }
   .cr-revision-diff { flex: 1; overflow-y: auto; padding: 14px 15px 24px; display: flex; flex-direction: column; gap: 10px; }
-  .cr-rdiff-row { display: flex; flex-direction: column; gap: 6px; }
+  .cr-rdiff-row { display: flex; flex-direction: column; gap: 6px; animation: crInlineDiffEnter .24s ease-out both; }
   .cr-rdiff-row > h4 {
     margin: 0; font: 600 11px/1.4 var(--sans); letter-spacing: .04em; color: var(--ink-3);
   }
@@ -368,6 +428,27 @@ ${fontLink}
     font-family: var(--serif); font-size: 12.5px; line-height: 1.7;
   }
   .cr-revision-empty { padding: 24px 4px; text-align: center; color: var(--ink-3); font-size: 12.5px; }
+  /* 骨架条 shimmer（原站 .cr-vol-skel i） */
+  .skel-lines { display: flex; flex-direction: column; gap: 8px; padding: 16px 4px; }
+  .skel-lines i {
+    height: 13px; border-radius: 4px;
+    background: linear-gradient(90deg, var(--paper-2) 30%, var(--paper-3) 50%, var(--paper-2) 70%);
+    background-size: 200% 100%; animation: cshim 1.4s linear infinite;
+  }
+  .c-spin {
+    width: 16px; height: 16px; border-radius: 50%; border: 2.5px solid var(--gold-soft);
+    border-top-color: var(--gold-deep); animation: cspin .8s linear infinite; flex: none;
+  }
+  .dot.writing { animation: cblink 1.6s ease-in-out infinite; }
+  /* 提示条（原站 .c-toast） */
+  .c-toast {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    max-width: calc(100% - 32px); overflow-wrap: anywhere; text-align: center; z-index: 100001;
+    background: var(--ink); color: var(--paper); font-size: 13.5px; font-weight: 500;
+    padding: 11px 20px; border-radius: 999px; box-shadow: 0 12px 34px -10px var(--shadow);
+    animation: ctoast .25s var(--ease);
+  }
+  .c-toast[hidden] { display: none; }
   .c-btn.sm { min-height: 26px; padding: 3px 10px; font-size: 11.5px; }
   .c-btn.gold { border-color: var(--gold-deep); background: var(--gold-deep); color: #fff; }
 
@@ -389,7 +470,7 @@ ${fontLink}
   <div class="app-body">
     <nav class="pane pane-nav" id="pane-nav" aria-label="文档导航">
       <div class="group-label">玩法</div>
-      <div class="vseg" id="variants" role="tablist" aria-label="玩法"></div>
+      <div class="cr-phasebar" id="variants" role="tablist" aria-label="玩法"></div>
       <div class="group-label" style="margin-top:16px">检查摘要</div>
       <div id="checks"></div>
       <details class="findings-box" id="findings-box">
@@ -426,6 +507,7 @@ ${fontLink}
   </footer>
 </div>
 
+<div class="c-toast" id="toast" hidden role="status"></div>
 <div class="cr-drawer-mask" id="rev-drawer" hidden>
   <aside class="cr-drawer cr-revision-drawer" role="dialog" aria-modal="true" aria-label="修订记录">
     <div class="cr-drawer-head">
@@ -533,10 +615,11 @@ function renderVariants() {
   box.innerHTML = "";
   for (const v of VARIANTS) {
     const b = document.createElement("button");
+    b.type = "button";
     b.textContent = v.label;
+    b.className = "pbi" + (v.key === currentVariant ? " on" : "");
     b.setAttribute("role", "tab");
     b.setAttribute("aria-selected", String(v.key === currentVariant));
-    if (v.key === currentVariant) b.className = "on";
     b.onclick = () => { currentVariant = v.key; renderVariants(); applyLayout(v.key); loadDoc(v.key); };
     box.appendChild(b);
   }
@@ -566,6 +649,12 @@ function scrollToSection(sectionId) {
   if (!h2) return;
   const pad = 8;
   main.scrollTop += h2.getBoundingClientRect().top - main.getBoundingClientRect().top - pad;
+  const chap = h2.closest(".chapter");
+  if (chap) {
+    chap.classList.remove("enter");
+    void chap.offsetWidth; // 强制重排，保证动画能重放
+    chap.classList.add("enter");
+  }
   markCurrentStep();
 }
 
@@ -575,6 +664,20 @@ let revAnchor = null;
 /** 原站 RevisionHistoryButton 用的 clock 图标 */
 function clockIcon() {
   return '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z M12 7v5l3 2"></path></svg>';
+}
+
+let toastTimer = null;
+/** 原站 .c-toast：底部胶囊提示，2.4s 自动消失 */
+function toast(text) {
+  const box = el("toast");
+  box.textContent = text;
+  box.hidden = false;
+  // 重放动画
+  box.style.animation = "none";
+  void box.offsetWidth;
+  box.style.animation = "";
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { box.hidden = true; }, 2400);
 }
 
 function closeRevpop() {
@@ -605,7 +708,7 @@ async function openDocRevisions(anchor, doc) {
   anchor.setAttribute("aria-expanded", "true");
   revAnchor = anchor;
 
-  el("rev-list").innerHTML = '<div class="cr-revision-empty">读取版本…</div>';
+  el("rev-list").innerHTML = '<div class="skel-lines"><i></i><i></i><i></i></div>';
   const res = await fetch("/api/revisions/" + currentVariant);
   if (!res.ok) {
     el("rev-list").innerHTML = '<div class="cr-revision-empty">读取版本失败</div>';
@@ -662,7 +765,7 @@ async function selectRevision(id) {
   el("rev-original").disabled = rev.id === "current";
 
   const diff = el("rev-diff");
-  diff.innerHTML = '<div class="cr-revision-empty">读取差异…</div>';
+  diff.innerHTML = '<div class="skel-lines"><i></i><i></i><i></i><i></i></div>';
   const res = await fetch("/api/revisions/" + currentVariant + "/" + encodeURIComponent(id));
   if (!res.ok) {
     diff.innerHTML = '<div class="cr-revision-empty">这一版没有可比较的原文（备份缺失）</div>';
@@ -714,7 +817,7 @@ async function restoreRevision() {
     return;
   }
   closeRevpop();
-  alert("表达层已恢复（事务 " + (body.transaction_id || "") + "）。document.json 是生成产物，需重新生成才会反映。");
+  toast("表达层已恢复（" + (body.transaction_id || "") + "）。document.json 需重新生成才会反映");
   await loadDoc(currentVariant);
 }
 
@@ -789,10 +892,13 @@ async function loadDoc(variant) {
   let cfgGrid = null;
   for (const block of doc.blocks) {
     cfgGrid = null;
+    const chap = document.createElement("section");
+    chap.className = "chapter";
+    chap.dataset.section = block.section_id;
     const h2 = document.createElement("h2");
     h2.textContent = block.title;
     h2.id = "sec-" + block.section_id;
-    body.appendChild(h2);
+    chap.appendChild(h2);
 
     const row = document.createElement("div");
     row.className = "toc-row";
@@ -933,14 +1039,15 @@ async function loadDoc(variant) {
         if (!cfgGrid) {
           cfgGrid = document.createElement("div");
           cfgGrid.className = "cfg-grid";
-          body.appendChild(cfgGrid);
+          chap.appendChild(cfgGrid);
         }
         cfgGrid.appendChild(div);
       } else {
         cfgGrid = null;
-        body.appendChild(div);
+        chap.appendChild(div);
       }
     }
+    body.appendChild(chap);
   }
 
   window.__segCount = segCount;
@@ -1103,6 +1210,7 @@ async function applyChanges() {
     return;
   }
   box.textContent = "未应用：" + (data.rejected || [data.message || data.error]).map((r) => (r.reasons ? r.reasons.join("；") : r)).join(" | ");
+  toast("应用失败，见上方原因");
 }
 
 async function markReviewed(targetType, targetId) {
