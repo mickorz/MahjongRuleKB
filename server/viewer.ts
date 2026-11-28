@@ -201,7 +201,6 @@ ${fontLink}
   .toc > *:nth-child(5) { animation-delay: .52s; }
   .toc > *:nth-child(n+6) { animation-delay: .60s; }
   .toc-row:hover { opacity: 1; border-color: var(--gold-soft); }
-  .toc-row.reviewed { opacity: 1; }
   .toc-row.on {
     opacity: 1; border-color: var(--gold-deep); box-shadow: 0 0 0 2px var(--gold-soft);
   }
@@ -212,9 +211,7 @@ ${fontLink}
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
   .toc-sub { font-size: 11.5px; color: var(--ink-3); font-weight: 400; margin-top: 2px; }
-  .toc-row.reviewed .dot { background: var(--sage); }
   .dot { width: 7px; height: 7px; border-radius: 50%; flex: 0 0 auto; background: var(--line); }
-  .dot.reviewed { background: var(--sage); }
   .dot.current { background: var(--gold); }
   button.link {
     background: none; border: none; color: inherit; cursor: pointer; font: inherit;
@@ -223,12 +220,6 @@ ${fontLink}
   }
   button.link:hover { color: var(--gold-deep); }
   button.link:focus-visible { outline: 2px solid var(--gold-deep); outline-offset: 2px; border-radius: 4px; }
-  .mini-action {
-    font-size: 10.5px; color: var(--ink-3); border: 1px solid var(--line);
-    border-radius: 999px; padding: 1px 7px; white-space: nowrap; opacity: 0;
-    transition: opacity .15s var(--ease);
-  }
-  .toc-row:hover .mini-action, .toc-row:focus-within .mini-action { opacity: 1; }
 
   /* 配置卡：label / value 两列（参考站 .cc-row） */
   /* 配置卡：宽屏两列（参考站 .cr-optgrid 的两栏思路） */
@@ -555,7 +546,6 @@ ${fontLink}
     <span>章节 <b id="st-section">—</b></span>
     <span>段落 <b id="st-segments">—</b></span>
     <span>改动 <b id="st-edits">0</b></span>
-    <span>未审 <b id="st-unreviewed">—</b></span>
     <span>检查 <b id="st-checks">—</b></span>
     <span id="st-version"></span>
     <div class="foot-actions" id="foot-actions" hidden>
@@ -633,7 +623,6 @@ function currentSegById(segmentId) {
   }
   return null;
 }
-let reviewSections = {};
 const draft = new Map();
 
 /* ---------- 左栏拖拽（两栏布局只剩一个分隔条）---------- */
@@ -1036,6 +1025,84 @@ function badge(text) {
   return span;
 }
 
+function updateStatus() {
+  el("st-segments").textContent = window.__segCount === undefined ? "—" : String(window.__segCount);
+  el("st-edits").textContent = String(draft.size);
+}
+
+/* ---------- 编辑草稿 ---------- */
+function markEdited(segmentId, text, before) {
+  draft.set(segmentId, { text, before });
+  el("foot-actions").hidden = false;
+  el("foot-count").textContent = draft.size + " 处改动";
+  el("diff-preview").hidden = true;
+  updateStatus();
+}
+
+function clearDraft() {
+  draft.clear();
+  el("foot-actions").hidden = true;
+  el("diff-preview").hidden = true;
+  loadDoc(currentVariant);
+}
+
+async function previewChanges() {
+  const box = el("diff-preview");
+  box.hidden = false;
+  box.innerHTML = "";
+  for (const [segmentId, d] of draft) {
+    const res = await fetch("/api/proposal", {
+      method: "POST",
+      headers: { "content-type": "application/json", "x-rule-studio": "1" },
+      body: JSON.stringify({
+        variant: currentVariant,
+        mutation: { target: { segment_id: segmentId }, op: "replace-text", text: d.text, source: "richtext", rationale: "工作台段落编辑" },
+      }),
+    });
+    const data = await res.json();
+    const line = document.createElement("div");
+    if (!data.ok) {
+      line.className = "before";
+      line.textContent = segmentId + " 被拒：" + (data.reasons || [data.error]).join("；");
+    } else {
+      const b = document.createElement("div"); b.className = "before"; b.textContent = "改动前：" + (data.before || "");
+      const a = document.createElement("div"); a.className = "after"; a.textContent = "改动后：" + (data.after || "");
+      const meta = document.createElement("div"); meta.className = "muted";
+      meta.textContent = "基线版本 " + data.base_revision.document_version;
+      line.append(b, a, meta);
+    }
+    box.appendChild(line);
+  }
+}
+
+async function applyChanges() {
+  if (draft.size === 0) return;
+  const mutations = [...draft.entries()].map(([segmentId, d]) => ({
+    target: { segment_id: segmentId },
+    op: "replace-text",
+    text: d.text,
+    source: "richtext",
+    rationale: "工作台段落编辑",
+  }));
+  const res = await fetch("/api/apply", {
+    method: "POST",
+    headers: { "content-type": "application/json", "x-rule-studio": "1" },
+    body: JSON.stringify({ variant: currentVariant, mutations }),
+  });
+  const data = await res.json();
+  const box = el("diff-preview");
+  box.hidden = false;
+  if (data.ok) {
+    box.textContent = "已应用 " + data.applied + " 处，版本 " + data.documentVersionBefore + " → " + data.documentVersionAfter;
+    draft.clear();
+    el("foot-actions").hidden = true;
+    await loadDoc(currentVariant);
+    return;
+  }
+  box.textContent = "未应用：" + (data.rejected || [data.message || data.error]).map((r) => (r.reasons ? r.reasons.join("；") : r)).join(" | ");
+  toast("应用失败，见上方原因");
+}
+
 async function loadDoc(variant) {
   const res = await fetch("/api/doc/" + variant);
   if (!res.ok) {
@@ -1107,16 +1174,8 @@ async function loadDoc(variant) {
     sub.textContent = block.segments.length + " 段";
     mid.appendChild(sub);
     row.appendChild(mid);
-    const rv = document.createElement("button");
-    rv.className = "link mini-action";
-    rv.textContent = "标记已审";
-    rv.onclick = (ev) => { ev.stopPropagation(); markReviewed("section", block.section_id); };
     // 整行可点：任一空白处也能跳章
-    row.onclick = (ev) => {
-      if (ev.target.closest(".mini-action")) return;
-      scrollToSection(block.section_id);
-    };
-    row.appendChild(rv);
+    row.onclick = () => scrollToSection(block.section_id);
     toc.appendChild(row);
 
     for (const seg of block.segments) {
@@ -1131,7 +1190,6 @@ async function loadDoc(variant) {
       if (isVariantOwn) {
         if (seg.lineage === "modified") badges.push("修改");
         if (seg.lineage === "added") badges.push("新增");
-        if (seg.diff_status === "candidate") badges.push("差异待确认");
         if (seg.release_blocker_refs && seg.release_blocker_refs.length) badges.push("待裁决 " + seg.release_blocker_refs.join("、"));
         if (!seg.editable) badges.push("数值不可改写");
       }
@@ -1247,7 +1305,6 @@ async function loadDoc(variant) {
 
   window.__segCount = segCount;
   await loadChecks(variant);
-  await loadReviews(variant);
   markCurrentStep();
   updateStatus();
 }
@@ -1314,110 +1371,7 @@ async function loadChecks(variant) {
   el("st-checks").className = status === "failed" ? "danger" : status === "warning" ? "warn" : "";
 }
 
-async function loadReviews(variant) {
-  const res = await fetch("/api/reviews/" + variant);
-  if (!res.ok) { el("st-unreviewed").textContent = "—"; return; }
-  const data = await res.json();
-  reviewSections = data.sections || {};
-  const values = Object.values(reviewSections);
-  const unreviewed = values.filter((s) => s !== "reviewed").length;
-  el("st-unreviewed").textContent = unreviewed + " / " + values.length;
-  // 同步左栏圆点与步骤圆点
-  document.querySelectorAll(".toc-row").forEach((row) => {
-    const dot = row.querySelector(".dot");
-    if (!dot) return;
-    dot.className = "dot" + (reviewSections[row.dataset.section] === "reviewed" ? " reviewed" : "");
-  });
-}
 
-function updateStatus() {
-  el("st-segments").textContent = window.__segCount === undefined ? "—" : String(window.__segCount);
-  el("st-edits").textContent = String(draft.size);
-}
-
-/* ---------- 编辑草稿 ---------- */
-function markEdited(segmentId, text, before) {
-  draft.set(segmentId, { text, before });
-  el("foot-actions").hidden = false;
-  el("foot-count").textContent = draft.size + " 处改动";
-  el("diff-preview").hidden = true;
-  updateStatus();
-}
-
-function clearDraft() {
-  draft.clear();
-  el("foot-actions").hidden = true;
-  el("diff-preview").hidden = true;
-  loadDoc(currentVariant);
-}
-
-async function previewChanges() {
-  const box = el("diff-preview");
-  box.hidden = false;
-  box.innerHTML = "";
-  for (const [segmentId, d] of draft) {
-    const res = await fetch("/api/proposal", {
-      method: "POST",
-      headers: { "content-type": "application/json", "x-rule-studio": "1" },
-      body: JSON.stringify({
-        variant: currentVariant,
-        mutation: { target: { segment_id: segmentId }, op: "replace-text", text: d.text, source: "richtext", rationale: "工作台段落编辑" },
-      }),
-    });
-    const data = await res.json();
-    const line = document.createElement("div");
-    if (!data.ok) {
-      line.className = "before";
-      line.textContent = segmentId + " 被拒：" + (data.reasons || [data.error]).join("；");
-    } else {
-      const b = document.createElement("div"); b.className = "before"; b.textContent = "改动前：" + (data.before || "");
-      const a = document.createElement("div"); a.className = "after"; a.textContent = "改动后：" + (data.after || "");
-      const meta = document.createElement("div"); meta.className = "muted";
-      meta.textContent = "基线版本 " + data.base_revision.document_version;
-      line.append(b, a, meta);
-    }
-    box.appendChild(line);
-  }
-}
-
-async function applyChanges() {
-  if (draft.size === 0) return;
-  const mutations = [...draft.entries()].map(([segmentId, d]) => ({
-    target: { segment_id: segmentId },
-    op: "replace-text",
-    text: d.text,
-    source: "richtext",
-    rationale: "工作台段落编辑",
-  }));
-  const res = await fetch("/api/apply", {
-    method: "POST",
-    headers: { "content-type": "application/json", "x-rule-studio": "1" },
-    body: JSON.stringify({ variant: currentVariant, mutations }),
-  });
-  const data = await res.json();
-  const box = el("diff-preview");
-  box.hidden = false;
-  if (data.ok) {
-    box.textContent = "已应用 " + data.applied + " 处，版本 " + data.documentVersionBefore + " → " + data.documentVersionAfter;
-    draft.clear();
-    el("foot-actions").hidden = true;
-    await loadDoc(currentVariant);
-    return;
-  }
-  box.textContent = "未应用：" + (data.rejected || [data.message || data.error]).map((r) => (r.reasons ? r.reasons.join("；") : r)).join(" | ");
-  toast("应用失败，见上方原因");
-}
-
-async function markReviewed(targetType, targetId) {
-  const res = await fetch("/api/review", {
-    method: "POST",
-    headers: { "content-type": "application/json", "x-rule-studio": "1" },
-    body: JSON.stringify({ variant: currentVariant, target: { type: targetType, id: targetId }, status: "reviewed", reviewer: "策划" }),
-  });
-  const data = await res.json();
-  el("sources").textContent = data.ok ? "已标记审查：" + targetId : "标记失败";
-  await loadReviews(currentVariant);
-}
 
 /* ---------- 启动 ---------- */
 document.addEventListener("click", (e) => {
