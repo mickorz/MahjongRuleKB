@@ -32,7 +32,7 @@ export function baseStyles(): string {
     --d-page: .92s;
     --nav-w: 250px;
     /* 中间栏阅读宽度：正文列的 max-width，改这一个值即可调整整栏宽窄 */
-    --doc-w: 680px;
+    --doc-w: 1200px;
   }
   * { box-sizing: border-box; }
   /* 入场/交互动画（原站同名关键帧，参数一致） */
