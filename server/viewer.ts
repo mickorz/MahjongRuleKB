@@ -1116,8 +1116,12 @@ function asstRender() {
     if (m.role === "assistant" && Array.isArray(m.tools) && m.tools.length) {
       const tools = document.createElement("div");
       tools.className = "asst-tools";
-      const names = [...new Set(m.tools)];
-      tools.textContent = "查了 " + m.tools.length + " 次：" + names.join("、");
+      const okCount = m.tools.filter((t) => t.ok).length;
+      const names = [...new Set(m.tools.filter((t) => t.ok).map((t) => t.name))];
+      const rejected = m.tools.length - okCount;
+      tools.textContent =
+        "查了 " + okCount + " 次" + (names.length ? "：" + names.join("、") : "") +
+        (rejected > 0 ? "（" + rejected + " 次被预算拒绝）" : "");
       art.appendChild(tools);
     }
     // 逐条 claim 校验：全部通过才算有依据
@@ -1335,7 +1339,7 @@ async function asstAsk(text) {
         content: data.text,
         ...(Array.isArray(data.claims) ? { claims: data.claims } : {}),
         ...(typeof data.grounded === "boolean" ? { grounded: data.grounded } : {}),
-        ...(Array.isArray(data.tool_calls) ? { tools: data.tool_calls.map((t) => t.name) } : {}),
+        ...(Array.isArray(data.tool_calls) ? { tools: data.tool_calls.map((t) => ({ name: t.name, ok: t.ok })) } : {}),
       });
     }
   } catch (e) {

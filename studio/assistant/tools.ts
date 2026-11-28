@@ -51,7 +51,7 @@ export const READ_ONLY_TOOLS: ToolSpec[] = [
       },
       ["variant"],
     ),
-    maxCallsPerTool: 2,
+    maxCallsPerTool: 3,
     run: (input, options) => searchRules(input, options) as ToolResult<unknown>,
   },
   {
@@ -59,7 +59,7 @@ export const READ_ONLY_TOOLS: ToolSpec[] = [
     description:
       "读取一张规则卡的完整正文、槽位、依赖、对照信息、证据与引用了它的文档段落。",
     parameters: obj({ variant: str("规则集目录名"), id: str("规则 ID") }, ["variant", "id"]),
-    maxCallsPerTool: 3,
+    maxCallsPerTool: 4,
     run: (input, options) => getRule(input, options) as ToolResult<unknown>,
   },
   {
@@ -75,7 +75,7 @@ export const READ_ONLY_TOOLS: ToolSpec[] = [
       },
       ["variant"],
     ),
-    maxCallsPerTool: 3,
+    maxCallsPerTool: 4,
     run: (input, options) => getConfig(input, options) as ToolResult<unknown>,
   },
   {
@@ -91,7 +91,7 @@ export const READ_ONLY_TOOLS: ToolSpec[] = [
       },
       ["variant"],
     ),
-    maxCallsPerTool: 2,
+    maxCallsPerTool: 3,
     run: (input, options) => listUnresolved(input, options) as ToolResult<unknown>,
   },
   {

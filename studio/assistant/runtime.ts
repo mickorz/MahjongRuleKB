@@ -13,8 +13,8 @@ import { collectIds, groundAnswer, type CheckedClaim } from "./grounding.ts";
 import { findTool, toolDefinitionsForModel, type ToolSpec } from "./tools.ts";
 import type { ToolResult } from "../query/types.ts";
 
-export const DEFAULT_MAX_TOOL_CALLS = 6;
-export const DEFAULT_MAX_ROUNDS = 4;
+export const DEFAULT_MAX_TOOL_CALLS = 8;
+export const DEFAULT_MAX_ROUNDS = 5;
 export const DEFAULT_TOOL_TIMEOUT_MS = 5000;
 
 export interface ChatMessage {
@@ -261,8 +261,10 @@ export async function runAssistant(
             error: {
               code: "tool_budget_exceeded",
               message: `本次请求的工具调用已达上限 ${maxToolCalls} 次，停止继续调用`,
-              hint: "请基于已获得的结果作答，或让用户缩小问题范围",
+              hint: "请基于已获得的结果作答；下面 collected_ids 是本次已检索到的 ID",
             },
+            // 把已收集到的 ID 回给模型，避免它「什么也没拿到」还要再查
+            collected_ids: [...injected].slice(0, 30),
           };
           messages.push({ role: "tool", tool_call_id: call.id, name, content: JSON.stringify(payload) });
           toolCalls.push({ name, args: rawArgs, ok: false, code: "tool_budget_exceeded", ms: 0 });
@@ -289,7 +291,11 @@ export async function runAssistant(
         } else if (perTool > tool.maxCallsPerTool) {
           result = {
             ok: false,
-            error: { code: "tool_budget_exceeded", message: `工具 ${name} 单次请求最多调用 ${tool.maxCallsPerTool} 次` },
+            error: {
+              code: "tool_budget_exceeded",
+              message: `工具 ${name} 单次请求最多调用 ${tool.maxCallsPerTool} 次`,
+              hint: "改用其它工具或直接基于已有结果作答",
+            },
           };
         } else if (parseError) {
           result = { ok: false, error: { code: "invalid_params", message: `参数不是合法 JSON：${parseError}` } };

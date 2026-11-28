@@ -12,7 +12,7 @@ import { join } from "node:path";
 import { z } from "zod";
 
 import { configIdPattern } from "../../schemas/config.ts";
-import { changeTypes, ruleStatuses } from "../../schemas/rule.ts";
+import { changeTypes, ruleIdPattern, ruleStatuses } from "../../schemas/rule.ts";
 import { PATHS } from "../../compiler/paths.ts";
 import { buildSnapshot, type ConfigRecord, type QueryOptions, type RuleSetSnapshot } from "./rules.ts";
 import {
@@ -28,8 +28,8 @@ import {
 export const getConfigInputSchema = z
   .object({
     variant: z.string(),
-    /** 精确配置 ID（基座 ID 或变体 ID 都可以，内部按 canonical_id 归并） */
-    id: z.string().regex(configIdPattern).optional(),
+    /** 精确配置 ID（基座 ID 或变体 ID 都可以，内部按 canonical_id 归并）；宽松收字符串便于指路 */
+    id: z.string().min(1).max(48).optional(),
     /** 名称 / 描述 / ID 关键词 */
     query: z.string().trim().min(1).max(60).optional(),
     /**
@@ -188,6 +188,29 @@ export function getConfig(
   const parsed = getConfigInputSchema.safeParse(rawInput);
   if (!parsed.success) return invalidParams(parsed.error);
   const input = parsed.data;
+
+  // 规则 ID 走错工具：直接指路
+  if (input.id && !configIdPattern.test(input.id.toUpperCase())) {
+    if (!ruleIdPattern.test(input.id.toUpperCase())) {
+      return {
+        ok: false,
+        error: {
+          code: "invalid_params",
+          message: `配置 ID 格式不合法：${input.id}`,
+          hint: "配置 ID 形如 HJ-C-DIFEN / XS-C-TUODI-EDU",
+        },
+      };
+    }
+    return {
+      ok: false,
+      error: {
+        code: "invalid_params",
+        message: `${input.id} 是规则卡，不是配置项`,
+        hint: "改用 get_rule({ variant, id }) 查询规则卡",
+        details: { suggest: { tool: "get_rule", args: { variant: input.variant, id: input.id } } },
+      },
+    };
+  }
 
   const snapshotResult = buildSnapshot(input.variant, options);
   if (!snapshotResult.ok) return snapshotResult;

@@ -16,6 +16,7 @@ import { loadRuleset, type LoadedRuleset } from "../../compiler/validator.ts";
 import { PATHS } from "../../compiler/paths.ts";
 import type { RuleMeta } from "../../schemas/rule.ts";
 import { changeTypes, ruleIdPattern, ruleStatuses, ruleTypes } from "../../schemas/rule.ts";
+import { configIdPattern } from "../../schemas/config.ts";
 import { cardSlots } from "../pipeline/read-ruleset.ts";
 import {
   invalidParams,
@@ -575,7 +576,8 @@ function matchRecord(
 export const getRuleInputSchema = z
   .object({
     variant: z.string(),
-    id: z.string().regex(ruleIdPattern),
+    // 先宽松收字符串：ID 类型判断放在函数里，才能给出「改用 get_config」的指路
+    id: z.string().min(1).max(48),
   })
   .strict();
 
@@ -586,11 +588,35 @@ export function getRule(rawInput: unknown, options: QueryOptions = {}): ToolResu
   if (!parsed.success) return invalidParams(parsed.error);
   const input = parsed.data;
 
+  const id = input.id.toUpperCase();
+
+  // 配置 ID 走错工具：直接指路，别让它白跑一次预算
+  if (configIdPattern.test(id)) {
+    return {
+      ok: false,
+      error: {
+        code: "invalid_params",
+        message: `${input.id} 是配置项，不是规则卡`,
+        hint: "改用 get_config({ variant, id }) 查询配置值",
+        details: { suggest: { tool: "get_config", args: { variant: input.variant, id: input.id } } },
+      },
+    };
+  }
+  if (!ruleIdPattern.test(id)) {
+    return {
+      ok: false,
+      error: {
+        code: "invalid_params",
+        message: `规则 ID 格式不合法：${input.id}`,
+        hint: "规则 ID 形如 HJ-R-DINGZHUANG / XS-K-LIANGANG（类型段见 R/T/N/M/F/K/P/V/I/A）",
+      },
+    };
+  }
+
   const snapshotResult = buildSnapshot(input.variant, options);
   if (!snapshotResult.ok) return snapshotResult;
   const snapshot = snapshotResult.data;
   const root = repoRoot(options);
-  const id = input.id.toUpperCase();
 
   const wrongSet = snapshot.context.kind === "variant" ? id.startsWith("HJ-") : id.startsWith("XS-");
   if (wrongSet) {

@@ -303,3 +303,13 @@ describe("12) 值呈现与上下文", () => {
     expect(view.get("XS-C-TUODI-EDU")?.id).toBe("XS-C-TUODI-EDU"); // added 无 base_rule_ref，键为自身 ID
   });
 });
+
+describe("14) 工具互相指路：get_config 收到规则 ID", () => {
+  it("invalid_params + suggest get_rule", () => {
+    const res = getConfig({ variant: "xiaoshan", id: "XS-R-TUODI" }, { root: ROOT });
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.error.code).toBe("invalid_params");
+    expect(String(res.error.hint)).toContain("get_rule");
+  });
+});

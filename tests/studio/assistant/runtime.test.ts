@@ -204,9 +204,35 @@ describe("3) 预算：全局次数 / 单工具次数 / 轮数", () => {
     expect(result.grounded).toBe(true);
   });
 
-  it("默认预算与设计一致：6 次 / 4 轮", () => {
-    expect(DEFAULT_MAX_TOOL_CALLS).toBe(6);
-    expect(DEFAULT_MAX_ROUNDS).toBe(4);
+  it("默认预算与设计一致：8 次 / 5 轮（跨玩法对比需要余量）", () => {
+    expect(DEFAULT_MAX_TOOL_CALLS).toBe(8);
+    expect(DEFAULT_MAX_ROUNDS).toBe(5);
+  });
+
+  it("预算被拒时回带已收集 ID，便于模型直接收口", async () => {
+    const seen: string[] = [];
+    const client: ChatClient = {
+      async chat({ messages }) {
+        const toolMsg = messages.filter((m) => m.role === "tool").pop();
+        if (toolMsg?.content) seen.push(String(toolMsg.content));
+        if (messages.filter((m) => m.role === "tool").length <= 1) {
+          return { tool_calls: [{ id: `c${seen.length}`, function: { name: "echo", arguments: "{}" } }] };
+        }
+        if (!messages.some((m) => m.content?.includes("预算已用尽"))) {
+          return { tool_calls: [{ id: "c9", function: { name: "echo", arguments: "{}" } }] };
+        }
+        return { content: answerWithClaims(["XS-R-TUODI"]) };
+      },
+    };
+    await runAssistant(
+      { messages: [{ role: "user", content: "x" }] },
+      { client, tools: [echoTool("echo", 1)], maxToolCalls: 1 },
+    );
+    // 第 2 次调用被全局预算拒绝，内容里应带 collected_ids
+    const rejected = seen.find((c) => c.includes("tool_budget_exceeded"));
+    expect(rejected).toBeTruthy();
+    expect(rejected).toContain("collected_ids");
+    expect(rejected).toContain("XS-R-TUODI");
   });
 });
 
