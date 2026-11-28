@@ -23,6 +23,9 @@ documents/
 # 自托管字体（node dev-examples/fetch-fonts.mjs 抓取，12MB，不入库）
 server/fonts/
 
+# xc-ui-flow 聊天框复刻 spike：含参考项目 worktree 与构建产物，整目录不入库
+dev-examples/xc-chat-spike/
+
 # 测试缓存
 node_modules/.vite/
 
