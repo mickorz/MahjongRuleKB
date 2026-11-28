@@ -1071,7 +1071,7 @@ async function loadDoc(variant) {
       }
       if (disp.configs.length) {
         const fromBase = seg.lineage === "default_inherited" || seg.lineage === "explicit_inherited";
-        refBits.push(fromBase ? "杭州固定值，不可改" : "萧山改写值");
+        refBits.push(fromBase ? "基类固定数值" : "萧山改写值");
         refIds.push(...disp.configs.map((c) => c.id));
       }
       const evidence = refs.source_evidence_refs || [];
