@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 
 import { SECTION_TITLES } from "../studio/pipeline/render.ts";
 import { viewerHtml } from "./viewer.ts";
+import { galleryHtml } from "./gallery.ts";
 import { addMutation, createSession } from "../studio/edit/session.ts";
 import { applySession } from "../studio/edit/apply-batch.ts";
 import { checkMutation, computeBaseRevision, mutationSchema, mutationToProposalInput } from "../studio/edit/mutation.ts";
@@ -44,6 +45,7 @@ export type ApiRoute =
   | { kind: "refs"; variant: string }
   | { kind: "revisions"; variant: string }
   | { kind: "revision-diff"; variant: string; revisionId: string }
+  | { kind: "gallery" }
   | { kind: "fonts-css" }
   | { kind: "font-file"; name: string }
   | { kind: "not-found" };
@@ -54,6 +56,7 @@ const fontsDir = join(dirname(fileURLToPath(import.meta.url)), "fonts");
 
 export function resolveRoute(pathname: string): ApiRoute {
   if (pathname === "/" || pathname === "/index.html") return { kind: "index" };
+  if (pathname === "/gallery" || pathname === "/gallery.html") return { kind: "gallery" };
   if (pathname === "/fonts.css") return { kind: "fonts-css" };
   if (pathname.startsWith("/fonts/")) {
     const name = pathname.slice("/fonts/".length);
@@ -241,6 +244,11 @@ export function createWorkbenchServer(options: WorkbenchOptions = {}): Server {
       } catch (e) {
         return json(res, 404, { error: "revision_not_found", message: (e as Error).message });
       }
+    }
+    if (route.kind === "gallery") {
+      const localFonts = existsSync(join(fontsDir, "fonts.css"));
+      text(res, 200, galleryHtml({ localFonts }), "text/html; charset=utf-8");
+      return;
     }
     if (route.kind === "fonts-css") {
       const file = join(fontsDir, "fonts.css");

@@ -134,6 +134,19 @@ describe("W3-1 HTTP 行为", () => {
     expect(html).toContain('class="doc-col"');
   });
 
+  it("/gallery 返回卡片形态总览（与工作台共用样式）", async () => {
+    const res = await fetch(`${base}/gallery`);
+    expect(res.status).toBe(200);
+    const html = await res.text();
+    expect(html).toContain("卡片形态总览");
+    expect(html).toContain('class="g-family"');
+    expect(html).toContain("cfgcard");
+    expect(html).toContain("asst-action");
+    // 共用 baseStyles：工作台的关键令牌必须出现
+    expect(html).toContain("--gold-deep");
+    expect(html).toContain("cr-phasebar");
+  });
+
   it("文档接口返回投影结构（章节标题已翻译）", async () => {
     const res = await fetch(`${base}/api/doc/xiaoshan`);
     expect(res.status).toBe(200);

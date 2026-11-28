@@ -1,20 +1,6 @@
-// 工作台前端（无构建，单文件）
-// 结构：外壳不滚，三栏各自滚动；1px 分隔条可拖拽，比例记忆（S1/S2）
-// 视觉：暖纸 + 墨字 + 金点（S1 已换令牌；卡片细化在 S3）
-export function viewerHtml(options: { localFonts?: boolean } = {}): string {
-  // 本地有字体就发本地（离线可用），否则回退 Google CDN
-  const fontLink = options.localFonts
-    ? '<link rel="stylesheet" href="/fonts.css" />'
-    : '<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&display=swap" />';
-  return `<!doctype html>
-<html lang="zh-CN">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<meta http-equiv="cache-control" content="no-store" />
-<title>策划工作台</title>
-${fontLink}
-<style>
+// 工作台共享样式：viewer 与 /gallery 共用同一份 CSS
+export function baseStyles(): string {
+  return `
   :root {
     color-scheme: light;
     /* 暖纸 + 墨字 + 金点（取自参考站 design-tokens） */
@@ -642,7 +628,26 @@ ${fontLink}
   @media (max-width: 960px) {
     .splitter:last-of-type { display: none; }
   }
-</style>
+`;
+}
+
+// 工作台前端（无构建，单文件）
+// 结构：外壳不滚，三栏各自滚动；1px 分隔条可拖拽，比例记忆（S1/S2）
+// 视觉：暖纸 + 墨字 + 金点（S1 已换令牌；卡片细化在 S3）
+export function viewerHtml(options: { localFonts?: boolean } = {}): string {
+  // 本地有字体就发本地（离线可用），否则回退 Google CDN
+  const fontLink = options.localFonts
+    ? '<link rel="stylesheet" href="/fonts.css" />'
+    : '<link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin /><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=Noto+Serif+SC:wght@400;500;600;700&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400;1,6..72,500&display=swap" />';
+  return `<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta http-equiv="cache-control" content="no-store" />
+<title>策划工作台</title>
+${fontLink}
+<style>${baseStyles()}</style>
 </head>
 <body>
 <div class="app" data-layout="two-pane">
