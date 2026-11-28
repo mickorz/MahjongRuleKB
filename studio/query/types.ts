@@ -174,6 +174,9 @@ export const queryErrorCodes = [
   "ambiguous", // 关键词命中多条但无法唯一确定
   "too_many_matches", // 超出上限且不允许截断
   "io_error", // 读取失败
+  // 以下两个由 Assistant Runtime 产生（共用同一个返回壳，避免 Runtime 再造一套）
+  "tool_budget_exceeded", // 工具调用超预算 / 单工具超次数
+  "tool_timeout", // 工具执行超时
 ] as const;
 export type QueryErrorCode = (typeof queryErrorCodes)[number];
 

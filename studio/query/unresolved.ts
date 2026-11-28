@@ -56,7 +56,13 @@ export function listUnresolved(
   options: QueryOptions = {},
 ): ToolResult<ListUnresolvedOutput> {
   const parsed = listUnresolvedInputSchema.safeParse(rawInput);
-  if (!parsed.success) return invalidParams(parsed.error);
+  if (!parsed.success) {
+    // 常见误用：把未决项 ID（XS-U-001）当成 card_ref
+    const raw = rawInput as { card_ref?: unknown } | null;
+    const cardRef = typeof raw?.card_ref === "string" ? raw.card_ref : "";
+    const hint = /-(U)-\d{3}$/.test(cardRef) ? "card_ref 要填规则卡或配置项的 ID，不是未决项 ID" : undefined;
+    return invalidParams(parsed.error, hint);
+  }
   const input = parsed.data;
 
   const snapshotResult = buildSnapshot(input.variant, options);

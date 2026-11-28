@@ -18,7 +18,12 @@ import { documentSchema } from "../studio/contracts/document.ts";
 import { applyDocumentProposal } from "../studio/transaction/apply.ts";
 import { listRevisions, revisionDiff, revisionOverridesBackup } from "./revisions.ts";
 import { allRefIds, resolveNames } from "./ref-names.ts";
-import { askAssistant, AssistantUnavailable, proposeEdit, EditProposalError } from "./assistant.ts";
+import { AssistantUnavailable, proposeEdit, EditProposalError } from "./assistant.ts";
+import { READ_ONLY_TOOLS } from "../studio/assistant/tools.ts";
+import { keywordOf, runAssistant, type ChatMessage } from "../studio/assistant/runtime.ts";
+import { ChatModelUnavailable, createChatClient, resolveChatModel } from "../studio/assistant/llm-client.ts";
+import { getConfig } from "../studio/query/configs.ts";
+import { searchRules } from "../studio/query/rules.ts";
 
 const variantPattern = /^[a-z][a-z0-9-]*$/;
 
@@ -364,7 +369,7 @@ async function handleWrite(req: IncomingMessage, res: ServerResponse, ctx: Write
   if (ctx.url.pathname === "/api/proposal") return proposalPreview(res, ctx.kbRoot, variant, body);
   if (ctx.url.pathname === "/api/apply") return applyBatch(res, ctx.kbRoot, variant, body);
   if (ctx.url.pathname === "/api/restore") return restoreRevision(res, ctx.kbRoot, variant, body);
-  if (ctx.url.pathname === "/api/assistant") return assistantReply(res, variant, body);
+  if (ctx.url.pathname === "/api/assistant") return assistantReply(res, variant, body, ctx.kbRoot);
   if (ctx.url.pathname === "/api/assistant/edit") return assistantEdit(res, ctx.kbRoot, variant, body);
   return json(res, 404, { error: "not_found" });
 }
@@ -510,7 +515,11 @@ function nextId(kbRoot: string, relDir: string, prefix: string): string {
 }
 
 /** POST /api/assistant：把对话转发给已配置模型；只读上下文，不写任何文件 */
-function assistantReply(res: ServerResponse, variant: string, body: Record<string, unknown>): void {
+/**
+ * POST /api/assistant：走 Assistant Runtime（六个只读工具 + 预算 + grounding + 预检索降级）。
+ * 不写任何规则文件；审计写到 .rule-studio/assistant/<session>/tool-calls.jsonl。
+ */
+function assistantReply(res: ServerResponse, variant: string, body: Record<string, unknown>, kbRoot: string): void {
   const turns = Array.isArray(body.messages) ? body.messages : [];
   const messages = turns
     .filter((m): m is { role: string; content: string } =>
@@ -522,15 +531,58 @@ function assistantReply(res: ServerResponse, variant: string, body: Record<strin
 
   const title = typeof body.title === "string" ? body.title : undefined;
   const excerpt = typeof body.excerpt === "string" ? body.excerpt.slice(0, 60000) : undefined;
+  const sessionId = typeof body.session_id === "string" && /^[A-Za-z0-9_-]{1,40}$/.test(body.session_id)
+    ? body.session_id
+    : `AS-${Date.now().toString(36)}`;
 
-  askAssistant({ messages, context: { ...(title ? { title } : {}), ...(excerpt ? { excerpt } : {}) } })
-    .then((reply) => json(res, 200, { ...reply, variant }))
-    .catch((e: Error) => {
-      if (e instanceof AssistantUnavailable) {
-        return json(res, 503, { error: "assistant_unavailable", message: e.message });
-      }
-      return json(res, 502, { error: "assistant_failed", message: e.message });
-    });
+  let client;
+  try {
+    client = createChatClient(resolveChatModel());
+  } catch (e) {
+    if (e instanceof ChatModelUnavailable) {
+      return json(res, 503, { error: "assistant_unavailable", message: e.message });
+    }
+    throw e;
+  }
+
+  const question = [...messages].reverse().find((m) => m.role === "user")?.content ?? "";
+
+  runAssistant(
+    { messages },
+    {
+      client,
+      tools: READ_ONLY_TOOLS,
+      audit: { root: kbRoot, sessionId },
+      context: { ...(title ? { title } : {}), ...(excerpt ? { excerpt } : {}) },
+      // 无 tool_calls 能力时：服务端按关键词预检索一次规则，再让模型基于结果作答
+      preRetrieval: async () => {
+        const query = keywordOf(question);
+        const hits = searchRules({ variant, query, limit: 8 }, { root: kbRoot });
+        const configs = getConfig({ variant, query, include_base_fallback: true }, { root: kbRoot });
+        return [
+          { tool: "search_rules", result: hits },
+          { tool: "get_config", result: configs },
+        ];
+      },
+    },
+  )
+    .then((result) =>
+      json(res, 200, {
+        ok: true,
+        variant,
+        session_id: sessionId,
+        model: client.model,
+        text: result.text,
+        claims: result.claims,
+        grounded: result.grounded,
+        mode: result.mode,
+        rounds: result.rounds,
+        tool_calls: result.toolCalls,
+        injected_ids: result.injectedIds.slice(0, 40),
+        budget_exceeded: result.budgetExceeded,
+      }),
+    )
+    .catch((e: Error) => json(res, 502, { error: "assistant_failed", message: e.message }));
 }
 
 /** 可改段落：变体自有且未被数值/公式锁定的片段 */

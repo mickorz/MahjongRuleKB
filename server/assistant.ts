@@ -1,7 +1,6 @@
 // 创作助手：本地代理到已配置的模型（复用 studio/generate 的 provider 解析）
 // 只做对话转发，不给模型任何写权限；上下文由前端挑选后随请求带上。
-import { resolveProviderConfig } from "../studio/generate/llm-generator.ts";
-import { resolveTierModel } from "../studio/generate/model-tiers.ts";
+import { ChatModelUnavailable, resolveChatModel } from "../studio/assistant/llm-client.ts";
 
 export interface AssistantTurn {
   role: "user" | "assistant";
@@ -20,7 +19,8 @@ export interface AssistantReply {
   model: string;
 }
 
-export class AssistantUnavailable extends Error {}
+/** 兼容旧命名：模型不可用（原 AssistantUnavailable） */
+export class AssistantUnavailable extends ChatModelUnavailable {}
 
 const SYSTEM = [
   "你是麻将规则知识库的编辑助手，服务对象是策划。",
@@ -30,60 +30,11 @@ const SYSTEM = [
 
 /** 取一个可用的对话模型；未配置时抛 AssistantUnavailable */
 function resolveModel(): { baseUrl: string; apiKey: string; model: string } {
-  const warnings: string[] = [];
-  for (const tier of ["fast", "big", "ultra"] as const) {
-    const resolved = resolveTierModel(tier);
-    if (resolved.warning) warnings.push(resolved.warning);
-    const modelString = resolved.model;
-    if (!modelString) continue;
-    const idx = modelString.indexOf("/");
-    if (idx <= 0) continue;
-    try {
-      const config = resolveProviderConfig(modelString.slice(0, idx));
-      if (config.baseUrl && config.apiKey) {
-        return { baseUrl: config.baseUrl, apiKey: config.apiKey, model: modelString.slice(idx + 1) };
-      }
-    } catch {
-      // 该档位没有可用 provider，继续下一档
-    }
+  try {
+    return resolveChatModel();
+  } catch (error) {
+    throw new AssistantUnavailable((error as Error).message);
   }
-  throw new AssistantUnavailable(
-    warnings[0] ?? "未配置可用模型（RULE_STUDIO_LLM_* 或 ~/.pi/agent/models.json）",
-  );
-}
-
-/** 调 OpenAI 兼容的 chat completions；返回纯文本 */
-export async function askAssistant(
-  request: AssistantRequest,
-  fetchImpl: typeof fetch = fetch,
-): Promise<AssistantReply> {
-  const { baseUrl, apiKey, model } = resolveModel();
-  const contextLines: string[] = [];
-  if (request.context?.title) contextLines.push(`文档：${request.context.title}`);
-  if (request.context?.excerpt) contextLines.push(`文档内容节选：\n${request.context.excerpt}`);
-
-  const body = {
-    model,
-    temperature: 0.2,
-    messages: [
-      { role: "system", content: [SYSTEM, ...contextLines].join("\n\n") },
-      ...request.messages.map((m) => ({ role: m.role, content: m.content })),
-    ],
-  };
-
-  const res = await fetchImpl(`${baseUrl.replace(/\/$/, "")}/chat/completions`, {
-    method: "POST",
-    headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) {
-    const text = await res.text().catch(() => "");
-    throw new Error(`模型返回 ${res.status}：${text.slice(0, 200)}`);
-  }
-  const data = (await res.json()) as { choices?: Array<{ message?: { content?: string } }> };
-  const text = data.choices?.[0]?.message?.content?.trim();
-  if (!text) throw new Error("模型没有返回内容");
-  return { ok: true, text, model };
 }
 
 /* ---------------- 改稿提案（Action） ---------------- */

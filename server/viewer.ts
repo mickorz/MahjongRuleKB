@@ -463,6 +463,13 @@ export function baseStyles(): string {
   .asst-message--user p { font-size: 13px; line-height: 1.7; color: var(--ink-2); }
   .asst-message--error p { color: var(--terra); }
 
+  .asst-tools { margin-top: 6px; font: 11px/1.5 var(--sans); color: var(--ink-3); }
+  .asst-ungrounded {
+    margin-top: 4px; font: 11px/1.5 var(--sans); color: var(--terra);
+    display: inline-flex; align-items: center; gap: 4px;
+  }
+  .asst-ungrounded::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
   /* 思维中（原站 .asst-thinking + 三点动画） */
   .asst-thinking { display: flex; align-items: center; gap: 7px; margin: 14px 0; color: var(--ink-2); font-size: 12px; }
   .asst-thinking__dots { display: inline-flex; align-items: center; gap: 3px; height: 12px; }
@@ -1075,6 +1082,23 @@ function asstRender() {
     const p = document.createElement("p");
     renderAsstText(p, m.content);
     art.appendChild(p);
+
+    // 工具执行摘要（模型查了哪些工具）
+    if (m.role === "assistant" && Array.isArray(m.tools) && m.tools.length) {
+      const tools = document.createElement("div");
+      tools.className = "asst-tools";
+      const names = [...new Set(m.tools)];
+      tools.textContent = "查了 " + m.tools.length + " 次：" + names.join("、");
+      art.appendChild(tools);
+    }
+    // 逐条 claim 校验：全部通过才算有依据
+    if (m.role === "assistant" && m.grounded === false) {
+      const flag = document.createElement("div");
+      flag.className = "asst-ungrounded";
+      const bad = (m.claims || []).filter((c) => c.status !== "ok").length;
+      flag.textContent = bad > 0 ? "有 " + bad + " 条结论缺少可追溯依据" : "本次回答未提供可追溯依据";
+      art.appendChild(flag);
+    }
     thread.appendChild(art);
     if (m.proposal) thread.appendChild(asstActionCard(m.proposal));
   }
@@ -1277,7 +1301,13 @@ async function asstAsk(text) {
     if (!res.ok) {
       asst.messages.push({ role: "assistant", content: "（" + (data.message || data.error || res.status) + "）" });
     } else {
-      asst.messages.push({ role: "assistant", content: data.text });
+      asst.messages.push({
+        role: "assistant",
+        content: data.text,
+        ...(Array.isArray(data.claims) ? { claims: data.claims } : {}),
+        ...(typeof data.grounded === "boolean" ? { grounded: data.grounded } : {}),
+        ...(Array.isArray(data.tool_calls) ? { tools: data.tool_calls.map((t) => t.name) } : {}),
+      });
     }
   } catch (e) {
     asst.messages.push({ role: "assistant", content: "（请求失败：" + e.message + "）" });
