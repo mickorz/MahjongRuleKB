@@ -954,7 +954,9 @@ function asstApplyGeometry() {
     drawer.style.left = "";
     drawer.style.top = "";
   }
-  app.classList.toggle("asst-docked", asst.mode === "docked");
+  // 只有「停靠且可见」才让正文让位；关闭后必须还原
+  const dockedVisible = asst.mode === "docked" && !drawer.hidden;
+  app.classList.toggle("asst-docked", dockedVisible);
   app.style.setProperty("--asst-dock-w", asst.width + "px");
 }
 
@@ -1907,8 +1909,8 @@ el("asst-launch").onclick = () => {
   const open = drawer.hidden;
   drawer.hidden = !open;
   el("asst-launch").setAttribute("aria-expanded", String(open));
+  asstApplyGeometry();
   if (open) {
-    asstApplyGeometry();
     asstRender();
     asstEl("asst-input").focus();
   }
@@ -1916,6 +1918,7 @@ el("asst-launch").onclick = () => {
 el("asst-close").onclick = () => {
   asstEl("asst-drawer").hidden = true;
   el("asst-launch").setAttribute("aria-expanded", "false");
+  asstApplyGeometry();
 };
 el("asst-send").onclick = () => (asst.editMode ? asstPropose(asstEl("asst-input").value) : asstAsk(asstEl("asst-input").value));
 asstEl("asst-input").addEventListener("keydown", (e) => {
