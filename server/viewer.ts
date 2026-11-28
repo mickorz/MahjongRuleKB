@@ -362,16 +362,68 @@ ${fontLink}
   .asst-launch[aria-expanded="true"] { background: var(--gold-deep); }
   .asst-launch:focus-visible { outline: 2px solid var(--gold-deep); outline-offset: 3px; }
 
-  /* 浮窗模式：贴右满高（参考站 body:has(.asst-drawer--floating) 的几何） */
+  /* 浮动模式：贴右、满高（参考站 floating 几何），可拖拽可缩放 */
   .asst-drawer {
-    position: fixed; z-index: 721; right: 16px; top: 16px;
-    width: 480px; height: calc(100vh - 32px);
+    position: fixed; z-index: 721;
     display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
     overflow: hidden; border: 1px solid var(--line); border-radius: 12px;
     background: var(--paper); box-shadow: 0 16px 44px var(--shadow);
     animation: asstWindowIn .2s var(--ease-out) both;
   }
   .asst-drawer[hidden] { display: none; }
+  .asst-drawer--floating {
+    right: 16px; top: 16px; width: 480px; height: calc(100vh - 32px);
+  }
+  .asst-drawer--floating.asst-drawer--placed { right: auto; }
+
+  /* 停靠模式：贴右满高、无圆角、只留左侧分隔线（参考站 --docked） */
+  .asst-drawer--docked {
+    right: 0; top: 0; bottom: 0; height: 100vh; width: 420px;
+    border: 0; border-left: 1px solid var(--line); border-radius: 0;
+    box-shadow: -3px 0 12px color-mix(in srgb, var(--shadow) 20%, transparent);
+    animation: none;
+  }
+  /* 停靠时给正文让位（等价参考站 body:has(.asst-drawer--floating) 的 margin-right） */
+  .app.asst-docked .app-body { padding-right: var(--asst-dock-w, 420px); }
+
+  .asst-drawer--dragging { user-select: none; }
+  .asst-drawer--dragging .asst-heading { cursor: grabbing; }
+
+  /* 缩放手柄：浮动右下角、停靠左缘 */
+  .asst-resize {
+    position: absolute; z-index: 2; background: transparent;
+  }
+  .asst-resize--se { right: 0; bottom: 0; width: 16px; height: 16px; cursor: nwse-resize; }
+  .asst-resize--se::after {
+    content: ""; position: absolute; right: 4px; bottom: 4px; width: 7px; height: 7px;
+    border-right: 2px solid var(--ink-3); border-bottom: 2px solid var(--ink-3);
+    border-radius: 0 0 2px 0; opacity: .6;
+  }
+  .asst-resize--left { left: 0; top: 0; bottom: 0; width: 10px; cursor: ew-resize; }
+  .asst-resize--left::before {
+    content: ""; position: absolute; inset: 0 auto 0 0; width: 1px; background: var(--line);
+    transition: background .15s var(--ease);
+  }
+  .asst-resize--left::after {
+    content: ""; position: absolute; top: 50%; left: 4px; width: 3px; height: 40px;
+    border-radius: 3px; background: color-mix(in srgb, var(--ink-3) 55%, var(--line));
+    transform: translateY(-50%);
+  }
+  .asst-resize--left:hover::before { background: var(--gold-soft); }
+  .asst-resize--left:hover::after { background: var(--gold-deep); height: 56px; }
+  .asst-drawer--floating .asst-resize--left { display: none; }
+  .asst-drawer--docked .asst-resize--se { display: none; }
+
+  .asst-heading-actions { display: flex; align-items: center; gap: 4px; flex: none; }
+  .asst-icon-button {
+    width: 28px; height: 28px; display: grid; place-items: center; padding: 0;
+    border: 1px solid transparent; border-radius: 6px; background: transparent;
+    color: var(--ink-3); cursor: pointer;
+    transition: background .15s var(--ease), color .15s var(--ease), border-color .15s var(--ease);
+  }
+  .asst-icon-button:hover { background: var(--card); border-color: var(--line); color: var(--ink); }
+  .asst-icon-button:focus-visible { outline: 2px solid var(--gold-deep); outline-offset: 2px; }
+  .asst-drawer--floating .asst-heading { cursor: grab; touch-action: none; }
 
   .asst-heading {
     display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
@@ -616,13 +668,23 @@ ${fontLink}
 <button type="button" class="asst-launch" id="asst-launch" aria-label="创作助手" title="创作助手" aria-expanded="false">
   <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z M19 14l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"></path></svg>
 </button>
-<aside class="asst-drawer" id="asst-drawer" hidden role="dialog" aria-modal="false" aria-labelledby="asst-title">
-  <header class="asst-heading">
+<aside class="asst-drawer asst-drawer--floating" id="asst-drawer" hidden role="dialog" aria-modal="false" aria-labelledby="asst-title">
+  <div class="asst-resize asst-resize--left" id="asst-resize-left" title="拖动调整宽度"></div>
+  <div class="asst-resize asst-resize--se" id="asst-resize-se" title="拖动调整大小"></div>
+  <header class="asst-heading" id="asst-heading">
     <div>
       <h2 id="asst-title">创作助手</h2>
       <p>基于当前玩法的规则文档回答；只能读，不会改动任何内容。</p>
     </div>
-    <button class="edt-x" id="asst-close" title="关闭" type="button">×</button>
+    <div class="asst-heading-actions">
+      <button class="asst-icon-button" id="asst-mode" title="切换停靠 / 浮动" aria-label="切换停靠或浮动">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M15 4v16"></path></svg>
+      </button>
+      <button class="asst-icon-button" id="asst-reset" title="清空会话" aria-label="清空会话">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"></path></svg>
+      </button>
+      <button class="edt-x" id="asst-close" title="关闭" type="button">×</button>
+    </div>
   </header>
   <div class="asst-thread" id="asst-thread"></div>
   <div class="asst-compose">
@@ -787,8 +849,46 @@ function scrollToSection(sectionId) {
 /* ---------- 文档渲染 ---------- */
 let refNames = { rules: {}, configs: {} };
 
-/** 助手会话（只存在页面内存里，不落盘） */
-const asst = { messages: [], busy: false };
+/** 助手会话与窗口状态（持久化到 localStorage，仅本机浏览器） */
+const ASST_KEY = "rs-assistant";
+const asst = {
+  messages: [],
+  busy: false,
+  mode: "floating", // floating | docked
+  width: 480,
+  height: 0, // 0 = 用满高
+  x: null, // 拖拽后的左上角；null = 默认贴右
+  y: null,
+};
+
+function asstSave() {
+  try {
+    localStorage.setItem(ASST_KEY, JSON.stringify({
+      mode: asst.mode,
+      width: asst.width,
+      height: asst.height,
+      x: asst.x,
+      y: asst.y,
+      messages: asst.messages.slice(-40),
+    }));
+  } catch {}
+}
+
+function asstLoad() {
+  try {
+    const raw = localStorage.getItem(ASST_KEY);
+    if (!raw) return;
+    const saved = JSON.parse(raw);
+    if (saved.mode === "docked" || saved.mode === "floating") asst.mode = saved.mode;
+    if (typeof saved.width === "number") asst.width = saved.width;
+    if (typeof saved.height === "number") asst.height = saved.height;
+    if (typeof saved.x === "number") asst.x = saved.x;
+    if (typeof saved.y === "number") asst.y = saved.y;
+    if (Array.isArray(saved.messages)) {
+      asst.messages = saved.messages.filter((m) => m && (m.role === "user" || m.role === "assistant") && typeof m.content === "string");
+    }
+  } catch {}
+}
 
 function asstEl(id) { return document.getElementById(id); }
 
@@ -798,6 +898,100 @@ const ASST_EXAMPLES = [
   "讲一下「拖底」的判定条件",
   "哪些规则还没定下来？",
 ];
+
+/** 把 asst 状态应用到窗口（位置/尺寸/模式/正文让位） */
+function asstApplyGeometry() {
+  const drawer = asstEl("asst-drawer");
+  const app = document.querySelector(".app");
+  drawer.classList.toggle("asst-drawer--docked", asst.mode === "docked");
+  drawer.classList.toggle("asst-drawer--floating", asst.mode === "floating");
+  drawer.classList.toggle("asst-drawer--placed", asst.x !== null && asst.mode === "floating");
+  drawer.style.width = asst.width + "px";
+  drawer.style.height = asst.mode === "floating" && asst.height > 0 ? asst.height + "px" : "";
+  if (asst.mode === "floating" && asst.x !== null && asst.y !== null) {
+    drawer.style.left = asst.x + "px";
+    drawer.style.top = asst.y + "px";
+  } else {
+    drawer.style.left = "";
+    drawer.style.top = "";
+  }
+  app.classList.toggle("asst-docked", asst.mode === "docked");
+  app.style.setProperty("--asst-dock-w", asst.width + "px");
+}
+
+/** 停靠 / 浮动切换 */
+function asstToggleMode() {
+  asst.mode = asst.mode === "docked" ? "floating" : "docked";
+  if (asst.mode === "floating") {
+    asst.x = null;
+    asst.y = null;
+  }
+  asstApplyGeometry();
+  asstSave();
+}
+
+/** 拖拽窗口（仅浮动模式；抓头部空白处，别抢按钮） */
+function asstBindDrag() {
+  const drawer = asstEl("asst-drawer");
+  const head = asstEl("asst-heading");
+  head.addEventListener("pointerdown", (ev) => {
+    if (asst.mode !== "floating") return;
+    if (ev.target.closest("button")) return;
+    ev.preventDefault();
+    const rect = drawer.getBoundingClientRect();
+    const dx = ev.clientX - rect.left;
+    const dy = ev.clientY - rect.top;
+    drawer.classList.add("asst-drawer--dragging");
+    try { head.setPointerCapture?.(ev.pointerId); } catch {}
+    const onMove = (e) => {
+      const maxX = window.innerWidth - 160;
+      const maxY = window.innerHeight - 80;
+      asst.x = Math.max(0, Math.min(maxX, e.clientX - dx));
+      asst.y = Math.max(0, Math.min(maxY, e.clientY - dy));
+      drawer.classList.add("asst-drawer--placed");
+      drawer.style.left = asst.x + "px";
+      drawer.style.top = asst.y + "px";
+    };
+    const onUp = () => {
+      drawer.classList.remove("asst-drawer--dragging");
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      asstSave();
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  });
+}
+
+/** 缩放：浮动右下角改宽高，停靠左缘改宽 */
+function asstBindResize() {
+  const drawer = asstEl("asst-drawer");
+  const bind = (handle, axis) => {
+    handle.addEventListener("pointerdown", (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      try { handle.setPointerCapture?.(ev.pointerId); } catch {}
+      const startX = ev.clientX;
+      const startY = ev.clientY;
+      const startW = drawer.getBoundingClientRect().width;
+      const startH = drawer.getBoundingClientRect().height;
+      const onMove = (e) => {
+        if (axis !== "y") asst.width = Math.max(320, Math.min(760, startW + (e.clientX - startX) * (asst.mode === "docked" ? -1 : 1)));
+        if (axis === "xy") asst.height = Math.max(320, Math.min(window.innerHeight - 24, startH + (e.clientY - startY)));
+        asstApplyGeometry();
+      };
+      const onUp = () => {
+        window.removeEventListener("pointermove", onMove);
+        window.removeEventListener("pointerup", onUp);
+        asstSave();
+      };
+      window.addEventListener("pointermove", onMove);
+      window.addEventListener("pointerup", onUp);
+    });
+  };
+  bind(asstEl("asst-resize-se"), "xy");
+  bind(asstEl("asst-resize-left"), "x");
+}
 
 function asstRender() {
   const thread = asstEl("asst-thread");
@@ -891,6 +1085,7 @@ async function asstAsk(text) {
   const content = text.trim();
   if (!content || asst.busy) return;
   asst.messages.push({ role: "user", content });
+  asstSave();
   asstRender();
   asst.busy = true;
   const send = asstEl("asst-send");
@@ -916,6 +1111,7 @@ async function asstAsk(text) {
     asst.messages.push({ role: "assistant", content: "（请求失败：" + e.message + "）" });
   } finally {
     asst.busy = false;
+    asstSave();
     send.disabled = false;
     send.innerHTML = sendHtml;
     asstRender();
@@ -1508,12 +1704,27 @@ document.addEventListener("click", (e) => {
 document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeRevpop(); });
 el("rev-drawer-close").onclick = closeRevpop;
 
+asstLoad();
+asstApplyGeometry();
+asstBindDrag();
+asstBindResize();
+
+el("asst-mode").onclick = (ev) => { ev.stopPropagation(); asstToggleMode(); };
+el("asst-reset").onclick = (ev) => {
+  ev.stopPropagation();
+  asst.messages = [];
+  asstSave();
+  asstRender();
+  toast("会话已清空");
+};
+
 el("asst-launch").onclick = () => {
   const drawer = asstEl("asst-drawer");
   const open = drawer.hidden;
   drawer.hidden = !open;
   el("asst-launch").setAttribute("aria-expanded", String(open));
   if (open) {
+    asstApplyGeometry();
     asstRender();
     asstEl("asst-input").focus();
   }
