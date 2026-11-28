@@ -527,7 +527,10 @@ function assistantReply(res: ServerResponse, variant: string, body: Record<strin
       (((m as Record<string, unknown>).role === "user") || ((m as Record<string, unknown>).role === "assistant")) &&
       typeof (m as Record<string, unknown>).content === "string")
     .map((m) => ({ role: m.role as "user" | "assistant", content: m.content.slice(0, 4000) }));
-  if (messages.length === 0) return json(res, 400, { error: "no_messages" });
+  if (messages.length === 0) {
+    console.log(`[assistant] ${JSON.stringify({ ts: new Date().toISOString(), status: 400, variant, error: "no_messages" })}`);
+    return json(res, 400, { error: "no_messages" });
+  }
 
   const title = typeof body.title === "string" ? body.title : undefined;
   const excerpt = typeof body.excerpt === "string" ? body.excerpt.slice(0, 60000) : undefined;
@@ -535,11 +538,28 @@ function assistantReply(res: ServerResponse, variant: string, body: Record<strin
     ? body.session_id
     : `AS-${Date.now().toString(36)}`;
 
+  // 观测：一次请求一行，成功与失败都记，便于区分「没连上」与「被拒」
+  const startedAt = Date.now();
+  const logAssistant = (status: number, extra: Record<string, unknown> = {}): void => {
+    console.log(
+      `[assistant] ${JSON.stringify({
+        ts: new Date().toISOString(),
+        status,
+        variant,
+        session: sessionId,
+        messages: messages.length,
+        ms: Date.now() - startedAt,
+        ...extra,
+      })}`,
+    );
+  };
+
   let client;
   try {
     client = createChatClient(resolveChatModel());
   } catch (e) {
     if (e instanceof ChatModelUnavailable) {
+      logAssistant(503, { error: "assistant_unavailable", message: e.message });
       return json(res, 503, { error: "assistant_unavailable", message: e.message });
     }
     throw e;
@@ -566,8 +586,17 @@ function assistantReply(res: ServerResponse, variant: string, body: Record<strin
       },
     },
   )
-    .then((result) =>
-      json(res, 200, {
+    .then((result) => {
+      logAssistant(200, {
+        mode: result.mode,
+        rounds: result.rounds,
+        tools: result.toolCalls.map((t) => t.name),
+        tool_failures: result.toolCalls.filter((t) => !t.ok).map((t) => `${t.name}:${t.code}`),
+        grounded: result.grounded,
+        claims: result.claims.length,
+        budget_exceeded: result.budgetExceeded,
+      });
+      return json(res, 200, {
         ok: true,
         variant,
         session_id: sessionId,
@@ -580,9 +609,12 @@ function assistantReply(res: ServerResponse, variant: string, body: Record<strin
         tool_calls: result.toolCalls,
         injected_ids: result.injectedIds.slice(0, 40),
         budget_exceeded: result.budgetExceeded,
-      }),
-    )
-    .catch((e: Error) => json(res, 502, { error: "assistant_failed", message: e.message }));
+      });
+    })
+    .catch((e: Error) => {
+      logAssistant(502, { error: "assistant_failed", message: e.message.slice(0, 200) });
+      return json(res, 502, { error: "assistant_failed", message: e.message });
+    });
 }
 
 /** 可改段落：变体自有且未被数值/公式锁定的片段 */

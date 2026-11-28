@@ -853,7 +853,18 @@ function renderVariants() {
     b.className = "pbi" + (v.key === currentVariant ? " on" : "");
     b.setAttribute("role", "tab");
     b.setAttribute("aria-selected", String(v.key === currentVariant));
-    b.onclick = () => { currentVariant = v.key; renderVariants(); applyLayout(v.key); loadDoc(v.key); };
+    b.onclick = () => {
+      if (v.key !== currentVariant) {
+        // 会话按玩法隔离：切玩法即换会话 ID 并清空当前消息
+        asst.messages = [];
+        asst.sessionId = newAssistantSessionId();
+        asstSave();
+      }
+      currentVariant = v.key;
+      renderVariants();
+      applyLayout(v.key);
+      loadDoc(v.key);
+    };
     box.appendChild(b);
   }
 }
@@ -910,6 +921,7 @@ const asst = {
 function asstSave() {
   try {
     localStorage.setItem(ASST_KEY, JSON.stringify({
+      sessionId: asst.sessionId,
       mode: asst.mode,
       width: asst.width,
       height: asst.height,
@@ -925,6 +937,7 @@ function asstLoad() {
     const raw = localStorage.getItem(ASST_KEY);
     if (!raw) return;
     const saved = JSON.parse(raw);
+    if (typeof saved.sessionId === "string" && /^[A-Za-z0-9_-]{1,40}$/.test(saved.sessionId)) asst.sessionId = saved.sessionId;
     if (saved.mode === "docked" || saved.mode === "floating") asst.mode = saved.mode;
     if (typeof saved.width === "number") asst.width = saved.width;
     if (typeof saved.height === "number") asst.height = saved.height;
@@ -937,6 +950,22 @@ function asstLoad() {
 }
 
 function asstEl(id) { return document.getElementById(id); }
+
+function newAssistantSessionId() {
+  try {
+    if (window.crypto && typeof window.crypto.randomUUID === "function") return window.crypto.randomUUID();
+  } catch {}
+  return "AS-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+}
+
+/** 取当前会话 ID；没有就新建并落盘 */
+function asstEnsureSession() {
+  if (!asst.sessionId) {
+    asst.sessionId = newAssistantSessionId();
+    asstSave();
+  }
+  return asst.sessionId;
+}
 
 /** 空态示例：进来看得懂的起手问题（参考站 .asst-example 列表） */
 const ASST_EXAMPLES = [
@@ -1217,7 +1246,7 @@ async function asstPropose(text) {
     const res = await fetch("/api/assistant/edit", {
       method: "POST",
       headers: { "content-type": "application/json", "X-Rule-Studio": "1" },
-      body: JSON.stringify({ variant: currentVariant, instruction }),
+      body: JSON.stringify({ variant: currentVariant, instruction, session_id: asstEnsureSession() }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -1295,7 +1324,7 @@ async function asstAsk(text) {
     const res = await fetch("/api/assistant", {
       method: "POST",
       headers: { "content-type": "application/json", "X-Rule-Studio": "1" },
-      body: JSON.stringify({ variant: currentVariant, messages: asst.messages, ...ctx }),
+      body: JSON.stringify({ variant: currentVariant, messages: asst.messages, session_id: asstEnsureSession(), ...ctx }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
@@ -1929,6 +1958,7 @@ el("asst-edit-mode").onclick = () => {
 el("asst-reset").onclick = (ev) => {
   ev.stopPropagation();
   asst.messages = [];
+  asst.sessionId = newAssistantSessionId();
   asstSave();
   asstRender();
   toast("会话已清空");
