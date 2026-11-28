@@ -1,5 +1,8 @@
 // Rule Query Service 第二批：getConfig 验收（配置继承 / 争议状态 / 来源 / 未决联动）
 import { afterEach, describe, expect, it } from "vitest";
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { join } from "node:path";
+import { tmpdir } from "node:os";
 
 import { classifyConfigSource, displayValue, effectiveConfigs, getConfig } from "../../../studio/query/configs.ts";
 import { buildSnapshot, clearSnapshotCache } from "../../../studio/query/rules.ts";
@@ -84,11 +87,11 @@ describe("5) 变体未覆盖的基座配置：仍然可见并标 inherited", () 
   });
 });
 
-describe("6) include_inherited 开关", () => {
-  it("默认包含继承项；关闭后只剩变体自有条目", () => {
+describe("6) include_base_fallback 开关", () => {
+  it("默认包含基座回退项；关闭后只剩变体侧有记录的条目（含 inherited）", () => {
     const all = okData<{ total: number }>(getConfig({ variant: "xiaoshan", query: "e" }, { root: ROOT }));
     const own = okData<{ total: number; items: Array<Record<string, any>> }>(
-      getConfig({ variant: "xiaoshan", query: "e", include_inherited: false }, { root: ROOT }),
+      getConfig({ variant: "xiaoshan", query: "e", include_base_fallback: false }, { root: ROOT }),
     );
     expect(all.total).toBeGreaterThan(own.total);
     expect(own.items.every((i) => i.origin === "variant")).toBe(true);
@@ -172,6 +175,100 @@ describe("11) 未决项联动：配置也有 unresolved_refs", () => {
       getConfig({ variant: "xiaoshan", id: "XS-C-CAISHEN" }, { root: ROOT }),
     ).items[0]!;
     expect(item.unresolved_refs).toContain("XS-U-001");
+  });
+});
+
+describe("13) 变体缓存必须随基座内容变化失效", () => {
+  it("同版本下改基座配置值，变体视图立即读到新值", () => {
+    const dir = mkdtempSync(join(tmpdir(), "query-base-fp-"));
+    const baseDir = join(dir, "rulebook", "specs", "base", "hangzhou");
+    const variantDir = join(dir, "rulebook", "specs", "variants", "fixture");
+    mkdirSync(join(baseDir, "guize"), { recursive: true });
+    mkdirSync(variantDir, { recursive: true });
+
+    writeFileSync(
+      join(baseDir, "manifest.yaml"),
+      [
+        "ruleset_id: fixture-friends-4p",
+        "version: 1.0.0",
+        "scope:",
+        "  player_count: 4",
+        "  room_type: friends",
+        "sources:",
+        "  - rulebook/sources/fixture/x.md",
+        "",
+      ].join(String.fromCharCode(10)),
+      "utf8",
+    );
+    const baseConfig = (value: number) =>
+      ["- id: HJ-C-A", "  origin: base", "  name: A", "  value: " + value, "  scope: four_player_friend_room", ""].join(String.fromCharCode(10));
+    const configFile = join(baseDir, "config.yaml");
+    writeFileSync(configFile, baseConfig(1), "utf8");
+    writeFileSync(
+      join(baseDir, "guize", "hj-r-a.md"),
+      [
+        "---",
+        "id: HJ-R-A",
+        "origin: base",
+        "type: judgment",
+        "name: A 规则",
+        "scope: four_player_friend_room",
+        "sources:",
+        "  - source: rulebook/sources/fixture/x.md",
+        "    section: 1",
+        "---",
+        "# A 规则",
+        "",
+        "- **结果**：A",
+        "",
+      ].join(String.fromCharCode(10)),
+      "utf8",
+    );
+
+    writeFileSync(
+      join(variantDir, "manifest.yaml"),
+      [
+        "ruleset_id: fixture2-friends-4p",
+        "version: 1.0.0",
+        "base:",
+        "  ruleset_id: fixture-friends-4p",
+        "  version: 1.0.0",
+        "scope:",
+        "  room_type: friends",
+        "sources:",
+        "  - rulebook/sources/fixture/x.md",
+        "",
+      ].join(String.fromCharCode(10)),
+      "utf8",
+    );
+    writeFileSync(
+      join(variantDir, "config.yaml"),
+      [
+        "- id: XS-C-A",
+        "  origin: variant",
+        "  name: A",
+        "  change_type: inherited",
+        "  base_rule_ref: HJ-C-A",
+        "  source: 1.1 配置表",
+        "",
+      ].join(String.fromCharCode(10)),
+      "utf8",
+    );
+
+    const first = okData<{ items: Array<Record<string, any>> }>(
+      getConfig({ variant: "fixture", id: "HJ-C-A" }, { root: dir }),
+    );
+    expect(first.items[0]!.value).toBe(1);
+
+    // 版本号不动，只改基座配置值
+    writeFileSync(configFile, baseConfig(2), "utf8");
+
+    const second = okData<{ items: Array<Record<string, any>> }>(
+      getConfig({ variant: "fixture", id: "HJ-C-A" }, { root: dir }),
+    );
+    expect(second.items[0]!.value).toBe(2);
+
+    rmSync(dir, { recursive: true, force: true });
   });
 });
 

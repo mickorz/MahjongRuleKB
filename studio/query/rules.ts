@@ -218,7 +218,21 @@ export function buildSnapshot(variant: string, options: QueryOptions = {}): Tool
     content_fingerprint: fingerprint,
   };
 
-  const cacheKey = [variant, context.version, fingerprint, context.base?.version ?? "-"].join("|");
+  // 变体快照依赖基座内容：先把基座快照建好，再算缓存 Key。
+  // 只用 base.version 不够——同版本下改了基座文件，变体会命中旧快照。
+  let base: RuleSetSnapshot | undefined;
+  if (resolved.kind === "variant") {
+    const baseResult = buildSnapshot(baseVariant, options);
+    if (!baseResult.ok) return baseResult;
+    base = baseResult.data;
+  }
+
+  const cacheKey = [
+    variant,
+    context.version,
+    fingerprint,
+    base ? base.context.content_fingerprint : "-",
+  ].join("|");
   if (!options.noCache) {
     const hit = snapshotCache.get(cacheKey);
     if (hit) return { ok: true, data: hit, context: hit.context, citations: [] };
@@ -271,11 +285,7 @@ export function buildSnapshot(variant: string, options: QueryOptions = {}): Tool
   }
 
   const snapshot: RuleSetSnapshot = { context, rules, configs, unresolved, unresolvedByCard, variantsByBase };
-
-  if (resolved.kind === "variant") {
-    const base = buildSnapshot(baseVariant, options);
-    if (base.ok) snapshot.base = base.data;
-  }
+  if (base) snapshot.base = base;
 
   if (!options.noCache) snapshotCache.set(cacheKey, snapshot);
   return { ok: true, data: snapshot, context, citations: [] };

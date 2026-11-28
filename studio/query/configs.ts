@@ -32,8 +32,12 @@ export const getConfigInputSchema = z
     id: z.string().regex(configIdPattern).optional(),
     /** 名称 / 描述 / ID 关键词 */
     query: z.string().trim().min(1).max(60).optional(),
-    /** 是否包含"变体没改、沿用基座"的条目，默认包含 */
-    include_inherited: z.boolean().default(true),
+    /**
+     * 是否包含「只有基座定义、变体没有对应配置记录」的基座回退项，默认包含。
+     * 注意：变体自己声明为 inherited 的条目（如 XS-C-CAISHEN）不算回退项，
+     * 它带有变体侧的 disputed / release_blocker / candidates，任何情况下都保留。
+     */
+    include_base_fallback: z.boolean().default(true),
   })
   .strict()
   .refine((v) => Boolean(v.id || v.query), {
@@ -193,7 +197,8 @@ export function getConfig(
   const view = effectiveConfigs(snapshot, root);
   let items = [...view.values()];
 
-  if (!input.include_inherited) {
+  if (!input.include_base_fallback) {
+    // 只保留变体侧有记录的条目（含 inherited），丢掉纯基座回退项
     items = items.filter((item) => item.origin === "variant");
   }
 
