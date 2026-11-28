@@ -180,3 +180,22 @@ describe("6) 小节切片", () => {
     expect(typeof sliced.text).toBe("string");
   });
 });
+
+describe("7) 走错工具时指路（不白烧预算）", () => {
+  it("rule_id 传配置 ID → invalid_params + suggest get_config", () => {
+    const res = readEvidence({ variant: "xiaoshan", rule_id: "XS-C-CAISHEN" }, { root: ROOT });
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.error.code).toBe("invalid_params");
+    expect(String(res.error.hint)).toContain("get_config");
+    expect(JSON.stringify(res.error.details)).toContain("get_config");
+  });
+
+  it("rule_id 传未决项 ID → invalid_params + suggest list_unresolved", () => {
+    const res = readEvidence({ variant: "xiaoshan", rule_id: "XS-U-001" }, { root: ROOT });
+    expect(res.ok).toBe(false);
+    if (res.ok) return;
+    expect(res.error.code).toBe("invalid_params");
+    expect(String(res.error.hint)).toContain("list_unresolved");
+  });
+});

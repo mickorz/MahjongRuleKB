@@ -12,6 +12,7 @@ import { posix } from "node:path";
 import { z } from "zod";
 
 import { ruleIdPattern } from "../../schemas/rule.ts";
+import { configIdPattern } from "../../schemas/config.ts";
 import { PATHS } from "../../compiler/paths.ts";
 import { buildSnapshot, classifyEvidence, type QueryOptions, type RuleSetSnapshot } from "./rules.ts";
 import { invalidParams, type ToolResult } from "./types.ts";
@@ -23,8 +24,8 @@ const SOURCES_PREFIX = `${PATHS.sourcesDir}/`;
 export const readEvidenceInputSchema = z
   .object({
     variant: z.string(),
-    /** 从这张卡的已登记证据里选一条 */
-    rule_id: z.string().regex(ruleIdPattern).optional(),
+    /** 从这张卡的已登记证据里选一条（先宽松收，函数内再分类指路） */
+    rule_id: z.string().min(1).max(48).optional(),
     /** 直接给 `path#section`（必须命中已登记证据） */
     ref: z.string().min(1).optional(),
     /** rule_id 有多条证据时选第几条，默认 0 */
@@ -193,6 +194,44 @@ export function readEvidence(
   let target: RegisteredEvidence | undefined;
   if (input.rule_id) {
     const id = input.rule_id.toUpperCase();
+
+    // 走错工具：配置没有可读的源文证据（配置的 source 多是人写的标签）
+    if (configIdPattern.test(id)) {
+      return {
+        ok: false,
+        error: {
+          code: "invalid_params",
+          message: `${input.rule_id} 是配置项，配置没有可读取的源文证据`,
+          hint: "配置值请用 get_config；证据只能从规则卡取（rule_id）",
+          details: { suggest: { tool: "get_config", args: { variant: input.variant, id: input.rule_id } } },
+        },
+        context: snapshot.context,
+      };
+    }
+    if (!ruleIdPattern.test(id) && !/^(HJ|XS)-U-\d{3}$/.test(id)) {
+      return {
+        ok: false,
+        error: {
+          code: "invalid_params",
+          message: `规则 ID 格式不合法：${input.rule_id}`,
+          hint: "规则 ID 形如 XS-R-TUODI；配置用 get_config，未决项用 list_unresolved",
+        },
+        context: snapshot.context,
+      };
+    }
+    // 走错工具：未决项 ID
+    if (/^(HJ|XS)-U-\d{3}$/.test(id)) {
+      return {
+        ok: false,
+        error: {
+          code: "invalid_params",
+          message: `${input.rule_id} 是未决项，不是规则卡`,
+          hint: "未决项请用 list_unresolved；要读证据请改用它 card_ref 指向的卡 ID",
+          details: { suggest: { tool: "list_unresolved", args: { variant: input.variant } } },
+        },
+        context: snapshot.context,
+      };
+    }
     const record = snapshot.rules.get(id) ?? snapshot.base?.rules.get(id);
     if (!record) {
       return {
