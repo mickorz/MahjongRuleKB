@@ -268,8 +268,9 @@ ${items}`;
 <meta http-equiv="cache-control" content="no-store" />
 <title>卡片形态总览 · 策划工作台</title>
 ${fontLink}
+<style>${baseStyles()}</style>
 <style>
-  /* baseStyles 给工作台写了外壳不滚，这里是普通文档页，只覆盖这一条 */
+  /* baseStyles 给工作台写了外壳不滚，这里是普通文档页，必须覆盖回来 */
   html, body { height: auto; overflow: auto; }
 
   body { background: #f6f3ec; margin: 0; padding: 40px 56px 90px; font-family: system-ui, -apple-system, "Noto Sans SC", sans-serif; }
@@ -292,49 +293,10 @@ ${fontLink}
   .g-cls summary { cursor: pointer; font-size: 11.5px; color: #8d8574; }
   .g-cls code { display: block; margin-top: 6px; font-size: 11.5px; color: #6b6558; background: #f1ece0; padding: 8px 10px; border-radius: 6px; line-height: 1.7; word-break: break-all; }
   .g-preview { border: 1px dashed #d9d3c4; border-radius: 10px; padding: 18px; background: #fffdf8; }
+  /* 共享样式（baseStyles）给 h1/h2 设了衬线体与吸顶，这里要还原成原站的普通文档流 */
+  .g-head h1, .g-family { font-family: inherit; font-weight: 700; }
+  .g-family { position: static; background: none; }
   .g-preview > * { margin-top: 0 !important; }
-</style>
-<style>
-  /* baseStyles 是为工作台写的「外壳不滚」，gallery 是普通文档页，必须覆盖回来 */
-  html, body { height: auto; overflow: auto; }
-  body {
-    background: var(--paper-2); margin: 0; padding: 36px 48px 120px;
-    font: 13px/1.7 var(--sans); color: var(--ink);
-  }
-  .g-head h1 { font-family: var(--serif); font-size: 30px; font-weight: 600; margin: 0 0 10px; color: var(--ink); }
-  .g-head p { color: var(--ink-2); margin: 0 0 22px; font-size: 13px; line-height: 1.8; max-width: 860px; }
-  .g-head code { font-family: var(--mono); font-size: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
-  .g-nav { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 30px; }
-  .g-nav a {
-    font-size: 12.5px; padding: 6px 12px; border: 1px solid var(--line); border-radius: 999px;
-    color: var(--ink-2); text-decoration: none; background: var(--card);
-  }
-  .g-nav a:hover { border-color: var(--gold-deep); color: var(--gold-deep); }
-  .g-nav b { color: var(--gold-deep); font-weight: 600; }
-  .g-family {
-    font-family: var(--serif); font-size: 18px; font-weight: 600; color: var(--ink);
-    margin: 40px 0 6px; padding-bottom: 10px; border-bottom: 2px solid var(--gold-soft);
-    scroll-margin-top: 20px;
-  }
-  .g-count { font-family: var(--sans); font-size: 11.5px; color: var(--gold-deep); margin-left: 8px; font-weight: 500; }
-  .g-family em { display: block; font-family: var(--sans); font-size: 12px; color: var(--ink-3); font-style: normal; margin-top: 6px; font-weight: 400; }
-  .g-item { margin: 20px 0 0; }
-  .g-meta { display: flex; align-items: center; gap: 9px; font-size: 12.5px; color: var(--ink-2); margin-bottom: 8px; flex-wrap: wrap; }
-  .g-name { font-weight: 600; color: var(--ink); }
-  .g-tag { background: var(--sage-wash); color: var(--sage); padding: 2px 8px; border-radius: 4px; font-size: 11.5px; }
-  .g-screen { margin-left: auto; color: var(--ink-3); font-size: 11.5px; }
-  .g-cls { margin-bottom: 10px; }
-  .g-cls summary { cursor: pointer; font-size: 11.5px; color: var(--ink-3); }
-  .g-cls code {
-    display: block; margin-top: 6px; font-family: var(--mono); font-size: 11.5px; color: var(--ink-2);
-    background: var(--card); border: 1px solid var(--line); padding: 8px 10px; border-radius: 6px;
-    line-height: 1.7; word-break: break-all;
-  }
-  .g-preview {
-    border: 1px dashed var(--line); border-radius: 10px; padding: 18px;
-    background: var(--paper); max-width: 900px;
-  }
-  .g-preview > * + * { margin-top: 8px; }
 </style>
 </head>
 <body>
