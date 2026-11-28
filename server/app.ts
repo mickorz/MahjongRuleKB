@@ -18,6 +18,7 @@ import { applyDocumentProposal } from "../studio/transaction/apply.ts";
 import { markReviewed, readReviewFile, reviewSummary } from "../studio/review/store.ts";
 import { listRevisions, revisionDiff, revisionOverridesBackup } from "./revisions.ts";
 import { allRefIds, resolveNames } from "./ref-names.ts";
+import { askAssistant, AssistantUnavailable } from "./assistant.ts";
 
 const variantPattern = /^[a-z][a-z0-9-]*$/;
 
@@ -367,6 +368,7 @@ async function handleWrite(req: IncomingMessage, res: ServerResponse, ctx: Write
   if (ctx.url.pathname === "/api/apply") return applyBatch(res, ctx.kbRoot, variant, body);
   if (ctx.url.pathname === "/api/review") return writeReview(res, ctx.kbRoot, variant, body);
   if (ctx.url.pathname === "/api/restore") return restoreRevision(res, ctx.kbRoot, variant, body);
+  if (ctx.url.pathname === "/api/assistant") return assistantReply(res, variant, body);
   return json(res, 404, { error: "not_found" });
 }
 
@@ -508,6 +510,30 @@ function nextId(kbRoot: string, relDir: string, prefix: string): string {
     : [];
   const next = (used.length > 0 ? Math.max(...used) : 0) + 1;
   return prefix + String(next).padStart(3, "0");
+}
+
+/** POST /api/assistant：把对话转发给已配置模型；只读上下文，不写任何文件 */
+function assistantReply(res: ServerResponse, variant: string, body: Record<string, unknown>): void {
+  const turns = Array.isArray(body.messages) ? body.messages : [];
+  const messages = turns
+    .filter((m): m is { role: string; content: string } =>
+      typeof m === "object" && m !== null &&
+      (((m as Record<string, unknown>).role === "user") || ((m as Record<string, unknown>).role === "assistant")) &&
+      typeof (m as Record<string, unknown>).content === "string")
+    .map((m) => ({ role: m.role as "user" | "assistant", content: m.content.slice(0, 4000) }));
+  if (messages.length === 0) return json(res, 400, { error: "no_messages" });
+
+  const title = typeof body.title === "string" ? body.title : undefined;
+  const excerpt = typeof body.excerpt === "string" ? body.excerpt.slice(0, 6000) : undefined;
+
+  askAssistant({ messages, context: { ...(title ? { title } : {}), ...(excerpt ? { excerpt } : {}) } })
+    .then((reply) => json(res, 200, { ...reply, variant }))
+    .catch((e: Error) => {
+      if (e instanceof AssistantUnavailable) {
+        return json(res, 503, { error: "assistant_unavailable", message: e.message });
+      }
+      return json(res, 502, { error: "assistant_failed", message: e.message });
+    });
 }
 
 /** POST /api/review：写一条审查记录（actor=server） */
