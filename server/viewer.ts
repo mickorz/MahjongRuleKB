@@ -63,7 +63,9 @@ ${fontLink}
   @keyframes cshim { to { background-position: -200% 0; } }
   @keyframes cblink { 0%, 100% { opacity: .3; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.1); } }
   @keyframes cspin { to { transform: rotate(360deg); } }
-  @keyframes asstWindowIn { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+  @keyframes asstWindowIn { from { opacity: .75; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  @keyframes asstSuggestionIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes asstThinking { 0%, 70%, 100% { opacity: .3; transform: translateY(1px); } 35% { opacity: 1; transform: translateY(-2px); } }
   @keyframes rgPop { from { transform: translateY(26px) scale(.96); } to { transform: none; } }
   html, body { height: 100%; margin: 0; overflow: hidden; }
   body {
@@ -347,59 +349,113 @@ ${fontLink}
   .c-content-action svg { flex: none; }
   .cr-history-trigger { margin-left: auto; white-space: nowrap; }
 
-  /* 创作助手：悬浮按钮（原站 .asst-launch） */
+  /* 创作助手（对齐参考站新版 .asst-launch / .asst-drawer / .asst-heading ...） */
   .asst-launch {
     position: fixed; right: 22px; bottom: 84px; z-index: 720;
     width: 48px; height: 48px; display: grid; place-items: center; padding: 0;
     border: 1px solid color-mix(in srgb, var(--gold-deep) 35%, var(--line));
     border-radius: 50%; background: var(--ink); color: var(--paper);
     box-shadow: 0 10px 28px var(--shadow); cursor: pointer;
-    transition: transform .18s var(--ease), background .18s var(--ease);
+    transition: background .18s var(--ease), transform .18s var(--ease);
   }
-  .asst-launch:hover { transform: translateY(-2px); background: var(--gold-deep); }
+  .asst-launch:hover { background: var(--gold-deep); transform: translateY(-2px); }
   .asst-launch[aria-expanded="true"] { background: var(--gold-deep); }
+  .asst-launch:focus-visible { outline: 2px solid var(--gold-deep); outline-offset: 3px; }
 
-  /* 助手窗口（原站 .asst-drawer） */
+  /* 浮窗模式：贴右满高（参考站 body:has(.asst-drawer--floating) 的几何） */
   .asst-drawer {
-    position: fixed; right: 22px; bottom: 144px; z-index: 721;
-    width: 396px; min-height: 320px; max-height: min(620px, calc(100vh - 180px));
+    position: fixed; z-index: 721; right: 16px; top: 16px;
+    width: 480px; height: calc(100vh - 32px);
     display: grid; grid-template-rows: auto minmax(0, 1fr) auto;
     overflow: hidden; border: 1px solid var(--line); border-radius: 12px;
     background: var(--paper); box-shadow: 0 16px 44px var(--shadow);
     animation: asstWindowIn .2s var(--ease-out) both;
   }
   .asst-drawer[hidden] { display: none; }
-  .asst-drawer-head {
-    display: flex; align-items: center; gap: 10px; padding: 12px 14px;
-    border-bottom: 1px solid var(--line); background: var(--paper-2);
+
+  .asst-heading {
+    display: flex; align-items: flex-start; justify-content: space-between; gap: 16px;
+    padding: 20px 22px 16px; border-bottom: 1px solid var(--line);
   }
-  .asst-drawer-head .ad {
-    width: 28px; height: 28px; border-radius: 7px; flex: none;
-    background: var(--ink); color: var(--paper); display: grid; place-items: center;
+  .asst-heading h2 {
+    margin: 0; font-family: var(--serif); font-size: 22px; font-weight: 650; color: var(--ink);
+    line-height: 1.25;
   }
-  .asst-drawer-head .ht { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
-  .asst-drawer-head .ht b { font-family: var(--serif); font-size: 14px; font-weight: 600; }
-  .asst-drawer-head .ht i { font-style: normal; font-size: 11px; color: var(--ink-3); }
-  .asst-drawer-body {
-    overflow-y: auto; padding: 14px; display: flex; flex-direction: column; gap: 10px;
-    font-size: 12.5px; line-height: 1.7; color: var(--ink);
+  .asst-heading p { max-width: 700px; margin: 7px 0 0; color: var(--ink-2); font-size: 12px; line-height: 1.7; }
+
+  .asst-thread {
+    min-height: 0; overflow: auto; padding: 20px 18px;
+    display: flex; flex-direction: column; gap: 2px;
   }
-  .asst-msg { padding: 9px 11px; border-radius: 8px; white-space: pre-wrap; word-break: break-word; }
-  .asst-msg.user { align-self: flex-end; max-width: 86%; background: var(--ink); color: var(--paper); }
-  .asst-msg.assistant { background: var(--card); border: 1px solid var(--line); }
-  .asst-msg.error { background: var(--terra-wash, oklch(.95 .04 40)); border: 1px solid color-mix(in srgb, var(--terra) 30%, transparent); color: var(--terra); }
-  .asst-msg .who { display: block; font: 600 10.5px/1.4 var(--sans); color: var(--ink-3); margin-bottom: 3px; }
-  .asst-empty { color: var(--ink-3); font-size: 12px; text-align: center; padding: 24px 8px; }
-  .asst-drawer-foot {
-    display: flex; align-items: flex-end; gap: 8px; padding: 10px 12px 12px;
-    border-top: 1px solid var(--line); background: var(--paper-2);
+
+  /* 空态：衬线大字 + 金线（原站 .asst-empty / ::before） */
+  .asst-empty-block { width: 100%; max-width: 380px; margin: clamp(28px, 8vh, 64px) auto 28px; }
+  .asst-empty {
+    margin: 0 0 22px; color: var(--ink); font: 600 24px/1.45 var(--serif); letter-spacing: -.015em;
+    animation: asstSuggestionIn .24s var(--ease-out) both;
   }
-  .asst-drawer-foot textarea {
-    flex: 1 1 auto; min-height: 38px; max-height: 120px; resize: none;
-    border: 1px solid var(--line); border-radius: 8px; background: var(--card);
-    padding: 9px 11px; font: 12.5px/1.5 var(--sans); color: var(--ink); outline: none;
+  .asst-empty::before {
+    content: ""; display: block; width: 28px; height: 2px; margin-bottom: 16px;
+    background: var(--gold-deep); border-radius: 1px;
   }
-  .asst-drawer-foot textarea:focus { border-color: var(--gold-deep); }
+  .asst-examples { display: flex; flex-direction: column; gap: 8px; }
+  .asst-example {
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+    min-width: 0; min-height: 46px; padding: 12px 14px; text-align: left;
+    border: 1px solid var(--line); border-radius: 7px; background: var(--card); color: var(--ink-2);
+    font: 12.5px/1.5 var(--sans); cursor: pointer;
+    animation: asstSuggestionIn .24s var(--ease-out) both;
+    transition: background .15s var(--ease), border-color .15s var(--ease), color .15s var(--ease);
+  }
+  .asst-example:nth-child(1) { animation-delay: 0s; }
+  .asst-example:nth-child(2) { animation-delay: .04s; }
+  .asst-example:nth-child(3) { animation-delay: .08s; }
+  .asst-example:hover { background: var(--gold-wash); border-color: var(--gold-soft); color: var(--ink); }
+  .asst-example__arrow { flex: none; color: var(--ink-3); transition: transform .15s var(--ease-out), color .15s var(--ease-out); }
+  .asst-example:hover .asst-example__arrow { color: var(--gold-deep); transform: translateX(3px); }
+
+  /* 消息：原站不用气泡，直接文本块；用户侧右对齐 */
+  .asst-message { width: fit-content; max-width: 100%; margin-bottom: 14px; }
+  .asst-message strong { display: block; font: 600 11px/1.6 var(--sans); color: var(--ink-3); margin-bottom: 2px; }
+  .asst-message p { margin: 0; font: 13px/1.7 var(--sans); color: var(--ink); white-space: pre-wrap; word-break: break-word; }
+  .asst-message--user { max-width: min(76%, 30rem); margin-left: auto; }
+  .asst-message--user strong { text-align: right; }
+  .asst-message--user p { font-size: 13px; line-height: 1.7; color: var(--ink-2); }
+  .asst-message--error p { color: var(--terra); }
+
+  /* 思维中（原站 .asst-thinking + 三点动画） */
+  .asst-thinking { display: flex; align-items: center; gap: 7px; margin: 14px 0; color: var(--ink-2); font-size: 12px; }
+  .asst-thinking__dots { display: inline-flex; align-items: center; gap: 3px; height: 12px; }
+  .asst-thinking__dots i {
+    width: 4px; height: 4px; border-radius: 50%; background: currentColor;
+    animation: asstThinking 1.15s var(--ease) infinite;
+  }
+  .asst-thinking__dots i:nth-child(2) { animation-delay: .14s; }
+  .asst-thinking__dots i:nth-child(3) { animation-delay: .28s; }
+
+  /* 输入区（原站 .asst-compose / .asst-compose-input / .asst-send） */
+  .asst-compose {
+    display: flex; align-items: flex-end; gap: 8px;
+    padding: 14px 18px 16px; border-top: 1px solid var(--line); background: var(--paper);
+  }
+  .asst-compose-input {
+    flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--card); overflow: hidden;
+  }
+  .asst-compose-input:focus-within { outline: 2px solid color-mix(in srgb, var(--gold-deep) 25%, transparent); border-color: var(--gold-deep); }
+  .asst-compose textarea {
+    display: block; width: 100%; box-sizing: border-box; border: 0; background: transparent;
+    min-height: 72px; max-height: 180px; resize: vertical; padding: 11px 13px;
+    color: var(--ink); font: 13.5px/1.6 var(--sans); outline: none;
+  }
+  .asst-send {
+    flex: 0 0 auto; width: 38px; height: 38px; display: grid; place-items: center; padding: 0;
+    border: 1px solid var(--ink); border-radius: 7px; background: var(--ink); color: var(--paper);
+    cursor: pointer; transition: opacity .15s var(--ease), background .15s var(--ease);
+  }
+  .asst-send:hover:not(:disabled) { background: var(--gold-deep); border-color: var(--gold-deep); }
+  .asst-send:disabled { cursor: not-allowed; opacity: .45; }
+  .asst-send:focus-visible { outline: 2px solid var(--gold-deep); outline-offset: 3px; }
 
   /* 修订记录抽屉（原站 .cr-drawer / .cr-revision-*） */
   .cr-drawer-mask {
@@ -560,16 +616,22 @@ ${fontLink}
 <button type="button" class="asst-launch" id="asst-launch" aria-label="创作助手" title="创作助手" aria-expanded="false">
   <svg width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z M19 14l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"></path></svg>
 </button>
-<aside class="asst-drawer" id="asst-drawer" hidden role="dialog" aria-label="创作助手">
-  <div class="asst-drawer-head">
-    <span class="ad"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z M19 14l.7 2 2 .7-2 .7-.7 2-.7-2-2-.7 2-.7z"></path></svg></span>
-    <div class="ht"><b>创作助手</b><i>基于当前玩法文档回答，只能读不能改</i></div>
+<aside class="asst-drawer" id="asst-drawer" hidden role="dialog" aria-modal="false" aria-labelledby="asst-title">
+  <header class="asst-heading">
+    <div>
+      <h2 id="asst-title">创作助手</h2>
+      <p>基于当前玩法的规则文档回答；只能读，不会改动任何内容。</p>
+    </div>
     <button class="edt-x" id="asst-close" title="关闭" type="button">×</button>
-  </div>
-  <div class="asst-drawer-body" id="asst-body"></div>
-  <div class="asst-drawer-foot">
-    <textarea id="asst-input" rows="1" placeholder="问点什么，例如「拖底怎么判」"></textarea>
-    <button class="c-btn primary" id="asst-send" type="button">发送</button>
+  </header>
+  <div class="asst-thread" id="asst-thread"></div>
+  <div class="asst-compose">
+    <div class="asst-compose-input">
+      <textarea id="asst-input" rows="2" placeholder="问点什么，回车发送"></textarea>
+    </div>
+    <button class="asst-send" id="asst-send" type="button" title="发送" aria-label="发送">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
+    </button>
   </div>
 </aside>
 <div class="c-toast" id="toast" hidden role="status"></div>
@@ -730,27 +792,75 @@ const asst = { messages: [], busy: false };
 
 function asstEl(id) { return document.getElementById(id); }
 
+/** 空态示例：进来看得懂的起手问题（参考站 .asst-example 列表） */
+const ASST_EXAMPLES = [
+  "这个玩法和基座最大的差异在哪？",
+  "讲一下「拖底」的判定条件",
+  "哪些规则还没定下来？",
+];
+
 function asstRender() {
-  const body = asstEl("asst-body");
+  const thread = asstEl("asst-thread");
+  thread.innerHTML = "";
+
   if (asst.messages.length === 0) {
-    body.innerHTML = '<div class="asst-empty">问它与当前文档相关的问题。它只读文档，不会改动任何内容。</div>';
+    const block = document.createElement("div");
+    block.className = "asst-empty-block";
+    const h = document.createElement("h3");
+    h.className = "asst-empty";
+    h.textContent = "想从哪里开始？";
+    block.appendChild(h);
+    const list = document.createElement("div");
+    list.className = "asst-examples";
+    for (const text of ASST_EXAMPLES) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "asst-example";
+      const span = document.createElement("span");
+      span.textContent = text;
+      b.appendChild(span);
+      const arrow = document.createElement("span");
+      arrow.className = "asst-example__arrow";
+      arrow.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h13M13 6l6 6-6 6"></path></svg>';
+      b.appendChild(arrow);
+      b.onclick = () => { asstEl("asst-input").value = text; asstAsk(text); };
+      list.appendChild(b);
+    }
+    block.appendChild(list);
+    thread.appendChild(block);
     return;
   }
-  body.innerHTML = "";
+
   for (const m of asst.messages) {
-    const d = document.createElement("div");
-    d.className = "asst-msg " + m.role;
-    const who = document.createElement("span");
-    who.className = "who";
-    who.textContent = m.role === "user" ? "我" : "助手";
-    if (m.role !== "user") d.appendChild(who);
-    d.appendChild(document.createTextNode(m.content));
-    body.appendChild(d);
+    const art = document.createElement("article");
+    art.className = "asst-message asst-message--" + m.role;
+    const who = document.createElement("strong");
+    who.textContent = m.role === "user" ? "你" : "助手";
+    art.appendChild(who);
+    const p = document.createElement("p");
+    renderAsstText(p, m.content);
+    art.appendChild(p);
+    thread.appendChild(art);
   }
-  body.scrollTop = body.scrollHeight;
+
+  if (asst.busy) {
+    const think = document.createElement("div");
+    think.className = "asst-thinking";
+    think.setAttribute("role", "status");
+    const label = document.createElement("span");
+    label.textContent = "助手正在读文档";
+    think.appendChild(label);
+    const dots = document.createElement("span");
+    dots.className = "asst-thinking__dots";
+    dots.innerHTML = "<i></i><i></i><i></i>";
+    think.appendChild(dots);
+    thread.appendChild(think);
+  }
+
+  thread.scrollTop = thread.scrollHeight;
 }
 
-/** 文档上下文：标题 + 前若干段正文（够模型判断，又不至于太长） */
+/** 文档上下文：整篇正文（上限 60000 字，超出截断并注明） */
 function asstContext() {
   const NL = String.fromCharCode(10);
   if (!currentDoc) return { title: "", excerpt: "" };
@@ -758,10 +868,23 @@ function asstContext() {
   const parts = [];
   for (const block of currentDoc.blocks) {
     parts.push("## " + block.title);
-    for (const seg of block.segments.slice(0, 6)) parts.push(seg.text);
-    if (parts.join(NL).length > 5000) break;
+    for (const seg of block.segments) parts.push(seg.text);
   }
-  return { title, excerpt: parts.join(NL).slice(0, 5000) };
+  const full = parts.join(NL);
+  // 单篇文档约 2.6 万字，整篇给模型（远低于上下文上限），不要再按字数粗暴截断
+  const LIMIT = 60000;
+  return { title, excerpt: full.length > LIMIT ? full.slice(0, LIMIT) + NL + "（后文已截断）" : full };
+}
+
+/** 极简 markdown：粗体、行内代码、换行（不引入第三方渲染器） */
+function renderAsstText(p, text) {
+  const NL = String.fromCharCode(10);
+  const TICK = String.fromCharCode(96);
+  const esc = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const BS = String.fromCharCode(92);
+  const bold = new RegExp(BS + "*" + BS + "*([^*]+)" + BS + "*" + BS + "*", "g");
+  const code = new RegExp(TICK + "([^" + TICK + "]+)" + TICK, "g");
+  p.innerHTML = esc.replace(bold, "<strong>$1</strong>").replace(code, "<code>$1</code>").split(NL).join("<br>");
 }
 
 async function asstAsk(text) {
@@ -771,9 +894,11 @@ async function asstAsk(text) {
   asstRender();
   asst.busy = true;
   const send = asstEl("asst-send");
+  const sendHtml = send.innerHTML;
   send.disabled = true;
   send.innerHTML = '<span class="c-spin"></span>';
   asstEl("asst-input").value = "";
+  asstRender();
   try {
     const ctx = asstContext();
     const res = await fetch("/api/assistant", {
@@ -792,7 +917,7 @@ async function asstAsk(text) {
   } finally {
     asst.busy = false;
     send.disabled = false;
-    send.textContent = "发送";
+    send.innerHTML = sendHtml;
     asstRender();
   }
 }

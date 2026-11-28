@@ -512,7 +512,7 @@ function assistantReply(res: ServerResponse, variant: string, body: Record<strin
   if (messages.length === 0) return json(res, 400, { error: "no_messages" });
 
   const title = typeof body.title === "string" ? body.title : undefined;
-  const excerpt = typeof body.excerpt === "string" ? body.excerpt.slice(0, 6000) : undefined;
+  const excerpt = typeof body.excerpt === "string" ? body.excerpt.slice(0, 60000) : undefined;
 
   askAssistant({ messages, context: { ...(title ? { title } : {}), ...(excerpt ? { excerpt } : {}) } })
     .then((reply) => json(res, 200, { ...reply, variant }))
