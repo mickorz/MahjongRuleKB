@@ -126,6 +126,45 @@ export const ruleDetailSchema = ruleCoreSchema.extend({
 });
 export type RuleDetail = z.infer<typeof ruleDetailSchema>;
 
+/* ---------------- 配置项 ---------------- */
+
+/**
+ * 配置视图（合并了基座继承关系）。
+ * 变体未覆盖的配置沿用基座值；继承项不填 value，值来自基座。
+ */
+export const configItemSchema = z.object({
+  /** 变体自有条目用变体 ID（XS-C-*），基座条目用基座 ID（HJ-C-*） */
+  id: z.string(),
+  /** 统一身份键：有 base_rule_ref 时取基座 ID，否则取自身 ID */
+  canonical_id: z.string(),
+  name: z.string(),
+  description: z.string().optional(),
+  /** 生效值（继承项取自基座） */
+  value: z.unknown().optional(),
+  /** 便于阅读的呈现：布尔 → 已启用/已关闭 */
+  value_display: z.string(),
+  unit: z.string().optional(),
+  status: z.enum(ruleStatuses),
+  release_blocker: z.boolean(),
+  origin: z.enum(["base", "variant"]),
+  change_type: z.enum(changeTypes).optional(),
+  /** 变体条目指向的基座配置 */
+  base_rule_ref: z.string().optional(),
+  /** 继承来源（变体视图里所有沿用基座的条目都带） */
+  inherited_from: z.object({ ruleset_id: z.string(), version: z.string() }).optional(),
+  /** 基座侧的原值，仅变体改写时给出，便于对照 */
+  base_value: z.unknown().optional(),
+  /** 同一配置的候选值（争议项） */
+  candidates: z.unknown().array().optional(),
+  resolution: z.string().optional(),
+  /** 来源可定位 → source_ref；否则只给 label（配置的 source 常是「1.1 配置表」这类标签） */
+  source_ref: z.object({ file: z.string(), line: z.number().int().positive() }).optional(),
+  source_label: z.string(),
+  source_resolvable: z.boolean(),
+  unresolved_refs: z.string().array(),
+});
+export type ConfigItemView = z.infer<typeof configItemSchema>;
+
 /* ---------------- 统一返回壳 ---------------- */
 
 export const queryErrorCodes = [
