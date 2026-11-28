@@ -1,7 +1,17 @@
 # Rule Copilot 架构设计（MahjongRuleKB 规则策划工作入口）
 
-- 文档版本：v1.0
+- 文档版本：v1.1
 - 日期：2026-11-28
+- 修订记录：
+  - **v1.1（2026-11-28，按《2026-11-28-RuleCopilot架构设计评审意见》）**
+    1. P1 工具从 5 个增至 **6 个**，新增 `get_config`；`list_dependencies` 明确推迟到 P2（§4.2）
+    2. `compare_rules` 改为显式 `CompareScope`（ids / keyword / all_changes），不再用"空 ids 默认全量"；比较按 `base_rule_ref` 建立对应；关键词比较默认上限 20 组 + `truncated`（§4.2）
+    3. 工具调用限制改为**全局预算**：每次用户请求 ≤6 次、单工具更低、Runtime ≤4 轮、单次 5s 超时（§4.3）
+    4. P0 数值校验从 Set 改为**多重集合 + 数字 Token 分类 + 中文数字规范化**（§8 P0-2）
+    5. 降级方案的 grounding 改为**逐条结论结构化引用**，不再以"整段出现一个合法 ID"为准（§4.4）
+    6. `ruleCardProposalSchema` 的 `target` **移除 `file_path`**，路径仅由服务端 Path Registry 解析并在内部保存（§6.3）
+    7. 新增 §8.1「P0 / P1 双线并行与集成门禁」，替代原先"P0 全部完成后开工"的顺序
+  - v1.0（2026-11-28）：初版
 - 基线代码：`main` @ `42e30af`（实际核查点为 `14a4299` / `fbd4caf` 之后的 HEAD）
 - 定位：**设计文档**。本文件只定义架构与契约，不改动任何现有代码，也不替代执行计划。
 - 涉及代码基线：`server/assistant.ts`、`server/viewer.ts`、`server/app.ts`、`studio/pipeline/read-ruleset.ts`、`compiler/validator.ts`、`studio/contracts/proposal.ts`、`studio/change/manager.ts`
@@ -11,7 +21,7 @@
 ## 0. 结论摘要
 
 1. 当前助手是「把需求文档喂给模型 → 拿回一段文字」的**问答壳**，它与知识库之间没有任何结构化通道。
-2. 因此最先要建的不是"更强的 Agent"，而是**只读的 Rule Query Service**（规则检索 / 读取 / 比较 / 证据 / 未决项），并让模型通过**工具白名单**调用它。
+2. 因此最先要建的不是"更强的 Agent"，而是**只读的 Rule Query Service**（规则检索 / 读取 / 比较 / 配置查询 / 证据 / 未决项，共 6 个工具），并让模型通过**工具白名单**调用它。
 3. 规则写入必须分三条通道（表达层 / 规则事实 / 基座），且**AI 永不直接写规则文件**：AI 只产出 Proposal，Diff 与审批在工作台，正确性由 Compiler 保证。
 4. 在写任何 Agent 代码之前，先修 5 个已经确诊的缺陷（P0），否则后续能力会建在错误的数据通道上。
 5. 先做 P1（只读查询）并以「每个结论可追溯到真实规则」为验收标准，再考虑 P2（规则修改）。
@@ -127,7 +137,7 @@
 studio/query/
   index.ts        # 对外门面：QueryService，统一 variant → RuleSetView 缓存
   rules.ts        # searchRules / getRule
-  configs.ts      # getConfig / listConfigs
+  configs.ts      # getConfig（P1 六工具之一）
   sources.ts      # readEvidence（按 rulebook/sources/**#anchor 读取片段）
   compare.ts      # compareRules（跨 variant 的结构化差异）
   unresolved.ts   # listUnresolved（读 variants/*/unresolved.yaml）
@@ -142,7 +152,11 @@ studio/query/
 - `variants/<v>/unresolved.yaml` → 未决项（当前 `XS-U-001/002/003` 三个 `release_blocker`）
 - `documents/<v>/document.json` → 段落与规则的映射（`segment_id ↔ rule_refs`），用于"这条结论出自哪一段"
 
-### 4.2 五个工具契约（P1 全部只读）
+### 4.2 六个工具契约（P1 全部只读）
+
+**工具清单（v1.1 定稿，6 个）**：`search_rules` / `get_rule` / `compare_rules` / `list_unresolved` / `get_config` / `read_evidence`。
+
+`list_dependencies` **不在 P1**：`get_rule` 已返回 `depends_on`，足以满足正向依赖读取；反向依赖（谁引用了这张卡）与修改影响分析属于 L3 审查，随 P2 的 Rule Validation 一起做，避免 P1 过早扩张。
 
 统一返回外壳（便于 UI 渲染与审计）：
 
@@ -201,30 +215,48 @@ output: {
 
 #### 3) `compare_rules`
 
+**必须显式声明比较范围**（v1.1 变更）：空参数不再默认全量，避免模型漏传 `ids` 就把整个规则集塞进上下文。
+
 ```ts
+type CompareScope =
+  | { kind: "ids"; ids: string[] }          // 指定规则
+  | { kind: "keyword"; query: string }      // 关键词发现后比较
+  | { kind: "all_changes" };                // 全量（显式授权，规模受限）
+
 input: {
-  base: string;            // 例如 "hangzhou"
-  variant: string;         // 例如 "xiaoshan"
-  ids?: string[];          // 指定规则；空则按 change_type=modified|added 全量
-  focus?: string;          // 关键词过滤（如 "财神"）
+  base: string;      // 例如 "hangzhou"
+  variant: string;   // 例如 "xiaoshan"
+  scope: CompareScope;
+  max_rows?: number; // 默认 20，上限 40；all_changes 强制 ≤20
 }
 output: {
-  summary: { modified: number; added: number; inherited_only_in_variant_missing?: number };
+  scope: CompareScope;
+  matched: number;        // 命中规则数（去重前）
+  truncated: boolean;     // 超过 max_rows 时为 true
+  summary: { modified: number; added: number; inherited_only?: number };
   rows: Array<{
+    /** 变体卡 ID（added 时无 base 对应） */
     id: string;
     change_type: "modified" | "added" | "inherited";
-    base?: { name: string; slots: Slot[]; status: string };
-    variant?: { name: string; slots: Slot[]; status: string };
-    /** 槽位级差异，而不是整段文本差异 */
+    /** 对应关系由 base_rule_ref 建立，不按同名 ID 猜 */
+    base_rule_ref?: string;
+    base?: { name: string; slots: Slot[]; status: string; version: string };
+    variant?: { name: string; slots: Slot[]; status: string; version: string };
     slot_diff: Array<{ slot: string; base?: string; variant?: string }>;
-    unresolved_refs: string[];   // 该规则被哪些未决项阻塞
+    unresolved_refs: string[];     // 该卡被哪些未决项阻塞
     evidence: { base: string[]; variant: string[] };
   }>;
-  caveats: string[];   // 如 "XS-C-CAISHEN 存在 disputed 项 XS-U-001，AI 不裁决"
+  caveats: string[];   // 例如 "XS-C-CAISHEN 命中 disputed 项 XS-U-001，AI 不裁决"
 }
 ```
 
-关键约束：比较**必须**把 `status` / `release_blocker` / `unresolved_refs` 原样带出，且 `caveats` 里显式提示"存在未裁决内容"。**AI 不得自行裁决冲突**——这是设计红线（对应 `variants/xiaoshan/unresolved.yaml` 的既有规则：未决项只能由规则方裁决）。
+三条实现约束（评审确认）：
+
+1. **对应关系只能来自 `base_rule_ref`**。变体卡的 ID 与基座卡 ID 不同名（如 `XS-R-ZHUANGJIA-02` 对照 `HJ-R-LUNZHUANG`），按同名 ID 比较会直接把差异算错。
+2. **关键词比较先检索再比较**：`search_rules(base, keyword)` ∪ `search_rules(variant, keyword)` 得到候选，再用 `base_rule_ref` 配对，最后做槽位级 diff。
+3. **规模硬约束**：`max_rows` 默认 20；`all_changes` 固定 20；被截断时 `truncated: true`，并在 `caveats` 里写明"还有 N 组未返回，请缩小范围"。
+
+关键约束（沿用 v1.0）：比较**必须**原样带出 `status` / `release_blocker` / `unresolved_refs`，`caveats` 里显式提示"存在未裁决内容"，**AI 不得自行裁决冲突**。
 
 #### 4) `list_unresolved`
 
@@ -237,7 +269,33 @@ output: { total: number; items: Array<{
 
 `releasable` 直接来自 `documents/<v>/manifest.yaml`/规则集状态，不由模型判断。
 
-#### 5) `read_evidence`
+#### 5) `get_config`
+
+配置值不一定写进规则卡正文（底分、局数、财神、封顶、玩法开关等独立存放），没有这个工具，模型只能从规则卡里猜。
+
+```ts
+input: {
+  variant: string;
+  id?: string;      // 例如 "HJ-C-DIFEN"
+  query?: string;   // 例如 "底分"
+  // id 与 query 至少提供一个（服务端校验，二者都缺 → invalid_params）
+}
+output: { items: Array<{
+  id: string;
+  name: string;
+  value: unknown;          // 原值（布尔/数字/字符串/数组），不做字符串化
+  value_display: string;   // 便于阅读的呈现（如 "enabled" → "已启用"）
+  description?: string;
+  source?: string;         // 配置来源锚点
+  scope?: string;
+  status: string;          // confirmed / inferred / unresolved / disputed
+  release_blocker: boolean;
+}>; total: number; }
+```
+
+数据源：`rulebook/compiled/<variant>/config.yaml`（复用 `nameIndex` 已建立的加载路径），并保留基座链合并规则（派生规则集未覆盖的配置沿用基座）。
+
+#### 6) `read_evidence`
 
 ```ts
 input: {
@@ -259,14 +317,25 @@ interface ToolSpec<I, O> {
   params: ZodSchema<I>;         // 参数校验（服务端强制，模型输出不可信）
   capability: "read";           // P1 只有 read；P2 增加 propose
   run: (input: I, ctx: QueryContext) => Promise<ToolResult<O>>;
-  /** 单次会话内允许的最大调用次数，防死循环 */
-  maxCallsPerTurn?: number;     // 默认 6
+  /** 单工具在该请求内的上限（低于全局预算，用于压制"反复搜同一词"） */
+  maxCallsPerTool?: number;     // 默认 3；search_rules 2，read_evidence 4
 }
 ```
 
 - 注册表是**白名单数组**，没有动态发现、没有文件系统工具。
 - 所有参数经 Zod 校验；`variant` 只接受 `rulebook/compiled/` 下已存在的目录名。
 - 每次调用写入审计日志（`.rule-studio/assistant/<session>/tool-calls.jsonl`），字段：`ts / tool / args(脱敏) / ok / ms / citations`。
+
+**调用预算（v1.1：全局口径，不再"每工具各 6 次"）**
+
+| 限制 | 值 | 超限行为 |
+|---|---|---|
+| 单次用户请求的工具调用总数 | **6**（全局） | 返回 `tool_budget_exceeded`，Runtime 停止循环，直接让模型基于已有结果作答 |
+| 单工具调用次数 | ≤3（`search_rules` ≤2、`read_evidence` ≤4） | 该次调用返回错误，模型可见并可换策略 |
+| Runtime 轮数 | ≤4 | 第 4 轮后强制收口 |
+| 单次工具执行 | 5s 超时 | 返回 `tool_timeout` |
+
+预算判定在 Runtime 里做（不在工具内部），工具自身只管参数与数据。
 
 ### 4.4 Assistant Runtime（工具循环）
 
@@ -283,9 +352,31 @@ loop (max 4 rounds):
 ```
 
 降级方案（重要）：当前档位模型若不支持 `tool_calls`（例如部分 flash 模型），Runtime 走**服务端预检索**：
-先用确定性规则把用户问题映射到 `search_rules(query=问题关键词)`，把结果作为上下文注入，再让模型基于注入结果作答；回答里仍要求引用 `rule_id`，服务端在落 UI 前把"回答中出现的 ID"与"实际注入的 ID"求交，交集为空则标记 `ungrounded: true` 并在气泡上提示"未引用知识库"。
+先用确定性规则把用户问题映射到 `search_rules(query=问题关键词)` / `get_config(query=…)`，把结果作为上下文注入，再让模型基于注入结果作答。
 
-这条降级不是可选项——它保证能力不因模型差异而消失。
+**Grounding 判定（v1.1：逐条结论，不再整段放行）**
+
+模型必须按结构化格式输出结论与引用：
+
+```json
+{
+  "claims": [
+    { "text": "萧山二牢局不开放点炮", "refs": ["XS-R-HUPAI-01"], "kind": "rule" },
+    { "text": "萧山底分为 1", "refs": ["HJ-C-DIFEN"], "kind": "config" }
+  ]
+}
+```
+
+服务端逐条校验：
+
+1. `refs` 中每个 ID 必须出现在**本次请求实际注入/检索到的** ID 集合里，否则该条标 `invalid_ref`。
+2. `refs` 为空的实质性结论标 `unverified`（不阻断展示，但 UI 上明确标记）。
+3. 只有全部 claim 都通过校验的回答才算 `grounded`；**不允许因为回答里出现过一个合法 ID 就整段放行**。
+4. 校验结果随消息落 UI：`claims[]` 携带 `status: "ok" | "invalid_ref" | "unverified"`。
+
+这不能数学上证明模型没有误读，但能建立可靠的来源约束——每条结论要么有出处，要么被标为未验证。
+
+该降级不是可选项——它保证能力不因模型差异而消失。
 
 ### 4.5 会话管理（修 D5）
 
@@ -312,7 +403,8 @@ interface AssistantSession {
 
 ```ts
 type AssistantMessage =
-  | { kind: "text"; role: "user" | "assistant"; content: string; ungrounded?: boolean }
+  | { kind: "text"; role: "user" | "assistant"; content: string;
+      claims?: Array<{ text: string; refs: string[]; status: "ok" | "invalid_ref" | "unverified" }> }
   | { kind: "tool"; tool: string; args: Record<string, unknown>;
       status: "running" | "ok" | "error"; summary: string; citations: Citation[]; ms?: number }
   | { kind: "citation"; items: Citation[] }        // 规则引用卡（可点击）
@@ -329,6 +421,7 @@ type AssistantMessage =
 |---|---|---|
 | 工具执行卡 | 单行：`🔍 搜索规则 · 财神 → 4 条`（失败为 terra 色 + 原因） | 展开看完整参数与 citations |
 | 引用卡 | `财神` + 状态徽章（`.badge.warn` 用于 `disputed`）+ 规则集名 | 点击在中间栏定位该规则段落（复用 `scrollToSection`）/ 打开规则详情 |
+| 未验证标记 | 结论行尾小字「未验证」/「引用无效」（`--ink-3` / `--terra`） | hover 显示原因；不阻断阅读 |
 | 比较卡 | 左杭州 / 右萧山，槽位级并排；`disputed` 行标红 | 行可展开证据 |
 | Proposal 卡 | 复用已有 `.asst-action`（表达层）与新增 `.asst-proposal`（规则事实）：标题 + 目标 + Diff + 校验结果列表 + 应用/丢弃 | 应用仍走 `POST /api/apply` 或 `/api/proposal/apply` |
 
@@ -374,10 +467,9 @@ export const ruleCardProposalSchema = z.object({
   channel: z.enum(["rule-fact", "base"]),
   variant: z.string(),
   intent: z.enum(["add", "modify", "resolve-unresolved"]),
+  // v1.1：目标只表达"改哪条规则"，路径绝不进入契约输入
   target: z.object({
-    rule_id: z.string().optional(),        // modify / resolve
-    card_ref: z.string().optional(),       // unresolved 裁决目标
-    file_path: z.string(),                 // 必须由 registry 推导，客户端不可给
+    rule_id: z.string(),                   // 必填：服务端据此推导唯一路径
   }),
   base_revision: baseRevisionSchema,       // 规则集版本 + content_hash
   patch: z.object({
@@ -391,7 +483,11 @@ export const ruleCardProposalSchema = z.object({
 });
 ```
 
-要点：`file_path` 由服务端从 `rule_id + variant` 推导（与现有 `paths/registry.ts` 一致），客户端不得提交路径——这条与当前文档提案的安全模型完全同构。
+要点（v1.1 收紧）：
+
+- **`file_path` 不是模型输入，也不是客户端输入**。服务端以 `variant + rule_id` 走 `studio/paths/registry.ts` 解析出唯一路径；解析失败（未注册产物 / 变体越权 / 基座保护）直接拒绝生成 Proposal。
+- 解析后的路径只写入**内部**提案记录（供审计与事务执行），不下发模型、不由前端回传。
+- 这条与当前文档提案的安全模型完全同构：模型只能表达意图，路径与权限由服务端决定。
 
 ---
 
@@ -414,27 +510,86 @@ create-variant(桐庐, base=hangzhou)
 
 ---
 
-## 8. P0 修复清单（在 P1 之前或同期）
+## 8. P0 修复清单（与 P1 双线并行，见 §8.1）
 
 | 编号 | 问题 | 修法 | 验收 |
 |---|---|---|---|
 | P0-1 | 改稿只用 `preview(60 字)` | 确定性选取目标段：用户显式点选 → 传该段完整 `text`；未点选 → `search_rules` 命中段落后再传全文；一次只改一段 | 提案返回的 `after_text` 与原文同段落、可逐句对齐；模型不再"猜开头" |
-| P0-2 | 只校验篇幅/反引号/ID | 增加：所有数字 token（`\d+(\.\d+)?`、`−200`、`8 倍`）必须与原文集合一致；新增数字视为违规 | 人为构造"把 8 倍改成 10 倍"的提案被拒，返回具体数值差异 |
+| P0-2 | 只校验篇幅/反引号/ID | **数值校验用多重集合，不用 Set**：见 §8.2。分类抽取 → 规范化 → 只比较"正文数值"桶的多重集合 | ①"把 8 倍改成 10 倍"被拒；②"自摸 2 倍 → 自摸 3 倍"（同文另有 2 倍）被拒；③"三局 → 四局"被拒（中文数字）；④只改 Markdown 编号 / 证据编号不误报 |
 | P0-3 | 无版本绑定 | 提案记录 `document_version` + 目标段 `text` 的 sha256；应用前复核，不一致返回 `stale_proposal` | 提案生成后手动改文档版本 → 应用被拒并提示重新生成 |
 | P0-4 | 会话不隔离 | 见 §4.5 | 切玩法后旧消息不可见；会话头显示 ruleset 版本 |
 | P0-5 | 表达修改与规则修改混为一谈 | 界面文案分流：表达层提案卡标「文档表达修改」；规则事实入口在 P2 之前保持禁用并说明原因 | 用户不会误以为规则事实已改 |
 
+### 8.1 P0 / P1 双线并行与集成门禁（v1.1）
+
+不做"全部 P0 完成才开工 P1"。P0-1…P0-3 只影响表达修改通道，不阻塞只读查询。
+
+```
+工作线 A（表达层安全）            工作线 B（只读查询）
+P0-1 完整原文                     studio/query/ 纯函数
+P0-2 数值多重集合校验             6 个工具契约 + Zod
+P0-3 版本 + Hash 绑定             工具单测（不接模型）
+P0-4 会话按 variant 隔离
+P0-5 表达 / 事实分流              查询结果人工抽查
+        │                                  │
+        └──────────┬───────────────────────┘
+                   ▼
+        集成门禁（三条全过才继续）
+        G1 P0-4 完成 → 才能接新的会话管理
+        G2 P0-5 完成 → 才能开放新的聊天交互
+        G3 Query Service 测试通过 → 才能接 Runtime
+                   ▼
+        P1 收尾：Tool Registry → Runtime 循环 → UI 四类卡片 → Gold Set 验收
+                   ▼
+        P2 前提：P0 全部验收通过，才开放规则事实 Proposal 写入
+```
+
+门禁是**串行的依赖点**，不是里程碑装饰：G1/G2/G3 任一未过，后续阶段不得开始。
+
+### 8.2 数字 Token 校验细则（P0-2）
+
+分五类抽取，**只在「正文数值」桶内比较多重集合**：
+
+| 类别 | 例 | 处理 |
+|---|---|---|
+| 规则 / 配置 ID 内的数字 | `XS-U-001`、`HJ-R-DINGZHUANG` | 先整体识别 ID 再排除，不参与数值比较 |
+| 证据编号 / 章节号 | `#R-BANK-02`、`第 2.3.3 节` | 归入"引用桶"，由引用集合一致性校验 |
+| Markdown 编号 | `1.` `2.` `-` | 按行首模式识别，替换后不参与比较 |
+| 公式内数字 | `2^本局实际牢数`、`d1 + d2 > 8` | 参与比较，但单独成桶（公式桶），便于报错定位 |
+| 正文数值 | `8 倍`、`−200 分`、`3 牢` | **主比较桶**：多重集合必须完全一致 |
+
+规范化规则：全角→半角、`−`/`-`/`－` 统一、去除千分位、`8 倍` 与 `8倍` 等价；中文数字（一二三四五六七八九十、两）先转阿拉伯数字再入桶（`三局`→`3`、`两牢`→`2`）。
+
+比较语义：
+
+- 主比较桶用 **multiset**（`Map<normalizedValue, count>`），`{2:2}` vs `{2:1, 3:1}` 判为不同——这是 Set 会漏掉的情形。
+- 允许"数量增加"仅当该值在原文桶已存在（例如原文已有 `2 倍`，新文再写一次 `2 倍` 属新增提及）；出现**原文没有的数值**即违规。
+- 报错需给出：`缺少 X；新增 Y；出现位置（槽位名）`，不返回笼统的"数值不一致"。
+
 ---
 
-## 9. P1 验收（三个真实场景 + Gold Set）
+## 9. P1 验收（四个真实场景 + Gold Set）
 
 | 测试问题 | 期望行为 | 通过标准 |
 |---|---|---|
 | 杭州和萧山财神规则有什么区别？ | `search_rules` ×2 → `get_rule` ×2 → `compare_rules` → `read_evidence` | 比较卡列出两侧规则 ID 与槽位差异；`XS-U-001` 以 `disputed` 呈现且不裁决 |
 | 哪些萧山规则还没有确定？ | `list_unresolved(only_blockers=true)` | 返回 `XS-U-001/002/003` 三条 + `releasable: false` |
 | 解释弃牌响应优先级 | `search_rules` → `get_rule` → `read_evidence` | 回答里的每个结论都带 `rule_id`；引用可点击定位 |
+| 杭州底分是多少？萧山有没有变？ | `get_config(base,"底分")` + `get_config(variant,"底分")` | 两侧配置 ID / 值 / 来源齐全；萧山未覆盖时明确说"沿用基座"，不猜 |
 
-Gold Set：新增 `tests/gold-set/copilot-questions.yaml`（20~30 条），每条包含 `question / expected_tools / expected_rule_ids / must_not_claim`（例如"不得声称 XS-U-001 已裁决"）。评分采用确定性比对（工具序列 + 规则 ID 集合），不依赖模型自评。
+Gold Set：新增 `tests/gold-set/copilot-questions.yaml`（20~30 条），每条包含：
+
+```yaml
+- id: CP-001
+  question: 杭州和萧山财神规则有什么区别？
+  expected_tools: [search_rules, search_rules, get_rule, compare_rules]
+  expected_rule_ids: [HJ-R-CAISHEN, XS-C-CAISHEN]
+  expected_config_ids: [HJ-C-CAISHEN]
+  must_not_claim: ["XS-U-001 已裁决"]
+  must_include_status: [disputed, release_blocker]
+```
+
+评分采用**确定性比对**（工具序列包含关系 + 规则/配置 ID 集合 + `must_not_claim` 反例），不依赖模型自评；`claims[]` 的 grounding 状态也计入评分（`invalid_ref` 一律扣分）。
 
 ---
 
@@ -445,6 +600,8 @@ Gold Set：新增 `tests/gold-set/copilot-questions.yaml`（20~30 条），每�
 3. 不做后台自动改规则（所有写入必须人在环内）。
 4. 不引入 Electron / 外部 Agent 框架（历史结论已否决 PiBot 二开路线）。
 5. 不让模型决定"哪条规则正确"——冲突由策划裁决，AI 只提供证据与候选。
+6. 不在 P1 做 `list_dependencies` / 反向依赖 / 影响分析（随 P2 的 L3 一起做）。
+7. 不允许"回答里出现一个合法 ID 就整段算有依据"（v1.1 已改为逐条 claim 校验）。
 
 ---
 
@@ -465,14 +622,18 @@ Gold Set：新增 `tests/gold-set/copilot-questions.yaml`（20~30 条），每�
 
 ## 12. 下一步
 
-1. 评审本文档，确认四件事的边界：Runtime / Query Service / Tool Registry / UI Protocol。
-2. 若通过，P1 开工顺序建议：`studio/query/` 纯函数 + 单测（不接模型）→ 5 个工具的契约测试 → `/api/assistant/chat` 工具循环 → UI 三类卡片 → Gold Set 20 条。
-3. P0-1…P0-5 与本设计不冲突，可并行先修（改动小、收益直接）。
+评审已通过（见《2026-11-28-RuleCopilot架构设计评审意见》），按 §8.1 双线并行开工：
+
+1. **工作线 B 第一步**：`studio/query/` 纯函数（`rules / configs / compare / unresolved / sources`）+ 单测，**不接模型**。
+2. **工作线 A 第一步**：P0-1（完整原文）+ P0-2（数值多重集合）+ P0-3（版本 + Hash），三项各自带独立测试。
+3. 两条线到 G1/G2/G3 门禁后，才做 Tool Registry → Runtime → UI 卡片 → Gold Set。
+4. P2（规则事实修改）**不在本阶段**；开启前必须 P0 全部验收通过。
 
 ---
 
 ## 引用与参考
 
+- 本仓库：`dev-docs/design/2026-11-28-RuleCopilot架构设计评审意见.md`（v1.1 全部修订的来源）
 - 本仓库：`dev-docs/design/2026-11-25-RuleStudio基座与变体需求文档工作流.md`（Proposal → Diff → 校验 → 批准 → 写回 的既定流程）
 - 本仓库：`AGENTS.md`（规则集不可手改、基座版本与 `content_hash` 约束、未决项不得 AI 补全）
 - 本仓库：`dev-docs/experience/css-variable-overridden-by-hardcoded-width.md`（本轮 UI 改动的失败模式复盘，与本设计无直接关系，但属于同一时期的工程经验）
