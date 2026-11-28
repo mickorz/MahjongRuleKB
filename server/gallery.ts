@@ -117,13 +117,50 @@ const COMPONENT_CSS = `
   .mg-voice-quote { font: 13px/1.6 var(--serif); color: var(--ink); }
   .mg-voice-note { margin-left: auto; font: 11px/1.4 var(--sans); color: var(--ink-3); }
 
-  /* 依赖图 */
-  .mg-map { width: 100%; max-width: 560px; height: auto; display: block; }
-  .mg-map .node rect { fill: var(--card); stroke: var(--line); }
-  .mg-map .node text { font: 11.5px var(--sans); fill: var(--ink); }
-  .mg-map .node.variant rect { stroke: var(--gold-deep); fill: var(--gold-wash); }
-  .mg-map .edge { stroke: var(--ink-3); stroke-width: 1.2; fill: none; marker-end: url(#mgArrow); opacity: .7; }
-  .mg-map .edge.dash { stroke-dasharray: 4 3; }
+  /* 关系网络（对照原站 .c-relationship-*，前缀改 mg-rel-） */
+  .mg-relmap { display: flex; flex-direction: column; gap: 10px; }
+  .mg-relmode { display: inline-flex; align-items: center; gap: 0; }
+  .mg-relmode .c-content-action { border-radius: 0; }
+  .mg-relmode .c-content-action:first-child { border-radius: 5px 0 0 5px; }
+  .mg-relmode .c-content-action:last-child { margin-left: -1px; border-radius: 0 5px 5px 0; }
+  .mg-relmode .c-content-action.active { border-color: var(--gold-soft); background: var(--gold-wash); color: var(--gold-deep); }
+  .mg-relcanvas {
+    position: relative; height: 320px; min-height: 300px; overflow: hidden;
+    border: 1px solid var(--line); border-radius: 9px;
+    background: radial-gradient(circle at 50% 46%, var(--paper-2), var(--card) 72%);
+  }
+  .mg-relcanvas > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .mg-rel-edge { stroke: var(--ink-3); stroke-width: 1.6; opacity: .52; vector-effect: non-scaling-stroke; transition: stroke .15s, stroke-width .15s, opacity .15s; }
+  .mg-rel-edge.ally { stroke: var(--gold-deep); stroke-width: 2.2; opacity: .72; }
+  .mg-rel-edge.hostile { stroke: var(--terra); stroke-width: 2.5; opacity: .78; }
+  .mg-rel-edge.mixed { stroke: var(--terra); stroke-width: 2.3; stroke-dasharray: 8 4; opacity: .76; }
+  .mg-rel-edge.secret { stroke: var(--gold); stroke-width: 2.1; stroke-dasharray: 5 4; opacity: .78; }
+  .mg-rel-edge.selected { stroke-width: 2.8; opacity: 1; }
+  .mg-rel-node {
+    position: absolute; z-index: 4; transform: translate(-50%, -50%);
+    display: inline-flex; align-items: center; gap: 8px; max-width: 190px; min-width: 112px;
+    border: 1.5px solid var(--line); border-radius: 999px; padding: 5px;
+    background: var(--card); cursor: pointer; font-family: inherit;
+  }
+  .mg-rel-node:hover, .mg-rel-node.selected { border-color: var(--gold); }
+  .mg-rel-node-av {
+    display: grid; place-items: center; width: 28px; height: 28px; flex: none; border-radius: 50%;
+    background: var(--ink-2); color: #fff; font: 500 12px/1 var(--serif);
+  }
+  .mg-rel-node.selected .mg-rel-node-av { background: var(--gold-deep); }
+  .mg-rel-node-copy { display: flex; min-width: 0; flex-direction: column; gap: 1px; text-align: left; }
+  .mg-rel-node-copy b { font: 12.5px/1.3 var(--sans); color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mg-rel-node-copy small { color: var(--ink-3); font: 400 9.5px/1.25 var(--sans); white-space: nowrap; }
+  .mg-rel-edge-label {
+    position: absolute; z-index: 3; transform: translate(-50%, -50%); max-width: 142px;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    border: 1px solid var(--line); border-radius: 6px; padding: 3px 8px;
+    background: var(--card); color: var(--ink-2); font: 11px/1.4 var(--sans); cursor: pointer;
+  }
+  .mg-rel-edge-label:hover, .mg-rel-edge-label.selected { border-color: var(--gold); color: var(--gold-deep); }
+  .mg-rel-edge-label.hostile { color: var(--terra); border-color: color-mix(in srgb, var(--terra) 35%, var(--line)); }
+  .mg-rel-edge-label.ally { color: var(--gold-deep); border-color: var(--gold-soft); }
+  .mg-rel-edge-label.mixed { color: var(--terra); border-color: color-mix(in srgb, var(--terra) 35%, var(--gold)); background: var(--gold-wash); }
 
   .mg-hint { font: 11.5px/1.6 var(--sans); color: var(--ink-3); }
 `;
@@ -241,26 +278,46 @@ const voice = () => `<section class="mg-panel">
   </div>
 </section>`;
 
-/** 依赖图 */
-const map = () => `<section class="mg-panel">
-  <header class="mg-panel-head"><div class="mg-panel-title"><i>10</i>开局链路</div></div>
-  <svg class="mg-map" viewBox="0 0 520 150" role="img" aria-label="开局规则依赖图">
-    <defs>
-      <marker id="mgArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-        <path d="M0 0 L10 5 L0 10 z" fill="currentColor" opacity=".6"></path>
-      </marker>
-    </defs>
-    <g class="node"><rect x="10" y="52" width="96" height="34" rx="7"></rect><text x="58" y="73" text-anchor="middle">定庄</text></g>
-    <g class="node variant"><rect x="136" y="52" width="112" height="34" rx="7"></rect><text x="192" y="73" text-anchor="middle">掷骰加庄</text></g>
-    <g class="node"><rect x="278" y="52" width="96" height="34" rx="7"></rect><text x="326" y="73" text-anchor="middle">发牌</text></g>
-    <g class="node"><rect x="404" y="52" width="104" height="34" rx="7"></rect><text x="456" y="73" text-anchor="middle">行牌</text></g>
-    <path class="edge" d="M106 69 H136"></path>
-    <path class="edge" d="M248 69 H278"></path>
-    <path class="edge dash" d="M374 69 H404"></path>
-    <g class="node"><rect x="136" y="8" width="112" height="28" rx="6"></rect><text x="192" y="26" text-anchor="middle">连庄与换庄</text></g>
-    <path class="edge dash" d="M192 36 V52"></path>
-  </svg>
-  <p class="mg-hint">实线＝顺序依赖，虚线＝条件分支；金色节点表示萧山相对基座有改写。</p>
+/** 关系网络（对照原站 .c-relationship-map.mode-graph） */
+const relationMap = () => `<section class="mg-panel mg-relmap">
+  <header class="mg-panel-head">
+    <div class="mg-panel-title"><i>11</i>规则关系<span class="mg-hint">×4</span></div>
+    <div class="mg-panel-actions">
+      <span class="mg-relmode" role="group" aria-label="关系展示方式">
+        <button type="button" class="c-content-action active" aria-pressed="true">图谱</button>
+        <button type="button" class="c-content-action" aria-pressed="false">列表</button>
+      </span>
+    </div>
+  </header>
+  <div class="mg-relcanvas" aria-label="规则关系图">
+    <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+      <line class="mg-rel-edge ally selected" x1="50" y1="30" x2="78" y2="58"></line>
+      <line class="mg-rel-edge" x1="50" y1="30" x2="22" y2="58"></line>
+      <line class="mg-rel-edge mixed" x1="78" y1="58" x2="22" y2="58"></line>
+      <line class="mg-rel-edge secret" x1="22" y1="58" x2="50" y2="82"></line>
+    </svg>
+    <button type="button" class="mg-rel-edge-label ally selected" aria-pressed="true" style="left: 64%; top: 44%;">写入牢数</button>
+    <button type="button" class="mg-rel-edge-label" aria-pressed="false" style="left: 36%; top: 44%;">前置</button>
+    <button type="button" class="mg-rel-edge-label mixed" aria-pressed="false" style="left: 50%; top: 58%;">冲突</button>
+    <button type="button" class="mg-rel-edge-label" aria-pressed="false" style="left: 36%; top: 70%;">触发</button>
+    <button type="button" class="mg-rel-node selected" aria-pressed="true" style="left: 50%; top: 30%;">
+      <span class="mg-rel-node-av">庄</span>
+      <span class="mg-rel-node-copy"><b>定庄</b><small>2 条关系</small></span>
+    </button>
+    <button type="button" class="mg-rel-node selected" aria-pressed="true" style="left: 78%; top: 58%;">
+      <span class="mg-rel-node-av">牢</span>
+      <span class="mg-rel-node-copy"><b>庄家牢数</b><small>2 条关系</small></span>
+    </button>
+    <button type="button" class="mg-rel-node" aria-pressed="false" style="left: 22%; top: 58%;">
+      <span class="mg-rel-node-av">财</span>
+      <span class="mg-rel-node-copy"><b>财神归属</b><small>2 条关系 · 未裁决</small></span>
+    </button>
+    <button type="button" class="mg-rel-node" aria-pressed="false" style="left: 50%; top: 82%;">
+      <span class="mg-rel-node-av">拖</span>
+      <span class="mg-rel-node-copy"><b>拖底</b><small>1 条关系</small></span>
+    </button>
+  </div>
+  <p class="mg-hint">金色实线＝写入依赖，灰线＝前置，红色虚线＝冲突，金色虚线＝触发；点节点或连线标签可高亮。</p>
 </section>`;
 
 /* ---------------- 家族（顺序与参考站一致） ---------------- */
@@ -273,7 +330,7 @@ const FAMILIES: Array<{ id: string; title: string; sub: string }> = [
   { id: "g5", title: "硬约束卡", sub: "文档级红线" },
   { id: "g6", title: "深化阅读卡", sub: "算分细则，可展开" },
   { id: "g7", title: "播报卡", sub: "动画与语音文案" },
-  { id: "g8", title: "依赖图谱", sub: "开局链路可视化" },
+  { id: "g8", title: "关系图谱", sub: "规则关系可视化（节点 + 连线标签）" },
 ];
 
 const SAMPLES: Sample[] = [
@@ -288,7 +345,7 @@ const SAMPLES: Sample[] = [
   { family: "g5", name: "硬约束（红线）", tags: ["可直接编辑"], where: "文档约束", classes: "mg-belief + mg-belief-row", html: beliefs() },
   { family: "g6", name: "细则 · 可展开", tags: ["可直接编辑"], where: "算分规则", classes: "mg-reader + details/summary + p", html: reader() },
   { family: "g7", name: "播报文案", tags: ["可直接编辑"], where: "UI 交互及表现", classes: "mg-voice + mg-voice-row(.mg-voice-k/.mg-voice-quote/.mg-voice-note)", html: voice() },
-  { family: "g8", name: "依赖图（节点图）", tags: ["只读"], where: "开局链路", classes: "mg-map + node/edge（SVG）", html: map() },
+  { family: "g8", name: "图形化节点图", tags: ["只读"], where: "规则关系", classes: "mg-relmap + mg-relcanvas + mg-rel-edge(.ally/.mixed/.secret) + mg-rel-node + mg-rel-edge-label + mg-relmode", html: relationMap() },
 ];
 
 /* ---------------- 页面 ---------------- */
