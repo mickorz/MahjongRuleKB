@@ -1125,19 +1125,15 @@ async function loadDoc(variant) {
       const div = document.createElement("div");
       div.dataset.lineage = seg.lineage;
 
-      // 徽章集合（两种卡共用）
-      const badges = [];
-      if (seg.lineage === "modified") badges.push("修改");
-      if (seg.lineage === "added") badges.push("新增");
-      if (seg.lineage.endsWith("inherited")) badges.push("继承");
-      if (seg.diff_status === "candidate") badges.push("差异待确认");
-      if (seg.release_blocker_refs && seg.release_blocker_refs.length) badges.push("待裁决 " + seg.release_blocker_refs.join("、"));
+      // 徽章：只在变体自有片段上显示（基座继承卡本就不可编辑，标了也是噪声）
       const isVariantOwn = seg.lineage === "modified" || seg.lineage === "added";
-      if (!isVariantOwn) {
+      const badges = [];
+      if (isVariantOwn) {
+        if (seg.lineage === "modified") badges.push("修改");
+        if (seg.lineage === "added") badges.push("新增");
+        if (seg.diff_status === "candidate") badges.push("差异待确认");
+        if (seg.release_blocker_refs && seg.release_blocker_refs.length) badges.push("待裁决 " + seg.release_blocker_refs.join("、"));
         if (!seg.editable) badges.push("数值不可改写");
-        badges.push("只读");
-      } else if (!seg.editable) {
-        badges.push("数值不可改写");
       }
 
       let p;
