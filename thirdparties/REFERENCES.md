@@ -13,6 +13,7 @@
 | REF-006 | docwriter | `https://github.com/docwriter-org/docwriter`（submodule 跟踪分支 `main`） | `thirdparties/docwriter` | `449f41cbe74d2bf5fd89f478b7e67951ce77746f`（2026-11-27 引入，与远端 `main` 一致） | MIT（Copyright 2026 DocWriter contributors） | 只读参考，复用方法论时可复制（MIT 允许），需保留版权声明 | 本地 Markdown 编辑器，写作者与 AI agent 共同评审修改；供 Rule Studio 本地 Web 工作台的编辑器与 AI 协作评审交互参考 |
 | REF-007 | PlotPilot | `https://github.com/shenminglinyi/PlotPilot`（submodule 跟踪分支 `master`） | `thirdparties/PlotPilot` | `fcd87ab81c9b977edb76669f4f652bbd2d2670b4`（2026-11-27 引入，与远端 `master` 一致，tag v4.8.1） | Apache 2.0 + Commons Clause v1.0 | 只读参考，禁止复制代码用于销售用途（Commons Clause 限制），保守处理为仅提炼方法论 | 【墨枢】作者的领航员（剧情写作 AI 导航工具）；供 Rule Studio 生成链路中的章节装配与文档导航思路参考 |
 | REF-008 | markra | `https://github.com/markrahq/markra`（submodule 跟踪分支 `v2`） | `thirdparties/markra` | `50dbe6459c8ff194dc1ce4842f6396a7b66f2b9d`（2026-11-27 引入，与远端 `v2` 一致，tag v2.14.9） | AGPL-3.0 | 只读参考，**禁止复制任何代码**（AGPL 传染风险）；交互思路提炼后写入本项目自己的文档 | 所见即所得 Markdown 编辑器，原生集成 AI、数据本地化；供 Rule Studio Web 工作台的编辑器与 AI 辅助编辑交互参考 |
+| REF-009 | storyflow | `https://github.com/isoenthusiast/storyflow`（submodule 跟踪分支 `main`） | `thirdparties/storyflow` | `eb3ded9aab80e74ad9f2ac0165ee3c97be6ae632`（2026-11-28 引入，与远端 `main` 一致） | MIT（Copyright 2026 StoryFlow contributors） | 只读参考，复用方法论时可复制（MIT 允许），需保留版权声明 | 对话式编辑台：把想法变成故事，带可视化工作流与可选 agent 协助；供 Rule Studio 对话编辑意图路由与工作流编排参考 |
 
 ## Submodule 引入与登记流程
 

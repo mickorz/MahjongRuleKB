@@ -26,3 +26,7 @@
 	path = thirdparties/markra
 	url = https://github.com/markrahq/markra.git
 	branch = v2
+[submodule "thirdparties/storyflow"]
+	path = thirdparties/storyflow
+	url = https://github.com/isoenthusiast/storyflow.git
+	branch = main
