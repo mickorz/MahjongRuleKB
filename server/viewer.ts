@@ -485,6 +485,34 @@ ${fontLink}
   .asst-thinking__dots i:nth-child(2) { animation-delay: .14s; }
   .asst-thinking__dots i:nth-child(3) { animation-delay: .28s; }
 
+  /* 改稿提案卡（Action） */
+  .asst-action {
+    margin: 4px 0 16px; padding: 12px 14px; border: 1px solid var(--gold-soft);
+    border-radius: 8px; background: var(--gold-wash);
+    animation: asstSuggestionIn .24s var(--ease-out) both;
+  }
+  .asst-action-head {
+    display: flex; align-items: center; gap: 8px; margin-bottom: 8px;
+    font: 600 11px/1.4 var(--sans); color: var(--gold-deep); letter-spacing: .02em;
+  }
+  .asst-action-head .seg-id { font-family: var(--mono); font-weight: 400; color: var(--ink-3); }
+  .asst-action-old {
+    padding: 8px 10px; border-radius: 6px; background: var(--paper-2); color: var(--ink-3);
+    font-family: var(--serif); font-size: 12.5px; line-height: 1.7;
+    text-decoration: line-through; text-decoration-color: color-mix(in srgb, var(--terra) 60%, transparent);
+  }
+  .asst-action-new {
+    margin-top: 6px; padding: 8px 10px; border-radius: 6px;
+    background: var(--card); border: 1px solid var(--gold-soft); color: var(--ink);
+    font-family: var(--serif); font-size: 12.5px; line-height: 1.7;
+  }
+  .asst-action-why { margin: 8px 0 0; font-size: 11.5px; line-height: 1.6; color: var(--ink-2); }
+  .asst-action-acts { display: flex; justify-content: flex-end; gap: 8px; margin-top: 10px; }
+  .asst-action .c-btn.sm { min-height: 26px; padding: 3px 10px; font-size: 11.5px; }
+  .asst-icon-button[aria-pressed="true"] {
+    background: var(--gold-wash); border-color: var(--gold-soft); color: var(--gold-deep);
+  }
+
   /* 输入区（原站 .asst-compose / .asst-compose-input / .asst-send） */
   .asst-compose {
     display: flex; align-items: flex-end; gap: 8px;
@@ -691,6 +719,9 @@ ${fontLink}
     <div class="asst-compose-input">
       <textarea id="asst-input" rows="2" placeholder="问点什么，回车发送"></textarea>
     </div>
+    <button class="asst-icon-button" id="asst-edit-mode" type="button" title="改稿模式：让助手给出改写提案" aria-label="改稿模式" aria-pressed="false">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4l10-10-4-4L4 16v4z"></path><path d="M14 6l4 4"></path></svg>
+    </button>
     <button class="asst-send" id="asst-send" type="button" title="发送" aria-label="发送">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
     </button>
@@ -853,6 +884,7 @@ let refNames = { rules: {}, configs: {} };
 const ASST_KEY = "rs-assistant";
 const asst = {
   messages: [],
+  editMode: false,
   busy: false,
   mode: "floating", // floating | docked
   width: 480,
@@ -1035,6 +1067,7 @@ function asstRender() {
     renderAsstText(p, m.content);
     art.appendChild(p);
     thread.appendChild(art);
+    if (m.proposal) thread.appendChild(asstActionCard(m.proposal));
   }
 
   if (asst.busy) {
@@ -1052,6 +1085,59 @@ function asstRender() {
   }
 
   thread.scrollTop = thread.scrollHeight;
+}
+
+/** 改稿提案卡：原 / 新 / 理由 + 应用·丢弃 */
+function asstActionCard(proposal) {
+  const box = document.createElement("div");
+  box.className = "asst-action";
+
+  const head = document.createElement("div");
+  head.className = "asst-action-head";
+  head.appendChild(document.createTextNode("改稿提案"));
+  const id = document.createElement("span");
+  id.className = "seg-id";
+  id.textContent = proposal.segment_id;
+  head.appendChild(id);
+  box.appendChild(head);
+
+  const oldEl = document.createElement("div");
+  oldEl.className = "asst-action-old";
+  oldEl.textContent = proposal.before;
+  box.appendChild(oldEl);
+
+  const newEl = document.createElement("div");
+  newEl.className = "asst-action-new";
+  newEl.textContent = proposal.after;
+  box.appendChild(newEl);
+
+  if (proposal.reason) {
+    const why = document.createElement("p");
+    why.className = "asst-action-why";
+    why.textContent = proposal.reason;
+    box.appendChild(why);
+  }
+
+  const acts = document.createElement("div");
+  acts.className = "asst-action-acts";
+  const apply = document.createElement("button");
+  apply.type = "button";
+  apply.className = "c-btn gold sm";
+  apply.textContent = "应用";
+  apply.onclick = () => asstApplyProposal(proposal, box);
+  const drop = document.createElement("button");
+  drop.type = "button";
+  drop.className = "c-btn sm";
+  drop.textContent = "丢弃";
+  drop.onclick = () => {
+    asst.messages = asst.messages.filter((m) => m.proposal !== proposal);
+    asstSave();
+    asstRender();
+  };
+  acts.appendChild(apply);
+  acts.appendChild(drop);
+  box.appendChild(acts);
+  return box;
 }
 
 /** 文档上下文：整篇正文（上限 60000 字，超出截断并注明） */
@@ -1079,6 +1165,83 @@ function renderAsstText(p, text) {
   const bold = new RegExp(BS + "*" + BS + "*([^*]+)" + BS + "*" + BS + "*", "g");
   const code = new RegExp(TICK + "([^" + TICK + "]+)" + TICK, "g");
   p.innerHTML = esc.replace(bold, "<strong>$1</strong>").replace(code, "<code>$1</code>").split(NL).join("<br>");
+}
+
+/** 改稿模式：请求提案 → 渲染 Action 卡片；应用仍走 /api/apply */
+async function asstPropose(text) {
+  const instruction = text.trim();
+  if (!instruction || asst.busy) return;
+  asst.messages.push({ role: "user", content: "（改稿）" + instruction });
+  asst.busy = true;
+  asstSave();
+  asstRender();
+  const send = asstEl("asst-send");
+  const sendHtml = send.innerHTML;
+  send.disabled = true;
+  send.innerHTML = '<span class="c-spin"></span>';
+  asstEl("asst-input").value = "";
+  try {
+    const res = await fetch("/api/assistant/edit", {
+      method: "POST",
+      headers: { "content-type": "application/json", "X-Rule-Studio": "1" },
+      body: JSON.stringify({ variant: currentVariant, instruction }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      asst.messages.push({ role: "assistant", content: "（" + (data.message || data.error || res.status) + "）" });
+    } else {
+      asst.messages.push({
+        role: "assistant",
+        content: data.reason ? "提案：" + data.reason : "提案：",
+        proposal: { segment_id: data.segment_id, before: data.before, after: data.after, reason: data.reason },
+      });
+    }
+  } catch (e) {
+    asst.messages.push({ role: "assistant", content: "（请求失败：" + e.message + "）" });
+  } finally {
+    asst.busy = false;
+    asstSave();
+    send.disabled = false;
+    send.innerHTML = sendHtml;
+    asstRender();
+  }
+}
+
+/** 应用提案：复用 /api/apply（权限矩阵 + 事务 + 版本递增） */
+async function asstApplyProposal(proposal, card) {
+  const btns = card.querySelectorAll("button");
+  btns.forEach((b) => { b.disabled = true; });
+  try {
+    const res = await fetch("/api/apply", {
+      method: "POST",
+      headers: { "content-type": "application/json", "X-Rule-Studio": "1" },
+      body: JSON.stringify({
+        variant: currentVariant,
+        mutations: [{
+          target: { segment_id: proposal.segment_id },
+          op: "replace-text",
+          text: proposal.after,
+          source: "richtext",
+          rationale: "助手提案",
+        }],
+      }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.ok) {
+      const why = (data.rejected || [])[0]?.reasons?.join("；") || data.message || data.error || res.status;
+      toast("应用失败：" + why);
+      btns.forEach((b) => { b.disabled = false; });
+      return;
+    }
+    toast("已应用，版本 " + data.documentVersionBefore + " → " + data.documentVersionAfter);
+    asst.messages = asst.messages.filter((m) => m.proposal !== proposal);
+    asstSave();
+    await loadDoc(currentVariant);
+    asstRender();
+  } catch (e) {
+    toast("应用失败：" + e.message);
+    btns.forEach((b) => { b.disabled = false; });
+  }
 }
 
 async function asstAsk(text) {
@@ -1710,6 +1873,12 @@ asstBindDrag();
 asstBindResize();
 
 el("asst-mode").onclick = (ev) => { ev.stopPropagation(); asstToggleMode(); };
+el("asst-edit-mode").onclick = () => {
+  asst.editMode = !asst.editMode;
+  el("asst-edit-mode").setAttribute("aria-pressed", String(asst.editMode));
+  asstEl("asst-input").placeholder = asst.editMode ? "描述要怎么改，例如「把这段写得更简洁」" : "问点什么，回车发送";
+  asstEl("asst-input").focus();
+};
 el("asst-reset").onclick = (ev) => {
   ev.stopPropagation();
   asst.messages = [];
@@ -1733,11 +1902,12 @@ el("asst-close").onclick = () => {
   asstEl("asst-drawer").hidden = true;
   el("asst-launch").setAttribute("aria-expanded", "false");
 };
-el("asst-send").onclick = () => asstAsk(asstEl("asst-input").value);
+el("asst-send").onclick = () => (asst.editMode ? asstPropose(asstEl("asst-input").value) : asstAsk(asstEl("asst-input").value));
 asstEl("asst-input").addEventListener("keydown", (e) => {
   if (e.key === "Enter" && !e.shiftKey) {
     e.preventDefault();
-    asstAsk(asstEl("asst-input").value);
+    const value = asstEl("asst-input").value;
+    if (asst.editMode) asstPropose(value); else asstAsk(value);
   }
 });
 el("rev-restore").onclick = restoreRevision;

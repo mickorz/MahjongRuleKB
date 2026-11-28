@@ -17,7 +17,7 @@ import { documentSchema } from "../studio/contracts/document.ts";
 import { applyDocumentProposal } from "../studio/transaction/apply.ts";
 import { listRevisions, revisionDiff, revisionOverridesBackup } from "./revisions.ts";
 import { allRefIds, resolveNames } from "./ref-names.ts";
-import { askAssistant, AssistantUnavailable } from "./assistant.ts";
+import { askAssistant, AssistantUnavailable, proposeEdit, EditProposalError } from "./assistant.ts";
 
 const variantPattern = /^[a-z][a-z0-9-]*$/;
 
@@ -357,6 +357,7 @@ async function handleWrite(req: IncomingMessage, res: ServerResponse, ctx: Write
   if (ctx.url.pathname === "/api/apply") return applyBatch(res, ctx.kbRoot, variant, body);
   if (ctx.url.pathname === "/api/restore") return restoreRevision(res, ctx.kbRoot, variant, body);
   if (ctx.url.pathname === "/api/assistant") return assistantReply(res, variant, body);
+  if (ctx.url.pathname === "/api/assistant/edit") return assistantEdit(res, ctx.kbRoot, variant, body);
   return json(res, 404, { error: "not_found" });
 }
 
@@ -520,6 +521,82 @@ function assistantReply(res: ServerResponse, variant: string, body: Record<strin
       if (e instanceof AssistantUnavailable) {
         return json(res, 503, { error: "assistant_unavailable", message: e.message });
       }
+      return json(res, 502, { error: "assistant_failed", message: e.message });
+    });
+}
+
+/** 可改段落：变体自有且未被数值/公式锁定的片段 */
+function editCandidates(document: {
+  blocks: Array<{ content: Array<{ segment_id: string; text: string; lineage: string; editable: boolean }> }>;
+}) {
+  const out: Array<{ segment_id: string; preview: string; text: string }> = [];
+  for (const block of document.blocks) {
+    for (const seg of block.content) {
+      const own = seg.lineage === "modified" || seg.lineage === "added";
+      if (!own || !seg.editable) continue;
+      out.push({ segment_id: seg.segment_id, preview: seg.text.slice(0, 60), text: seg.text });
+    }
+  }
+  return out;
+}
+
+/**
+ * POST /api/assistant/edit：让模型挑一段并给出改写，服务端校验后只返回提案。
+ * 这里不写盘；应用仍走 POST /api/apply（同一套权限矩阵与事务）。
+ */
+function assistantEdit(res: ServerResponse, kbRoot: string, variant: string, body: Record<string, unknown>): void {
+  const instruction = typeof body.instruction === "string" ? body.instruction.trim() : "";
+  if (!instruction) return json(res, 400, { error: "no_instruction" });
+  const document = loadDocument(kbRoot, variant);
+  if (!document) return json(res, 404, { error: "document_not_found" });
+
+  const candidates = editCandidates(document as never);
+  const wanted = typeof body.segment_id === "string" ? body.segment_id : "";
+  const pool = wanted ? candidates.filter((c) => c.segment_id === wanted) : candidates;
+  if (pool.length === 0) return json(res, 409, { error: "no_editable_segment" });
+
+  proposeEdit({ instruction, candidates: pool.map((c) => ({ segment_id: c.segment_id, preview: c.preview })) })
+    .then(({ proposal, model }) => {
+      const before = pool.find((c) => c.segment_id === proposal.segment_id)?.text ?? "";
+      if (proposal.after_text === before) {
+        return json(res, 409, { ok: false, error: "no_change", message: "模型给回的文本与原文一致" });
+      }
+      // 防截断/防漏引用：篇幅、反引号配对、规则 ID 集合都必须与原文一致
+      const problems: string[] = [];
+      if (proposal.after_text.length < before.length * 0.5) {
+        problems.push("篇幅只有原文的 " + Math.round((proposal.after_text.length / before.length) * 100) + "%");
+      }
+      const ticks = (v: string) => (v.match(/`/g) ?? []).length;
+      if (ticks(proposal.after_text) !== ticks(before)) {
+        problems.push("反引号数量不一致（原文 " + ticks(before) + "，提案 " + ticks(proposal.after_text) + "）");
+      }
+      const refRe = /(?:HJ|XS)-[A-Z0-9]+(?:-[A-Z0-9]+)*/g;
+      const beforeRefs = new Set(before.match(refRe) ?? []);
+      const afterRefs = new Set(proposal.after_text.match(refRe) ?? []);
+      const missing = [...beforeRefs].filter((r) => !afterRefs.has(r));
+      const added = [...afterRefs].filter((r) => !beforeRefs.has(r));
+      if (missing.length) problems.push("漏掉引用 " + missing.join("、"));
+      if (added.length) problems.push("凭空新增引用 " + added.join("、"));
+      if (problems.length) {
+        return json(res, 422, {
+          ok: false,
+          error: "bad_proposal",
+          message: "提案不可用：" + problems.join("；") + "。请重试或换个说法。",
+        });
+      }
+      return json(res, 200, {
+        ok: true,
+        model,
+        variant,
+        segment_id: proposal.segment_id,
+        before,
+        after: proposal.after_text,
+        reason: proposal.reason,
+      });
+    })
+    .catch((e: Error) => {
+      if (e instanceof AssistantUnavailable) return json(res, 503, { error: "assistant_unavailable", message: e.message });
+      if (e instanceof EditProposalError) return json(res, 422, { error: "bad_proposal", message: e.message });
       return json(res, 502, { error: "assistant_failed", message: e.message });
     });
 }
