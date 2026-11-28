@@ -10,6 +10,7 @@ import { fileURLToPath } from "node:url";
 
 import { patchAgentTimeline } from "./patches/agent-timeline.mjs";
 import { extractChatCss } from "./patches/extract-css.mjs";
+import { patchWorkItemLabels, patchZhLocale } from "./patches/work-item-labels.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, "../..");
@@ -108,6 +109,14 @@ ensureNodeModules();
 
 const patch = patchAgentTimeline(forkDir);
 console.log(`[xc-chat] patch agent-timeline: ${patch.applied ? "已应用" : "已是最新"}`);
+
+for (const [name, run] of [
+  ["work-items 工具中文名", patchWorkItemLabels],
+  ["zh-CN 工具摘要模板", patchZhLocale],
+]) {
+  const result = run(forkDir);
+  console.log(`[xc-chat] patch ${name}: ${result.applied ? "已应用" : "已是最新"}`);
+}
 
 const cssOut = join(here, "src/chat-subset.css");
 const css = extractChatCss(forkDir, cssOut);

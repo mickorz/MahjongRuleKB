@@ -4,7 +4,7 @@
 // - 读接口只接受 variant + 固定产物名，绝不接受客户端路径
 // - 写入接口（W3-3 起）要求 Origin 同源 + 自定义头；当前阶段只读，写请求一律 405
 import { createServer, type IncomingMessage, type Server, type ServerResponse } from "node:http";
-import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -230,8 +230,11 @@ export function createWorkbenchServer(options: WorkbenchOptions = {}): Server {
 
     if (route.kind === "index") {
       const localFonts = existsSync(join(fontsDir, "fonts.css"));
-      const chatWidget = existsSync(join(chatWidgetDir, "chat-lib.js"));
-      text(res, 200, viewerHtml({ localFonts, chatWidget }), "text/html; charset=utf-8");
+      const widgetFile = join(chatWidgetDir, "chat-lib.js");
+      const chatWidget = existsSync(widgetFile);
+      // 产物 mtime 当版本号：重新构建后浏览器不会复用旧 bundle
+      const chatWidgetVersion = chatWidget ? Math.round(statSync(widgetFile).mtimeMs) : 0;
+      text(res, 200, viewerHtml({ localFonts, chatWidget, chatWidgetVersion }), "text/html; charset=utf-8");
       return;
     }
     if (route.kind === "refs") {

@@ -17,6 +17,11 @@ function inline(text: string): string {
 }
 
 const isTableRow = (line: string): boolean => /^\s*\|.*\|\s*$/.test(line);
+const headingOf = (line: string): { level: number; text: string } | null => {
+  const hit = /^(#{1,6})\s+(.*)$/.exec(line);
+  if (!hit) return null;
+  return { level: Math.min(hit[1].length, 4), text: hit[2] };
+};
 const isFence = (line: string): boolean => /^```/.test(line.trim());
 const bulletOf = (line: string): string | null => /^\s*[-*]\s+(.*)$/.exec(line)?.[1] ?? null;
 
@@ -63,6 +68,14 @@ function toHtml(text: string): string {
     }
     if (inFence) {
       out.push(escapeHtml(line) + "\n");
+      continue;
+    }
+
+    // 标题：模型输出常带 "## 小标题"，不处理会原样露出井号
+    const heading = headingOf(line);
+    if (heading) {
+      closeList();
+      out.push("<h" + heading.level + ">" + inline(heading.text) + "</h" + heading.level + ">");
       continue;
     }
 

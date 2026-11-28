@@ -50,3 +50,29 @@ node vendor/xc-chat/build.mjs     # patch 幂等，重复执行安全
 ```
 
 若上游 `ThreadItem` 字段变更，需要同步 `studio/assistant/chat-turns.ts` 的映射。
+
+## 覆盖层（纸色主题 + 输入框）
+
+产物自带 `mountComposer()`，用参考项目的 `.composer` / `.prompt-box` 外壳，
+回调交给宿主（工作台的发送/改稿逻辑不变）。
+
+纸色主题写在 `src/chat-lib.tsx` 的 `TOKENS` 里，按参考项目的变量名重写：
+`--canvas / --surface / --border / --text / --accent / --composer-*`。
+**必须排在 `<link>` 之后注入**（`ensureShadow` 里 appendChild 到末尾），
+否则同优先级下会被参考项目样式盖回去。
+
+参考项目把部分颜色写死（`.markdown-content h1..h4`、`code`、`a`、`.user-message`），
+这些在 TOKENS 里按需覆盖。
+
+## 样式子集抽取
+
+`patches/extract-css.mjs` 用前缀 allow-list 抽聊天相关规则。
+漏掉一个前缀的症状很隐蔽：类名存在但规则没抽到 → 元素吃 UA 默认样式
+（复制按钮会变成灰底描边的空方块）。加前缀后记得看一眼 `chat-lib.css` 体积变化
+（30KB → 48KB 就是补齐 16 个消息类前缀的结果）。
+
+## 产物入库
+
+`server/chat-widget/` 随仓库入库（720KB），新克隆开箱可用。
+重建用 `npm run build:chat-widget`；页面用产物 mtime 当版本号，
+重建后浏览器不会命中旧缓存。

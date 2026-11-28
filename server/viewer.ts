@@ -425,6 +425,9 @@ export function baseStyles(): string {
 
   .asst-widget { flex: 1 1 auto; min-height: 0; overflow: hidden; display: block; }
   .asst-widget[hidden] { display: none; }
+  .asst-composer { flex: 0 0 auto; display: block; }
+  .asst-composer[hidden] { display: none; }
+  .asst-compose[hidden] { display: none; }
   .asst-thread {
     min-height: 0; overflow: auto; padding: 20px 18px;
     display: flex; flex-direction: column; gap: 2px;
@@ -645,16 +648,31 @@ export function baseStyles(): string {
 // 工作台前端（无构建，单文件）
 // 结构：外壳不滚，三栏各自滚动；1px 分隔条可拖拽，比例记忆（S1/S2）
 // 视觉：暖纸 + 墨字 + 金点（S1 已换令牌；卡片细化在 S3）
+/** 聊天框 bundle 暴露的输入框句柄（避免源码级 import 一个运行时 URL） */
+interface WidgetComposerHandle {
+  setDisabled: (disabled: boolean) => void;
+  setPlaceholder: (text: string) => void;
+  clear: () => void;
+  focus: () => void;
+}
+
 declare global {
   interface Window {
-    __xcChat?: { mountChat: (el: HTMLElement, options: Record<string, unknown>) => { applyTurns: (turns: unknown[]) => void } };
+    __xcChat?: {
+      mountChat: (el: HTMLElement, options: Record<string, unknown>) => { applyTurns: (turns: unknown[]) => void };
+      mountComposer?: (el: HTMLElement, options: Record<string, unknown>) => WidgetComposerHandle;
+    };
     __xcChatHandle?: { applyTurns: (turns: unknown[]) => void };
+    __xcComposerHandle?: WidgetComposerHandle;
   }
 }
 
-export function viewerHtml(options: { localFonts?: boolean; chatWidget?: boolean } = {}): string {
+export function viewerHtml(
+  options: { localFonts?: boolean; chatWidget?: boolean; chatWidgetVersion?: number } = {},
+): string {
   // 聊天框：vendor/xc-chat 构建出 server/chat-widget/ 时启用，否则回退内置渲染
   const chatWidget = options.chatWidget === true;
+  const chatWidgetVersion = options.chatWidgetVersion ?? 0;
   // 本地有字体就发本地（离线可用），否则回退 Google CDN
   const fontLink = options.localFonts
     ? '<link rel="stylesheet" href="/fonts.css" />'
@@ -733,6 +751,9 @@ ${fontLink}
       <button class="asst-icon-button" id="asst-mode" title="切换停靠 / 浮动" aria-label="切换停靠或浮动">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"></rect><path d="M15 4v16"></path></svg>
       </button>
+      <button class="asst-icon-button" id="asst-edit-mode" type="button" title="改稿模式：让助手给出改写提案" aria-label="改稿模式" aria-pressed="false">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4l10-10-4-4L4 16v4z"></path><path d="M14 6l4 4"></path></svg>
+      </button>
       <button class="asst-icon-button" id="asst-reset" title="清空会话" aria-label="清空会话">
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M9 7V5h6v2M6 7l1 13h10l1-13"></path></svg>
       </button>
@@ -740,14 +761,12 @@ ${fontLink}
     </div>
   </header>
   <div class="asst-widget" id="asst-widget" hidden></div>
+  <div class="asst-composer" id="asst-composer" hidden></div>
   <div class="asst-thread" id="asst-thread"></div>
   <div class="asst-compose">
     <div class="asst-compose-input">
       <textarea id="asst-input" rows="2" placeholder="问点什么，回车发送"></textarea>
     </div>
-    <button class="asst-icon-button" id="asst-edit-mode" type="button" title="改稿模式：让助手给出改写提案" aria-label="改稿模式" aria-pressed="false">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4l10-10-4-4L4 16v4z"></path><path d="M14 6l4 4"></path></svg>
-    </button>
     <button class="asst-send" id="asst-send" type="button" title="发送" aria-label="发送">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"></path></svg>
     </button>
@@ -919,6 +938,7 @@ let refNames = { rules: {}, configs: {} };
 
 /** 助手会话与窗口状态（持久化到 localStorage，仅本机浏览器） */
 const CHAT_WIDGET = ${chatWidget ? "true" : "false"};
+const CHAT_WIDGET_V = "?v=${chatWidgetVersion}";
 const ASST_KEY = "rs-assistant";
 const asst = {
   messages: [],
@@ -1104,12 +1124,19 @@ function chatTurnsPayload() {
       turns.push(current);
     }
     const turnId = current.id;
+    // 时间戳来源：user 用发送时刻，assistant 用响应时刻；步骤在区间内均分，
+    // 这样参考项目的 turnDurationMs（末项时间 - 首项时间）能算出真实耗时。
+    const sentAt = typeof m.at === "number" ? m.at - (typeof m.ms === "number" ? m.ms : 0) : undefined;
+    const doneAt = typeof m.at === "number" ? m.at : undefined;
+    const span = sentAt !== undefined && doneAt !== undefined ? Math.max(doneAt - sentAt, 1) : 0;
+    const stampAt = (ratio) => (span > 0 ? Math.round(sentAt + span * ratio) : now + index);
     if (m.role === "user") {
-      current.items.push({ id: turnId + "-user", turnId, type: "userMessage", text: m.content, timestamp: now + index });
+      current.items.push({ id: turnId + "-user", turnId, type: "userMessage", text: m.content, timestamp: stampAt(0) });
       return;
     }
     // 兼容旧数据：早期只存了工具名字符串
     const stepList = (m.tools || []).map((t) => (typeof t === "string" ? { name: t, ok: true } : t));
+    const stepCount = Math.max(stepList.length, 1);
     stepList.forEach((tool, i) => {
       current.items.push({
         id: turnId + "-tool-" + i,
@@ -1120,7 +1147,7 @@ function chatTurnsPayload() {
         status: tool.ok ? "completed" : "failed",
         arguments: tool.args || {},
         output: tool.ok ? "ok" : String(tool.code || "error"),
-        timestamp: now + index,
+        timestamp: stampAt((i + 1) / (stepCount + 1)),
       });
     });
     const bad = (m.claims || []).filter((c) => c.status !== "ok");
@@ -1131,7 +1158,7 @@ function chatTurnsPayload() {
         type: "reasoning",
         status: "completed",
         text: "有 " + bad.length + " 条结论缺少可追溯依据：" + bad.map((c) => c.text.slice(0, 24)).join("；"),
-        timestamp: now + index,
+        timestamp: stampAt(stepCount / (stepCount + 1)),
       });
     }
     if (String(m.content || "").trim()) {
@@ -1143,11 +1170,45 @@ function chatTurnsPayload() {
         status: "completed",
         phase: "final_answer",
         text: m.content,
-        timestamp: now + index,
+        timestamp: stampAt(1),
       });
     }
   });
   return turns;
+}
+
+/** 输入区切换 + 状态同步：widget composer 与内置 textarea 二选一 */
+function syncComposer() {
+  const composerHost = asstEl("asst-composer");
+  const useWidgetComposer = widgetAvailable() && !!window.__xcChat && typeof window.__xcChat.mountComposer === "function";
+  if (composerHost) composerHost.hidden = !useWidgetComposer;
+  const builtinCompose = document.querySelector(".asst-compose");
+  if (builtinCompose) builtinCompose.hidden = useWidgetComposer;
+  const composer = composerHandle();
+  if (composer) {
+    composer.setDisabled(!!asst.busy);
+    composer.setPlaceholder(asst.editMode ? "描述要怎么改，例如「把这段写得更简洁」" : "问点什么，回车发送");
+  }
+}
+
+/** 用参考项目的输入框替换内置输入区；未就绪返回 null（调用方回退） */
+function composerHandle() {
+  const host = asstEl("asst-composer");
+  if (!host || !widgetAvailable() || !window.__xcChat) return null;
+  if (host.__mounted) return window.__xcComposerHandle || null;
+  const mountComposer = window.__xcChat.mountComposer;
+  if (typeof mountComposer !== "function") return null;
+  host.__mounted = true;
+  window.__xcComposerHandle = mountComposer(host, {
+    cssUrl: "/chat-widget/chat-lib.css" + CHAT_WIDGET_V,
+    placeholder: "问点什么，回车发送",
+    onSend: (text) => {
+      const value = String(text || "").trim();
+      if (!value) return;
+      if (asst.editMode) asstPropose(value); else asstAsk(value);
+    },
+  });
+  return window.__xcComposerHandle;
 }
 
 /** 用预构建聊天框渲染整个会话；返回 false 表示不可用（调用方回退） */
@@ -1157,7 +1218,7 @@ async function renderWithWidget() {
   if (!host) return false;
   if (!window.__xcChat) {
     try {
-      window.__xcChat = await import("/chat-widget/chat-lib.js");
+      window.__xcChat = await import("/chat-widget/chat-lib.js" + CHAT_WIDGET_V);
     } catch (error) {
       console.warn("[chat-widget] 加载失败，回退内置渲染", error);
       return false;
@@ -1169,11 +1230,13 @@ async function renderWithWidget() {
       window.__xcChatHandle = window.__xcChat.mountChat(host, {
         turns: chatTurnsPayload(),
         language: "zh-CN",
-        cssUrl: "/chat-widget/chat-lib.css",
+        cssUrl: "/chat-widget/chat-lib.css" + CHAT_WIDGET_V,
       });
     } else {
       window.__xcChatHandle.applyTurns(chatTurnsPayload());
     }
+    composerHandle();
+    syncComposer();
     return true;
   } catch (error) {
     console.warn("[chat-widget] 渲染失败，回退内置渲染", error);
@@ -1188,6 +1251,8 @@ function asstRender() {
   // 预构建聊天框可用时：整段会话交给它渲染，内置渲染留作空态与回退
   const widgetHost = asstEl("asst-widget");
   if (widgetHost) widgetHost.hidden = !widgetAvailable() || asst.messages.length === 0;
+
+  syncComposer();
   if (widgetAvailable() && asst.messages.length > 0) {
     thread.hidden = true;
     renderWithWidget();
@@ -1358,10 +1423,12 @@ function renderAsstText(p, text) {
 async function asstPropose(text) {
   const instruction = text.trim();
   if (!instruction || asst.busy) return;
-  asst.messages.push({ role: "user", content: "（改稿）" + instruction });
+  asst.messages.push({ role: "user", content: "（改稿）" + instruction, at: Date.now() });
   asst.busy = true;
   asstSave();
   asstRender();
+  const startedAt = Date.now();
+  let assistantAt = 0;
   const send = asstEl("asst-send");
   const sendHtml = send.innerHTML;
   send.disabled = true;
@@ -1375,10 +1442,14 @@ async function asstPropose(text) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      asst.messages.push({ role: "assistant", content: "（" + (data.message || data.error || res.status) + "）" });
+      assistantAt = Date.now();
+      asst.messages.push({ role: "assistant", at: assistantAt, ms: assistantAt - startedAt, content: "（" + (data.message || data.error || res.status) + "）" });
     } else {
+      assistantAt = Date.now();
       asst.messages.push({
         role: "assistant",
+        at: assistantAt,
+        ms: assistantAt - startedAt,
         content: data.reason ? "提案：" + data.reason : "提案：",
         proposal: { segment_id: data.segment_id, before: data.before, after: data.after, reason: data.reason },
       });
@@ -1434,7 +1505,7 @@ async function asstApplyProposal(proposal, card) {
 async function asstAsk(text) {
   const content = text.trim();
   if (!content || asst.busy) return;
-  asst.messages.push({ role: "user", content });
+  asst.messages.push({ role: "user", content, at: Date.now() });
   asstSave();
   asstRender();
   asst.busy = true;
@@ -1444,6 +1515,8 @@ async function asstAsk(text) {
   send.innerHTML = '<span class="c-spin"></span>';
   asstEl("asst-input").value = "";
   asstRender();
+  const startedAt = Date.now();
+  let assistantAt = 0;
   try {
     const ctx = asstContext();
     const res = await fetch("/api/assistant", {
@@ -1453,10 +1526,14 @@ async function asstAsk(text) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      asst.messages.push({ role: "assistant", content: "（" + (data.message || data.error || res.status) + "）" });
+      assistantAt = Date.now();
+      asst.messages.push({ role: "assistant", at: assistantAt, ms: assistantAt - startedAt, content: "（" + (data.message || data.error || res.status) + "）" });
     } else {
+      assistantAt = Date.now();
       asst.messages.push({
         role: "assistant",
+        at: assistantAt,
+        ms: assistantAt - startedAt,
         content: data.text,
         ...(Array.isArray(data.claims) ? { claims: data.claims } : {}),
         ...(typeof data.grounded === "boolean" ? { grounded: data.grounded } : {}),
@@ -2078,7 +2155,8 @@ el("asst-edit-mode").onclick = () => {
   asst.editMode = !asst.editMode;
   el("asst-edit-mode").setAttribute("aria-pressed", String(asst.editMode));
   asstEl("asst-input").placeholder = asst.editMode ? "描述要怎么改，例如「把这段写得更简洁」" : "问点什么，回车发送";
-  asstEl("asst-input").focus();
+  const liveComposer = composerHandle();
+  if (liveComposer) liveComposer.focus(); else asstEl("asst-input").focus();
 };
 el("asst-reset").onclick = (ev) => {
   ev.stopPropagation();
@@ -2097,7 +2175,8 @@ el("asst-launch").onclick = () => {
   asstApplyGeometry();
   if (open) {
     asstRender();
-    asstEl("asst-input").focus();
+    const liveComposer = composerHandle();
+    if (liveComposer) liveComposer.focus(); else asstEl("asst-input").focus();
   }
 };
 el("asst-close").onclick = () => {

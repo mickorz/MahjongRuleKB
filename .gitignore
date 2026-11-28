@@ -27,7 +27,6 @@ server/fonts/
 dev-examples/xc-chat-spike/
 
 # 聊天框预构建产物与参考项目 worktree（由 vendor/xc-chat/build.mjs 生成）
-server/chat-widget/
 vendor/xc-chat/fork/
 vendor/xc-chat/src/chat-subset.css
 

@@ -8,6 +8,11 @@ const KEEP_PREFIXES = [
   ".timeline", ".markdown", ".md-", ".lazy-", ".badge", ".c-badge", ".c-btn",
   ".c-content-action", ".icon-", ".shimmer", ".change-count", ".file-diff",
   ".artifact", ".prompt-", ".attachment", ".mono", ".serif",
+  // 会话消息与状态类：用户消息的复制按钮、回答页脚、折叠详情全靠它们
+  ".user-message", ".assistant-response", ".thinking-", ".approval-",
+  ".questionnaire-", ".todo-list-", ".compaction-", ".connection-",
+  ".image-read-", ".model-change-", ".stopped-work-", ".active-work-",
+  ".activity-shimmer", ".muted-text", ".spin", ".primary",
 ];
 const KEEP_EXACT = new Set([
   ":root", "html", "body", "*", "a", "button", "code", "pre", "ul", "ol", "li",

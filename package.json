@@ -7,7 +7,8 @@
     "validate": "node compiler/validator.ts",
     "compile": "node compiler/compile.ts",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "build:chat-widget": "node vendor/xc-chat/build.mjs"
   },
   "dependencies": {
     "yaml": "^2.6.0",
